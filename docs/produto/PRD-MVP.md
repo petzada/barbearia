@@ -540,6 +540,8 @@ Após restore: subir em **modo recuperação** (flag no banco, controlada só po
 
 ### 8.1 Pirâmide e ferramentas
 
+> **2026-10-13 (D0082):** não há Docker; onde esta seção cita Postgres via Docker, leia-se Postgres do Railway em bancos `_dev`/`_test` (ver AGENTS.md).
+
 - **Unitários** (Vitest): domínio puro — calendário, cotação, alocação, máquinas de estado, comissão, arredondamento. Relógio injetado.
 - **Integração** (Vitest + Postgres real via Docker): migrações, constraints, transações, concorrência (duas conexões), outbox/inbox, jobs.
 - **Contrato**: adapters contra fixtures sanitizadas (respostas reais anonimizadas) e contra fakes que implementam o mesmo port; o mesmo conjunto de testes roda contra o fake e contra o adapter real.

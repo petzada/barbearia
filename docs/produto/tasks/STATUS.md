@@ -5,8 +5,8 @@ Mantido pelo orquestrador. Atualizar a cada mudança de estado. Estados em [READ
 | ID | Task | Estado | Responsável / branch | Atualizado em | Observação (gate, bloqueio, parte entregue) |
 |---|---|---|---|---|---|
 | T00 | Kickoff e handoffs iniciais | done | Orquestrador | 2026-10-13 | Inventário: repositório sem commits e sem código de app (só docs/, reports/, research_notes/, .maestri/); nada diverge do plano. Links de PRD/tasks/handoffs verificados. Pedidos H01–H04 feitos. |
-| T01 | Scaffold do repositório | ready | — | 2026-10-13 | H00 respondido (D0082): sem Docker, Postgres Railway em bancos _dev/_test |
-| T02 | Plataforma e contratos | todo | — | 2026-10-13 | — |
+| T01 | Scaffold do repositório | done | Bigorna / main (7c38b78, 04ff6eb, fcc17d4) | 2026-10-13 | Sem Docker (D0082): Postgres Railway via proxy TCP, bancos barbearia_dev/_test. Revisão Navalha aprovada (após 1 reprovação); teste Espelho aprovado (após 1 reprovação: assets 404 no Node 22/Windows → servidor scripts/start-web.mjs + check:start no verify). P3 p/ T12: decidir servidor/adapter de deploy e validar em Linux. |
+| T02 | Plataforma e contratos | running | Bigorna / main | 2026-10-13 | — |
 | T03 | Jobs, outbox, inbox | todo | — | 2026-10-13 | — |
 | T04 | Identidade e acesso | todo | — | 2026-10-13 | — |
 | T05 | Shell de UI e PWA | todo | — | 2026-10-13 | — |
