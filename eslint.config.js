@@ -86,7 +86,7 @@ export default tseslint.config(
   },
   {
     // Fora do domínio, `any` explícito também é erro nas fronteiras; mantemos a regra do recommended (error).
-    files: ['scripts/**/*.ts'],
+    files: ['scripts/**/*.{ts,mjs}'],
     rules: { 'no-console': 'off' },
   },
 )

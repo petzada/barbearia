@@ -12,25 +12,26 @@ Todas as versões estão fixadas (exatas) em `package.json`; o `pnpm-lock.yaml` 
 
 ## Comandos
 
-| Comando                       | O que faz                                                                  |
-| ----------------------------- | -------------------------------------------------------------------------- |
-| `pnpm install`                | instala dependências                                                       |
-| `pnpm dev` / `dev:worker`     | servidor web (porta 3000) / processo worker                                |
-| `pnpm build`                  | build de produção                                                          |
-| `pnpm start` / `start:worker` | roda o build / o worker                                                    |
-| `pnpm lint`                   | ESLint                                                                     |
-| `pnpm format`                 | Prettier (escreve); `pnpm format:check` só confere                         |
-| `pnpm typecheck`              | `tsc --noEmit`                                                             |
-| `pnpm test:unit`              | Vitest, projeto `unit` (sem rede)                                          |
-| `pnpm test:integration`       | Vitest, projeto `integration` (Postgres `barbearia_test`, precisa de rede) |
-| `pnpm test`                   | unit + integration                                                         |
-| `pnpm test:e2e`               | Playwright, viewports mobile e desktop (sobe o `vite dev` sozinho na 3100) |
-| `pnpm db:check`               | confere conectividade (`select 1`) e `btree_gist` em `_dev` e `_test`      |
-| `pnpm db:bootstrap`           | cria, se faltar, `barbearia_dev` e `barbearia_test`; grava `.env.local`    |
-| `pnpm db:generate`            | `drizzle-kit generate` (gera migração a partir do schema)                  |
-| `pnpm db:migrate`             | aplica migrações em `DATABASE_URL` (`--test` para o banco de teste)        |
-| `pnpm db:reset`               | zera os schemas do banco e reaplica migrações (`--test` para o de teste)   |
-| `pnpm verify`                 | lint + typecheck + test + build (rodar antes de entregar)                  |
+| Comando                       | O que faz                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `pnpm install`                | instala dependências                                                                                            |
+| `pnpm dev` / `dev:worker`     | servidor web (porta 3000) / processo worker                                                                     |
+| `pnpm build`                  | build de produção                                                                                               |
+| `pnpm start` / `start:worker` | web de produção (SSR + estáticos de `dist/client`, `scripts/start-web.mjs`, porta `PORT`, padrão 3000) / worker |
+| `pnpm check:start`            | sobe o `start` e confere `/` e os assets em 200 (exige `pnpm build`)                                            |
+| `pnpm lint`                   | ESLint                                                                                                          |
+| `pnpm format`                 | Prettier (escreve); `pnpm format:check` só confere                                                              |
+| `pnpm typecheck`              | `tsc --noEmit`                                                                                                  |
+| `pnpm test:unit`              | Vitest, projeto `unit` (sem rede)                                                                               |
+| `pnpm test:integration`       | Vitest, projeto `integration` (Postgres `barbearia_test`, precisa de rede)                                      |
+| `pnpm test`                   | unit + integration                                                                                              |
+| `pnpm test:e2e`               | Playwright, viewports mobile e desktop (sobe o `vite dev` sozinho na 3100)                                      |
+| `pnpm db:check`               | confere conectividade (`select 1`) e `btree_gist` em `_dev` e `_test`                                           |
+| `pnpm db:bootstrap`           | cria, se faltar, `barbearia_dev` e `barbearia_test`; grava `.env.local`                                         |
+| `pnpm db:generate`            | `drizzle-kit generate` (gera migração a partir do schema)                                                       |
+| `pnpm db:migrate`             | aplica migrações em `DATABASE_URL` (`--test` para o banco de teste)                                             |
+| `pnpm db:reset`               | zera os schemas do banco e reaplica migrações (`--test` para o de teste)                                        |
+| `pnpm verify`                 | lint + typecheck + test + build + check:start (rodar antes de entregar)                                         |
 
 ## Banco de dados: sem Docker (D0082)
 
@@ -100,4 +101,4 @@ Alias de import: `~/` = `src/`. Dentro de um módulo use import relativo.
 
 ## Definição de pronto (resumo, PRD §8.3)
 
-`pnpm verify` verde (lint, typecheck, testes, build), critérios de aceite provados por teste, relatório de entrega do PRD §11.5.
+`pnpm verify` verde (lint, typecheck, testes, build, check:start), critérios de aceite provados por teste, relatório de entrega do PRD §11.5.
