@@ -1,0 +1,13 @@
+node_modules
+.output
+.tanstack
+dist
+drizzle
+playwright-report
+test-results
+pnpm-lock.yaml
+src/routeTree.gen.ts
+docs
+reports
+research_notes
+.maestri

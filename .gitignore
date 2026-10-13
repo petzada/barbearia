@@ -1,0 +1,22 @@
+# dependências e build
+node_modules
+.output
+.tanstack
+.vinxi
+dist
+*.tsbuildinfo
+
+# ambiente: segredos nunca versionados (D0082: URLs do Railway ficam em .env.local)
+.env*
+!.env.example
+
+# testes
+playwright-report
+test-results
+coverage
+
+# ferramentas locais
+.maestri/
+.railway/
+.DS_Store
+*.log
