@@ -31,6 +31,8 @@ Todas as versões estão fixadas (exatas) em `package.json`; o `pnpm-lock.yaml` 
 | `pnpm db:generate`            | `drizzle-kit generate` (gera migração a partir do schema)                                                       |
 | `pnpm db:migrate`             | aplica migrações em `DATABASE_URL` (`--test` para o banco de teste)                                             |
 | `pnpm db:reset`               | zera os schemas do banco e reaplica migrações (`--test` para o de teste)                                        |
+| `pnpm db:seed`                | cria a barbearia do deploy a partir de `BARBEARIA_SLUG` (idempotente; T02)                                      |
+| `pnpm env:check`              | valida o `.env.local` como o boot faz (só imprime nomes de variáveis)                                           |
 | `pnpm verify`                 | lint + typecheck + test + build + check:start (rodar antes de entregar)                                         |
 
 ## Banco de dados: sem Docker (D0082)
@@ -83,6 +85,8 @@ Alias de import: `~/` = `src/`. Dentro de um módulo use import relativo.
 - Comentários explicam o **porquê** e citam a decisão: `// D0058: prazo congelado na reserva`.
 - Migrações são incrementais. **Nunca edite uma migração já aplicada**; crie outra.
 - Sem float para dinheiro: `Money` em centavos (T02).
+- Server functions só pelos construtores `defineQuery`/`defineCommand` (`~/platform/context`); `createServerFn` fora de `src/platform/context/dispatcher.ts` falha em `tests/security`. Veja `src/contracts/README.md`.
+- Sem `Date.now()`/`new Date()` em `src/modules`: use `ctx.clock` e `~/platform/time`.
 
 ## Convenção de idioma
 

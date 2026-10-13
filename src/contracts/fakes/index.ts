@@ -1,0 +1,10 @@
+// Fakes em memória dos ports, para testes de módulos e de adapters (PRD §8.1).
+export { FakeAuditWriter } from './audit-writer'
+export { FakeJobQueue } from './job-queue'
+export { FakeMetricsSink } from './metrics-sink'
+export { FakeNotificationProvider } from './notification-provider'
+export { FakeOutbox } from './outbox'
+export { FakePaymentProvider } from './payment-provider'
+export { FakePushProvider } from './push-provider'
+export { FakeSessionResolver } from './session-resolver'
+export { FakeStorageProvider } from './storage-provider'
