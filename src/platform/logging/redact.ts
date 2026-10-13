@@ -6,7 +6,7 @@ export const REDACTED = '[redigido]'
 /**
  * Chaves cujo valor NUNCA é registrado. Comparação por trecho, sem maiúsculas nem separadores
  * (`session_token`, `sessionToken` e `SESSIONTOKEN` valem o mesmo). Conservadora de propósito.
- * `code`/`codigo` ficam de fora: são códigos de erro. O código de login chama-se `otp` ou `codigoVerificacao`.
+ * `code`/`codigo` ficam de fora: são códigos de erro; `assinatura` também (é o agregado de negócio: `assinaturaId`). O código de login chama-se `otp` ou `codigoVerificacao`.
  */
 const TRECHOS_SECRETOS = [
   'otp',
@@ -22,8 +22,8 @@ const TRECHOS_SECRETOS = [
   'cartao',
   'cardnumber',
   'privatekey',
-  'signature',
-  'assinatura',
+  'signature', // assinatura criptográfica (x-signature, x-openpix-signature)
+  'hmac',
   'verificationcode',
   'codigoverificacao',
 ]

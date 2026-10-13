@@ -11,7 +11,9 @@ function normalizar<T>(value: T): T {
   return JSON.parse(JSON.stringify(value ?? null)) as T
 }
 
+/** Visitante anônimo e job de sistema têm escopos distintos: nunca compartilham chave nem resultado. */
 export function idempotencyScopeOf(ctx: RequestContext): string {
+  if (ctx.actorKind === 'system') return 'sistema'
   return ctx.actorId ?? 'anonimo'
 }
 

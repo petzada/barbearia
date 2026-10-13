@@ -71,6 +71,23 @@ describe('redaction central (PRD §7.8)', () => {
     expect(texto).toContain('SCHEDULING.SLOT_UNAVAILABLE') // código de erro não é segredo
   })
 
+  it('preserva o agregado de negócio Assinatura e redige assinatura criptográfica', () => {
+    const limpo = redactSensitive({
+      assinaturaId: 'ass-123',
+      assinatura: { plano: 'Clube', estado: 'ativa' },
+      signature: 'abc123',
+      'x-signature': 'ts=1,v1=zzz',
+      'x-openpix-signature': 'hmac-valor',
+      hmac: 'valor-hmac',
+    }) as Record<string, unknown>
+    expect(limpo['assinaturaId']).toBe('ass-123')
+    expect(limpo['assinatura']).toEqual({ plano: 'Clube', estado: 'ativa' })
+    expect(limpo['signature']).toBe(REDACTED)
+    expect(limpo['x-signature']).toBe(REDACTED)
+    expect(limpo['x-openpix-signature']).toBe(REDACTED)
+    expect(limpo['hmac']).toBe(REDACTED)
+  })
+
   it('mascara telefone por nome de chave e preserva o resto', () => {
     const limpo = redactSensitive({
       telefone: '+5511987654321',

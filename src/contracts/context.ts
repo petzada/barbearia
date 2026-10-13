@@ -3,6 +3,8 @@ import type { Clock } from './clock'
 export const ROLES = ['cliente', 'barbeiro', 'admin'] as const
 export type Role = (typeof ROLES)[number]
 
+export type ActorKind = 'user' | 'anonymous' | 'system'
+
 /**
  * Contexto de toda operação (PRD §7.3). D0019: `barbeariaId` vem da configuração do deploy,
  * nunca do navegador. Papéis são combináveis (`['barbeiro', 'cliente']`).
@@ -10,6 +12,8 @@ export type Role = (typeof ROLES)[number]
  */
 export interface RequestContext {
   readonly barbeariaId: string
+  /** `user`: sessão; `anonymous`: visitante; `system`: job/processo interno. Separa o escopo de idempotência. */
+  readonly actorKind: ActorKind
   readonly actorId: string | null
   readonly roles: readonly Role[]
   readonly sessionId: string | null

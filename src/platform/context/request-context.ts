@@ -1,5 +1,5 @@
 import type { Clock } from '~/contracts/clock'
-import type { RequestContext } from '~/contracts/context'
+import type { ActorKind, RequestContext } from '~/contracts/context'
 import type { ResolvedSession } from '~/contracts/session'
 import { newId } from '../ids'
 
@@ -22,10 +22,11 @@ export function correlationIdFromHeader(value: string | null | undefined): strin
   return value && PADRAO_CORRELATION_ID.test(value) ? value : newCorrelationId()
 }
 
-export function createRequestContext(input: CreateContextInput): RequestContext {
-  const session = input.session ?? null
+function buildContext(input: CreateContextInput, actorKind: ActorKind): RequestContext {
+  const session = actorKind === 'user' ? (input.session ?? null) : null
   return {
     barbeariaId: input.barbeariaId,
+    actorKind,
     actorId: session?.actorId ?? null,
     roles: session ? [...new Set(session.roles)] : [],
     sessionId: session?.sessionId ?? null,
@@ -35,7 +36,11 @@ export function createRequestContext(input: CreateContextInput): RequestContext 
   }
 }
 
+export function createRequestContext(input: CreateContextInput): RequestContext {
+  return buildContext(input, input.session ? 'user' : 'anonymous')
+}
+
 /** Jobs e processos internos: sem ator, sem sessão, sem papéis. A auditoria registra `ator_id` nulo. */
 export function createSystemContext(input: Omit<CreateContextInput, 'session'>): RequestContext {
-  return createRequestContext(input)
+  return buildContext(input, 'system')
 }

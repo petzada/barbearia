@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { createSystemContext } from '../../src/platform/context'
 import { AppError } from '../../src/platform/errors'
 import { chavesIdempotencia, hashPayload, withIdempotency } from '../../src/platform/idempotency'
 import { abrirBancoDeTeste, type BancoDeTeste } from './helpers/banco'
@@ -157,6 +158,37 @@ describe('withIdempotency (PRD §7.3)', () => {
     expect(
       await withIdempotency(ana, 'teste.escopo', chave, hash, () => Promise.resolve('NAO')),
     ).toBe('ana')
+  })
+
+  it('visitante anônimo e job de sistema não compartilham chave nem resultado', async () => {
+    const chave = chaveNova()
+    const hash = hashPayload({ x: 1 })
+    const anonimo = banco.contexto({ atorId: null })
+    const sistema = createSystemContext({ barbeariaId: banco.barbearia.id, clock: banco.clock })
+    expect(anonimo.actorKind).toBe('anonymous')
+    expect(sistema.actorKind).toBe('system')
+    let execucoes = 0
+    const executar = (nome: string) => () => {
+      execucoes += 1
+      return Promise.resolve(nome)
+    }
+    const a = await withIdempotency(anonimo, 'teste.publica', chave, hash, executar('anonimo'))
+    const s = await withIdempotency(sistema, 'teste.publica', chave, hash, executar('sistema'))
+    expect([a, s]).toEqual(['anonimo', 'sistema'])
+    expect(execucoes).toBe(2)
+    // Cada um continua idempotente no seu escopo.
+    expect(await withIdempotency(anonimo, 'teste.publica', chave, hash, executar('NAO'))).toBe(
+      'anonimo',
+    )
+    expect(await withIdempotency(sistema, 'teste.publica', chave, hash, executar('NAO'))).toBe(
+      'sistema',
+    )
+    expect(execucoes).toBe(2)
+    const { rows } = await banco.pool.query<{ ator_id: string }>(
+      'select ator_id from chaves_idempotencia where chave = $1 order by ator_id',
+      [chave],
+    )
+    expect(rows.map((r) => r.ator_id)).toEqual(['anonimo', 'sistema'])
   })
 
   it('o resultado repetido é JSON puro (datas viram texto nas duas execuções)', async () => {
