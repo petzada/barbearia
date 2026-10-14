@@ -8,4 +8,7 @@
  *
  * Formato do nome: `<modulo>.<operacao>` (ex.: `catalog.listarServicos`).
  */
-export const PUBLIC_OPERATIONS: readonly string[] = []
+export const PUBLIC_OPERATIONS: readonly string[] = [
+  'catalog.listPublicCatalog',
+  'catalog.listPublicBarbers',
+]
