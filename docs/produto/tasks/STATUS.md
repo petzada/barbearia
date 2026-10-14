@@ -7,15 +7,15 @@ Mantido pelo orquestrador. Atualizar a cada mudança de estado. Estados em [READ
 | T00 | Kickoff e handoffs iniciais | done | Orquestrador | 2026-10-13 | Inventário: repositório sem commits e sem código de app (só docs/, reports/, research_notes/, .maestri/); nada diverge do plano. Links de PRD/tasks/handoffs verificados. Pedidos H01–H04 feitos. |
 | T01 | Scaffold do repositório | done | Bigorna / main (7c38b78, 04ff6eb, fcc17d4) | 2026-10-13 | Sem Docker (D0082): Postgres Railway via proxy TCP, bancos barbearia_dev/_test. Revisão Navalha aprovada (após 1 reprovação); teste Espelho aprovado (após 1 reprovação: assets 404 no Node 22/Windows → servidor scripts/start-web.mjs + check:start no verify). P3 p/ T12: decidir servidor/adapter de deploy e validar em Linux. |
 | T02 | Plataforma e contratos | done | Bigorna / main (c682c6c, ea32919) | 2026-10-13 | Revisão Navalha aprovada; teste Espelho aprovado (185 testes). Desvio técnico aceito: dispatcher único (src/platform/context/dispatcher.ts) no lugar de createServerFn por operação. Encaminhado: CSRF/Origin no endpoint único (T04); teste de segredo no bundle com controle positivo quando a 1ª rota usar o dispatcher (T04/T37); loadEnv no boot do web/worker (T03/T12); REVOKE/trigger de TRUNCATE em auditoria (T37); pontosBaseSchema 0–10000 vs reajuste >100% (T24); limpeza de chaves de idempotência (T03/T36). |
-| T03 | Jobs, outbox, inbox | review | Bigorna / task/T03-jobs-outbox-inbox @ 2beaae2 (worktree barbearia-wt/T03) | 2026-10-13 | Entregue; pg-boss enfileira na transação (sem outbox de jobs). Em revisão (Navalha). |
+| T03 | Jobs, outbox, inbox | review | Bigorna→Tenaz / task/T03-jobs-outbox-inbox @ 2865dca | 2026-10-13 | 1ª revisão reprovada (Navalha: isolamento do worker, em_andamento sem reconciliação, prazo de parada do outbox); corrigido; re-revisão (Lince). |
 | T04 | Identidade e acesso | running | Bigorna / task/T04-identidade-e-acesso (worktree barbearia-wt/T04, DB barbearia_t04_test) | 2026-10-13 | Inclui CSRF/Origin no dispatcher e teste de bundle com controle positivo (herdados do T02). Telas aguardam T05. |
 | T05 | Shell de UI e PWA | done | Cinzel / task/T05-shell-ui-pwa @ f24d7b8 → main | 2026-10-13 | Revisão Lince aprovada; teste Espelho aprovado (307 testes, e2e 119). Pendências: UiSessionSource real (T04), setBrand (T08), setNotificationCount (T30); NODE_ENV do .env.local no build (T12). |
-| T06 | Catálogo e equipe | running | Cinzel / task/T06-catalogo-servicos-equipe (base: branch T05; worktree barbearia-wt/T06, DB barbearia_t06_test) | 2026-10-13 | Concluir requer T04 e T05 integrados |
+| T06 | Catálogo e equipe | review | Cinzel / task/T06-catalogo-servicos-equipe @ b74658a (base T05) | 2026-10-13 | Entregue (319 testes; e2e 125). Em revisão (Navalha). FK usuario_id e fakes de outbox/storage a religar na integração com T03/T04/T08. |
 | T07 | Planos e versões | todo | — | 2026-10-13 | — |
 | T08 | Configuração, marca, R2 | todo | — | 2026-10-13 | — |
-| T09 | Adapter WhatsMiau | todo | — | 2026-10-13 | — |
+| T09 | Adapter WhatsMiau | running | Tenaz / task/T09-adapter-whatsmiau (base T03 2865dca; DB barbearia_t09_test) | 2026-10-13 | Iniciada sobre T03 em re-revisão. |
 | T10 | Adapter Mercado Pago | todo | — | 2026-10-13 | — |
-| T11 | Adapter Woovi | todo | — | 2026-10-13 | — |
+| T11 | Adapter Woovi | running | Cinzel / task/T11-adapter-woovi (base T03 2865dca; DB barbearia_t11_test) | 2026-10-13 | Iniciada sobre T03 em re-revisão. |
 | T12 | CI e deploy | todo | — | 2026-10-13 | — |
 | T13 | Motor de cotação | todo | — | 2026-10-13 | — |
 | T14 | Agenda e disponibilidade | todo | — | 2026-10-13 | — |
