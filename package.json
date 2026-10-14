@@ -9,7 +9,7 @@
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "dev": "vite dev",
-    "dev:worker": "tsx watch src/worker.ts",
+    "dev:worker": "tsx watch --env-file-if-exists=.env.local src/worker.ts",
     "build": "vite build",
     "start": "node scripts/start-web.mjs",
     "start:worker": "tsx src/worker.ts",
@@ -29,7 +29,9 @@
     "db:seed": "tsx scripts/db-seed.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:start",
     "check:start": "node scripts/check-start.mjs",
-    "env:check": "tsx scripts/env-check.ts"
+    "env:check": "tsx scripts/env-check.ts",
+    "ops:recovery": "tsx scripts/ops-recovery.ts",
+    "ops:example-job": "tsx scripts/ops-example-job.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -65,6 +67,7 @@
     "drizzle-orm": "0.45.4",
     "luxon": "3.7.2",
     "pg": "8.23.1",
+    "pg-boss": "12.38.0",
     "pino": "10.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",

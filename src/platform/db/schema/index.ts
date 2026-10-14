@@ -3,3 +3,7 @@
 export * from './barbearias'
 export * from '../../audit/schema'
 export * from '../../idempotency/schema'
+export * from '../../outbox/schema'
+export * from '../../inbox/schema'
+export * from '../../external-ops/schema'
+export * from '../../recovery/schema'
