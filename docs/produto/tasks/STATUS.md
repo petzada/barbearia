@@ -9,8 +9,8 @@ Mantido pelo orquestrador. Atualizar a cada mudança de estado. Estados em [READ
 | T02 | Plataforma e contratos | done | Bigorna / main (c682c6c, ea32919) | 2026-10-13 | Revisão Navalha aprovada; teste Espelho aprovado (185 testes). Desvio técnico aceito: dispatcher único (src/platform/context/dispatcher.ts) no lugar de createServerFn por operação. Encaminhado: CSRF/Origin no endpoint único (T04); teste de segredo no bundle com controle positivo quando a 1ª rota usar o dispatcher (T04/T37); loadEnv no boot do web/worker (T03/T12); REVOKE/trigger de TRUNCATE em auditoria (T37); pontosBaseSchema 0–10000 vs reajuste >100% (T24); limpeza de chaves de idempotência (T03/T36). |
 | T03 | Jobs, outbox, inbox | review | Bigorna / task/T03-jobs-outbox-inbox @ 2beaae2 (worktree barbearia-wt/T03) | 2026-10-13 | Entregue; pg-boss enfileira na transação (sem outbox de jobs). Em revisão (Navalha). |
 | T04 | Identidade e acesso | running | Bigorna / task/T04-identidade-e-acesso (worktree barbearia-wt/T04, DB barbearia_t04_test) | 2026-10-13 | Inclui CSRF/Origin no dispatcher e teste de bundle com controle positivo (herdados do T02). Telas aguardam T05. |
-| T05 | Shell de UI e PWA | running | Cinzel / task/T05-shell-ui-pwa (worktree barbearia-wt/T05, DB barbearia_t05_test) | 2026-10-13 | — |
-| T06 | Catálogo e equipe | todo | — | 2026-10-13 | — |
+| T05 | Shell de UI e PWA | review | Cinzel / task/T05-shell-ui-pwa @ f24d7b8 (worktree barbearia-wt/T05) | 2026-10-13 | Entregue (307 testes; e2e 119; axe sem violações). Em revisão (Lince). |
+| T06 | Catálogo e equipe | running | Cinzel / task/T06-catalogo-servicos-equipe (base: branch T05; worktree barbearia-wt/T06, DB barbearia_t06_test) | 2026-10-13 | Concluir requer T04 e T05 integrados |
 | T07 | Planos e versões | todo | — | 2026-10-13 | — |
 | T08 | Configuração, marca, R2 | todo | — | 2026-10-13 | — |
 | T09 | Adapter WhatsMiau | todo | — | 2026-10-13 | — |
