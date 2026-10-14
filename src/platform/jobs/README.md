@@ -43,7 +43,10 @@ await getJobQueue().enqueueInTx(tx, {
   startAfter: instanteDoLembrete, // agendamento por instante
   correlationId: ctx.correlationId,
 })
-await getJobQueue().cancelByKeyInTx(tx, { queue: LembreteQueue.name, singletonKey: `lembrete:${reservaId}` }) // cancela o que ainda não rodou
+await getJobQueue().cancelByKeyInTx(tx, {
+  queue: LembreteQueue.name,
+  singletonKey: `lembrete:${reservaId}`,
+}) // cancela o que ainda não rodou
 ```
 
 Regras:
@@ -85,8 +88,14 @@ import { receiveWebhook, registerInboxHandler } from '~/platform/inbox'
 
 const adapter = {
   provider: 'mercado-pago',
-  verify: ({ rawBody, headers }) => validarXSignature(rawBody, headers) ? { ok: true } : { ok: false, reason: 'x-signature' },
-  parse: ({ rawBody, headers }) => ({ account, environment: 'test', eventId, headers: { 'x-request-id': headers.get('x-request-id') ?? '' } }),
+  verify: ({ rawBody, headers }) =>
+    validarXSignature(rawBody, headers) ? { ok: true } : { ok: false, reason: 'x-signature' },
+  parse: ({ rawBody, headers }) => ({
+    account,
+    environment: 'test',
+    eventId,
+    headers: { 'x-request-id': headers.get('x-request-id') ?? '' },
+  }),
 }
 // handler da rota: return receiveWebhook(request, adapter)
 
@@ -103,10 +112,17 @@ Estados: `recebido` → `processando` → `processado` | `falhou`. `reprocessInb
 ## 4. Operações externas (`~/platform/external-ops`)
 
 ```ts
-import { defineExternalOperation, ExternalNotAppliedError, runExternalOperation } from '~/platform/external-ops'
+import {
+  defineExternalOperation,
+  ExternalNotAppliedError,
+  runExternalOperation,
+} from '~/platform/external-ops'
 import { PermanentJobError } from '~/platform/jobs'
 
-export const CancelarAssinaturaMp = defineExternalOperation<{ preapprovalId: string }, { status: string }>({
+export const CancelarAssinaturaMp = defineExternalOperation<
+  { preapprovalId: string },
+  { status: string }
+>({
   type: 'mercado-pago.cancelar-assinatura', // registrada: o worker precisa dela para reconciliar/repetir
   timeoutMs: 15_000,
   execute: async ({ preapprovalId }, { idempotencyKey, signal }) => {
@@ -130,8 +146,10 @@ const r = await runExternalOperation(ctx, CancelarAssinaturaMp, {
 
 `runExternalOperation`: recusa com `SYSTEM.RECOVERY_MODE` → **persiste a intenção e dá commit** → chama (timeout) → registra o resultado e o job de continuação **na mesma transação**. Mesma chave devolve a mesma operação (sem segunda chamada se já `confirmada`; `IDEMPOTENCY.KEY_REUSED` se alvo/entrada diferem; execução simultânea devolve `em_andamento`).
 
+Ao gravar `em_andamento`, a mesma transação agenda um watchdog `external-ops.advance` para `timeoutMs` + 60 s depois. Se a operação já estiver terminal quando o job rodar, ele conclui sem chamar o provedor. Quando um novo prazo de continuação é registrado, o job aguardando da mesma chave é cancelado e substituído na transação.
+
 - `incerta` (timeout, rede, 5xx, ou chamador que sumiu em `em_andamento` por mais de `timeoutMs`+60 s): o job `external-ops.advance` chama **`reconcile` antes de qualquer repetição**: `applied` → `confirmada` sem segunda chamada; `not_applied` → repete com a **mesma** chave de idempotência; `unknown` → continua `incerta` e reagenda (30 s, 2, 10, 30 min, depois de hora em hora, até 48×; esgotado = pendência). **Sem `reconcile`, uma operação incerta nunca é repetida sozinha** e abre pendência.
-- `ExternalNotAppliedError` → `pendente` + retentativa pela política; `PermanentJobError` → `falhou` + pendência, sem job.
+- `ExternalNotAppliedError` → `pendente` + retentativa pela política; `PermanentJobError` → `falhou` + pendência, sem job de repetição. O watchdog já agendado ao entrar em `em_andamento` pode rodar depois e concluir sem nova chamada.
 
 ## 5. Modo recuperação (`~/platform/recovery`, D0078)
 
@@ -142,7 +160,7 @@ const r = await runExternalOperation(ctx, CancelarAssinaturaMp, {
 
 ## 6. Worker (`pnpm dev:worker`, `pnpm start:worker`)
 
-`src/worker.ts`: `loadEnv()` na primeira linha → `startWorker()` → registra handlers da plataforma (`inbox.process`, `external-ops.advance`, `system.exemplo`) e de cada `modules/*/jobs.ts` (varredura de pasta + `import()`, pois fora do Vite não há `import.meta.glob`) → cria as filas → `boss.work` por fila + consumidor do dead letter + dispatcher do outbox. `SIGINT`/`SIGTERM` encerram com graça (espera os jobs em andamento, até 30 s).
+`src/worker.ts`: `loadEnv()` na primeira linha → `startWorker()` → registra handlers da plataforma (`inbox.process`, `external-ops.advance`, `system.exemplo`) e de cada `modules/*/jobs.ts` (varredura de pasta + `import()`, pois fora do Vite não há `import.meta.glob`) → cria as filas → `boss.work` por fila + consumidor do dead letter + dispatcher do outbox. `WorkerOptions.queueNames` pode restringir as filas consumidas; sem essa opção, todas são consumidas. `SIGINT`/`SIGTERM` encerram com graça: o orçamento de até 30 s cobre a espera do dispatcher do outbox e, com o tempo restante, os jobs em andamento no pg-boss.
 
 `dev:worker` lê `.env.local` (`--env-file-if-exists`). Job de exemplo: em um terminal `pnpm dev:worker`, em outro `pnpm ops:example-job "olá"`; o worker registra `job de exemplo processado`. O worker precisa das migrações aplicadas (`outbox`, `operacoes_externas` etc.): `pnpm db:migrate`.
 

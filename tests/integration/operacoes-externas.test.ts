@@ -11,7 +11,9 @@ import {
 import { externalOperationJobKey, EXTERNAL_OPS_QUEUE } from '../../src/platform/external-ops/run'
 import { operacoesExternas } from '../../src/platform/external-ops/schema'
 import { setDeadLetterHook, type DeadLetterEvent } from '../../src/platform/jobs/dead-letter'
+import { resetJobHandlers } from '../../src/platform/jobs/handlers'
 import { PermanentJobError } from '../../src/platform/jobs/failures'
+import { startWorker, type RunningWorker } from '../../src/platform/jobs/worker'
 import { setRecoveryMode } from '../../src/platform/recovery'
 import { abrirBancoDeTeste, type BancoDeTeste } from './helpers/banco'
 import { contarJobs, encerrarBoss, esperarAte, prepararBoss } from './helpers/jobs'
@@ -49,6 +51,7 @@ class ProvedorFalso {
 describe('operações externas (intenção → commit → chamada → registro)', () => {
   let banco: BancoDeTeste
   let provedor: ProvedorFalso
+  let worker: RunningWorker | undefined
   let contador = 0
   const pendencias: DeadLetterEvent[] = []
 
@@ -71,8 +74,11 @@ describe('operações externas (intenção → commit → chamada → registro)'
     })
   })
 
-  afterEach(() => {
+  afterEach(async () => {
+    await worker?.stop(5_000)
+    worker = undefined
     resetExternalOperations()
+    resetJobHandlers()
     setDeadLetterHook(undefined)
   })
 
@@ -110,6 +116,30 @@ describe('operações externas (intenção → commit → chamada → registro)'
     )
     return Number((resultado.rows[0] as { total: number }).total)
   }
+  const jobAguardandoDeContinuacao = async (id: string) => {
+    const resultado = await banco.db.execute(
+      sql`select id, state::text as state, start_after from pgboss.job where name = ${EXTERNAL_OPS_QUEUE.name} and singleton_key = ${externalOperationJobKey(id)} and state::text = 'created' order by created_on desc limit 1`,
+    )
+    return resultado.rows[0] as
+      { id: string; state: string; start_after: Date | string } | undefined
+  }
+  const estadoDoJob = async (jobId: string) => {
+    const resultado = await banco.db.execute(
+      sql`select state::text as state from pgboss.job where id = ${jobId}`,
+    )
+    return (resultado.rows[0] as { state: string } | undefined)?.state
+  }
+  const iniciarWorker = async () => {
+    await encerrarBoss()
+    await prepararBoss()
+    worker = await startWorker({
+      barbeariaId: banco.barbearia.id,
+      clock: banco.clock,
+      loadModules: false,
+      queueNames: [EXTERNAL_OPS_QUEUE.name],
+      pollingIntervalSeconds: 0.5,
+    })
+  }
 
   it('caminho feliz: persiste a intenção, chama uma vez e confirma; repetir a chave não chama de novo', async () => {
     const definicao = definirCobranca()
@@ -119,11 +149,27 @@ describe('operações externas (intenção → commit → chamada → registro)'
     const segunda = await runExternalOperation(ctx, definicao, pedido('ok-1'))
     expect(segunda).toMatchObject({ status: 'confirmada', result: { cobrancaId: 'cob-ok-1' } })
     expect(provedor.chamadas).toBe(1)
+    expect(await jobDeContinuacao(primeira.operationId)).toBe(1)
     expect(await linha('ok-1')).toMatchObject({
       estado: 'confirmada',
       tentativas: 1,
       alvo: 'assinatura:ok-1',
     })
+  })
+
+  it('o watchdog de uma operação terminal conclui sem chamar o provedor de novo', async () => {
+    const definicao = definirCobranca()
+    const ctx = banco.contexto({ atorId: null })
+    const resultado = await runExternalOperation(ctx, definicao, pedido('terminal-watchdog-1'))
+    const job = await jobAguardandoDeContinuacao(resultado.operationId)
+    expect(job).toMatchObject({ state: 'created' })
+
+    await iniciarWorker()
+    await banco.db.execute(sql`update pgboss.job set start_after = now() where id = ${job?.id}`)
+    await esperarAte(async () => (await estadoDoJob(job?.id ?? '')) === 'completed')
+
+    expect(await linha('terminal-watchdog-1')).toMatchObject({ estado: 'confirmada' })
+    expect(provedor.chamadas).toBe(1)
   })
 
   it('a intenção está commitada ANTES da chamada (visível por outra conexão durante a chamada)', async () => {
@@ -230,7 +276,7 @@ describe('operações externas (intenção → commit → chamada → registro)'
     expect(registro).toMatchObject({ estado: 'falhou' })
     expect(registro?.ultimoErro).toContain('credencial inválida')
     expect(pendencias).toMatchObject([{ reason: 'permanent', ref: registro?.id }])
-    expect(await jobDeContinuacao(registro?.id ?? '')).toBe(0)
+    expect(await jobDeContinuacao(registro?.id ?? '')).toBe(1) // apenas o watchdog criado ao entrar em andamento
     expect(provedor.chamadas).toBe(1)
   })
 
@@ -306,6 +352,52 @@ describe('operações externas (intenção → commit → chamada → registro)'
       result: { cobrancaId: 'cob-abandonada-1' },
     })
     expect(provedor.chamadas).toBe(0)
+  })
+
+  it('agenda reconciliação ao entrar em andamento antes de registrar o retorno do chamador', async () => {
+    let liberarChamada: (() => void) | undefined
+    let sinalizarInicio: (() => void) | undefined
+    const chamadaIniciada = new Promise<void>((resolver) => {
+      sinalizarInicio = resolver
+    })
+    const resposta = new Promise<{ cobrancaId: string }>((resolver) => {
+      liberarChamada = () => resolver({ cobrancaId: 'cob-abandonada-antes-registro' })
+    })
+    const definicao = defineExternalOperation<{ chave: string }, { cobrancaId: string }>({
+      type: `teste.abandonada-antes-registro-${++contador}`,
+      timeoutMs: 120_000,
+      execute: async (entrada) => {
+        provedor.chamadas += 1
+        provedor.aplicado.set(entrada.chave, 'cob-abandonada-antes-registro')
+        sinalizarInicio?.()
+        return resposta
+      },
+      reconcile: (entrada) => Promise.resolve(provedor.reconciliar(entrada.chave)),
+    })
+    const ctx = banco.contexto({ atorId: null })
+    const chamador = runExternalOperation(ctx, definicao, pedido('abandonada-antes-registro-1'))
+    await chamadaIniciada
+    const registro = await linha('abandonada-antes-registro-1')
+    expect(registro).toMatchObject({ estado: 'em_andamento' })
+    const watchdog = await jobAguardandoDeContinuacao(registro?.id ?? '')
+    expect(watchdog).toMatchObject({ state: 'created' })
+    expect(new Date(watchdog?.start_after ?? 0).getTime()).toBe(
+      ctx.clock.now().getTime() + definicao.timeoutMs + 60_000,
+    )
+
+    await iniciarWorker()
+    banco.clock.advance(definicao.timeoutMs + 60_000)
+    await banco.db.execute(
+      sql`update pgboss.job set start_after = now() where id = ${watchdog?.id}`,
+    )
+    await esperarAte(async () => (await estadoDoJob(watchdog?.id ?? '')) === 'completed')
+
+    expect(await linha('abandonada-antes-registro-1')).toMatchObject({ estado: 'confirmada' })
+    expect(provedor.chamadas).toBe(1)
+    expect(provedor.reconciliacoes).toBe(1)
+    liberarChamada?.()
+    expect((await chamador).status).toBe('confirmada')
+    expect(provedor.chamadas).toBe(1)
   })
 
   it('modo recuperação recusa a operação externa antes de persistir ou chamar', async () => {

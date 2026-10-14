@@ -182,7 +182,8 @@ export async function dispatchOutbox(options: DispatchOptions): Promise<Dispatch
 }
 
 export interface OutboxDispatcherHandle {
-  stop(): Promise<void>
+  /** Para o laço e espera o processamento atual até o prazo informado. */
+  stop(timeoutMs?: number): Promise<void>
 }
 
 /** Laço do worker: esvazia o outbox e dorme `intervalMs` quando não há nada. */
@@ -210,10 +211,25 @@ export function startOutboxDispatcher(
     }
   })()
   return {
-    async stop() {
+    async stop(timeoutMs = Number.POSITIVE_INFINITY) {
       parar = true
       acordar?.()
-      await laco
+      if (!Number.isFinite(timeoutMs)) {
+        await laco
+        return
+      }
+      if (timeoutMs <= 0) return
+      let timer: ReturnType<typeof setTimeout> | undefined
+      try {
+        await Promise.race([
+          laco,
+          new Promise<void>((resolver) => {
+            timer = setTimeout(resolver, timeoutMs)
+          }),
+        ])
+      } finally {
+        if (timer) clearTimeout(timer)
+      }
     },
   }
 }

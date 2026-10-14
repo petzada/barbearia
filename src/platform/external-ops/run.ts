@@ -48,6 +48,10 @@ export type ExternalOperationOutcome<TResult extends JsonValue = JsonValue> =
   | { readonly status: 'incerta' | 'pendente' | 'em_andamento'; readonly operationId: string }
   | { readonly status: 'falhou'; readonly operationId: string; readonly error: string | null }
 
+type ExternalOperationJobQueue = Pick<JobQueue, 'enqueueInTx'> & {
+  cancelByKeyInTx(tx: Tx, input: { queue: string; singletonKey: string }): Promise<void>
+}
+
 export interface ExternalOperationRequest<TInput extends JsonValue> {
   /** Uma chave por intenção de negócio (ex.: `cancelar:<assinaturaId>`): repetir a chamada não duplica o efeito. */
   readonly idempotencyKey: string
@@ -59,13 +63,13 @@ export interface ExternalOperationRequest<TInput extends JsonValue> {
 
 export interface ExternalOperationDeps {
   readonly db?: Db
-  readonly queue?: Pick<JobQueue, 'enqueueInTx'>
+  readonly queue?: ExternalOperationJobQueue
   readonly random?: () => number
 }
 
 interface Ambiente {
   readonly db: Db
-  readonly queue: Pick<JobQueue, 'enqueueInTx'>
+  readonly queue: ExternalOperationJobQueue
   readonly random: () => number
   readonly ctx: RequestContext
 }
@@ -177,6 +181,24 @@ async function atualizar(
   return linha
 }
 
+/** Mantém um único job aguardando por operação: o watchdog anterior pode ter outro prazo. */
+async function agendarAvancoInTx(
+  env: Ambiente,
+  tx: Tx,
+  operationId: string,
+  startAfter: Date,
+): Promise<void> {
+  const singletonKey = externalOperationJobKey(operationId)
+  await env.queue.cancelByKeyInTx(tx, { queue: EXTERNAL_OPS_QUEUE.name, singletonKey })
+  await env.queue.enqueueInTx(tx, {
+    queue: EXTERNAL_OPS_QUEUE.name,
+    payload: { operationId },
+    singletonKey,
+    startAfter,
+    correlationId: env.ctx.correlationId,
+  })
+}
+
 /** Decide o próximo passo e, no mesmo lock, marca `em_andamento` quando vai chamar o provedor. */
 async function planejar(
   env: Ambiente,
@@ -214,15 +236,20 @@ async function planejar(
       }
       case 'incerta':
         return { kind: 'reconcile', linha }
-      default:
-        return {
-          kind: 'execute',
-          linha: await atualizar(tx, linha.id, agora, {
-            estado: 'em_andamento',
-            tentativas: linha.tentativas + 1,
-            iniciadaEm: agora,
-          }),
-        }
+      default: {
+        const emAndamento = await atualizar(tx, linha.id, agora, {
+          estado: 'em_andamento',
+          tentativas: linha.tentativas + 1,
+          iniciadaEm: agora,
+        })
+        await agendarAvancoInTx(
+          env,
+          tx,
+          linha.id,
+          new Date(agora.getTime() + definicao.timeoutMs + FOLGA_DE_ABANDONO_MS),
+        )
+        return { kind: 'execute', linha: emAndamento }
+      }
     }
   })
 }
@@ -303,13 +330,7 @@ async function registrar<TResult extends JsonValue>(
   const atualizada = await db.transaction(async (tx) => {
     const nova = await atualizar(tx, linha.id, ctx.clock.now(), mudanca.valores)
     if (mudanca.seguirEm) {
-      await env.queue.enqueueInTx(tx, {
-        queue: EXTERNAL_OPS_QUEUE.name,
-        payload: { operationId: linha.id },
-        singletonKey: externalOperationJobKey(linha.id),
-        startAfter: mudanca.seguirEm,
-        correlationId: ctx.correlationId,
-      })
+      await agendarAvancoInTx(env, tx, linha.id, mudanca.seguirEm)
     }
     return nova
   })
@@ -435,7 +456,7 @@ async function reconciliar<TResult extends JsonValue>(
   }
   if (desfecho.outcome === 'not_applied') {
     // O provedor confirmou que NÃO aplicou: só agora é seguro repetir (com a mesma chave de idempotência).
-    const plano = await reabrir(env, linha)
+    const plano = await reabrir(env, linha, definicao.timeoutMs)
     return plano ? chamar<TResult>(env, definicao, plano) : resultadoDe<TResult>(linha)
   }
   const tentativas = linha.reconciliacoes + 1
@@ -459,6 +480,7 @@ async function reconciliar<TResult extends JsonValue>(
 async function reabrir(
   env: Ambiente,
   linha: LinhaOperacaoExterna,
+  timeoutMs: number,
 ): Promise<LinhaOperacaoExterna | undefined> {
   const { db, ctx } = env
   const agora = ctx.clock.now()
@@ -469,11 +491,18 @@ async function reabrir(
       .where(eq(operacoesExternas.id, linha.id))
       .for('update')
     if (!atual || atual.estado !== 'incerta') return undefined
-    return atualizar(tx, atual.id, agora, {
+    const emAndamento = await atualizar(tx, atual.id, agora, {
       estado: 'em_andamento',
       tentativas: atual.tentativas + 1,
       iniciadaEm: agora,
     })
+    await agendarAvancoInTx(
+      env,
+      tx,
+      atual.id,
+      new Date(agora.getTime() + timeoutMs + FOLGA_DE_ABANDONO_MS),
+    )
+    return emAndamento
   })
 }
 

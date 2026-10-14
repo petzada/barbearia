@@ -25,13 +25,15 @@ export interface WorkerOptions {
   readonly outboxIntervalMs?: number
   /** Adiamento de jobs de efeito externo em modo recuperação (padrão 30 s). */
   readonly recoveryDeferMs?: number
+  /** Filas consumidas por este worker. Ausente, consome todas as filas registradas. */
+  readonly queueNames?: readonly string[]
   /** Importa `modules/*\/jobs.ts`. Padrão: sim. */
   readonly loadModules?: boolean
 }
 
 export interface RunningWorker {
   readonly boss: PgBoss
-  /** Encerramento gracioso: para de buscar jobs novos e espera os em andamento terminarem. */
+  /** Para de buscar jobs; um orçamento único limita a espera do outbox e dos jobs em andamento. */
   stop(timeoutMs?: number): Promise<void>
 }
 
@@ -68,7 +70,10 @@ export async function startWorker(options: WorkerOptions = {}): Promise<RunningW
   }
 
   const polling = options.pollingIntervalSeconds ?? 2
-  const handlers = listJobHandlers()
+  const filasPermitidas = options.queueNames === undefined ? undefined : new Set(options.queueNames)
+  const handlers = listJobHandlers().filter(
+    ({ definicao }) => !filasPermitidas || filasPermitidas.has(definicao.name),
+  )
   for (const { definicao, handler } of handlers) {
     await ensureQueue(boss, definicao)
     await boss.work(
@@ -99,21 +104,27 @@ export async function startWorker(options: WorkerOptions = {}): Promise<RunningW
   }
 
   // Jobs que o pg-boss desistiu de executar (crash do processo, expiração) caem aqui.
-  await ensureDeadLetterQueue(boss)
-  await boss.work(
-    DEAD_LETTER_QUEUE,
-    { includeMetadata: true, pollingIntervalSeconds: Math.max(polling, 5), batchSize: 1 } as const,
-    (jobs) =>
-      processarLote(jobs, async (job) => {
-        await reportDeadLetter({
-          source: 'job',
-          reason: 'expired',
-          ref: job.sourceId ?? job.id,
-          ...(job.sourceName ? { queue: job.sourceName } : {}),
-          error: 'o pg-boss esgotou as tentativas dele (crash do processo ou expiração)',
-        })
-      }),
-  )
+  if (!filasPermitidas || filasPermitidas.has(DEAD_LETTER_QUEUE)) {
+    await ensureDeadLetterQueue(boss)
+    await boss.work(
+      DEAD_LETTER_QUEUE,
+      {
+        includeMetadata: true,
+        pollingIntervalSeconds: Math.max(polling, 5),
+        batchSize: 1,
+      } as const,
+      (jobs) =>
+        processarLote(jobs, async (job) => {
+          await reportDeadLetter({
+            source: 'job',
+            reason: 'expired',
+            ref: job.sourceId ?? job.id,
+            ...(job.sourceName ? { queue: job.sourceName } : {}),
+            error: 'o pg-boss esgotou as tentativas dele (crash do processo ou expiração)',
+          })
+        }),
+    )
+  }
 
   const outbox: OutboxDispatcherHandle = startOutboxDispatcher({
     clock,
@@ -127,8 +138,11 @@ export async function startWorker(options: WorkerOptions = {}): Promise<RunningW
   return {
     boss,
     async stop(timeoutMs = 30_000) {
-      await outbox.stop()
-      await stopBoss({ graceful: true, timeoutMs })
+      const prazo = performance.now() + Math.max(timeoutMs, 0)
+      await outbox.stop(Math.max(prazo - performance.now(), 0))
+      const restante = Math.max(prazo - performance.now(), 0)
+      // pg-boss 12.38.0 impõe pelo menos 1 s a uma parada graciosa.
+      await stopBoss({ graceful: restante >= 1_000, timeoutMs: restante })
     },
   }
 }

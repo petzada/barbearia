@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { defineEvent } from '../../src/platform/context'
 import { setDeadLetterHook, type DeadLetterEvent } from '../../src/platform/jobs/dead-letter'
-import { enqueueExampleJob } from '../../src/platform/jobs/example'
+import { enqueueExampleJob, EXAMPLE_QUEUE } from '../../src/platform/jobs/example'
 import { PermanentJobError } from '../../src/platform/jobs/failures'
 import {
   registerJobHandler,
@@ -55,9 +55,9 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
     pendencias.length = 0
   })
 
-  async function iniciar() {
+  async function iniciar(queueNames: readonly string[]) {
     await prepararBoss() // `encerrarBoss` do teste anterior pode ter derrubado a instância
-    worker = await startWorker({ barbeariaId: banco.barbearia.id, ...OPCOES })
+    worker = await startWorker({ barbeariaId: banco.barbearia.id, queueNames, ...OPCOES })
     return worker
   }
 
@@ -76,7 +76,7 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
   }
 
   it('pnpm dev:worker processa um job de exemplo (critério de aceite)', async () => {
-    await iniciar()
+    await iniciar([EXAMPLE_QUEUE.name])
     const { jobId } = await enqueueExampleJob('olá, worker')
     expect(jobId).toBeTruthy()
     await esperarAte(async () => (await estadoDoJob(jobId ?? '')) === 'completed', {
@@ -91,7 +91,7 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
       vistos.push(job)
       return Promise.resolve()
     })
-    await iniciar()
+    await iniciar([fila.name])
     const { jobId } = await getJobQueue().enqueue({
       queue: fila.name,
       payload: { n: 7 },
@@ -124,20 +124,27 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
       chamadasPermanente += 1
       return Promise.reject(new PermanentJobError('credencial inválida'))
     })
-    await iniciar()
+    await iniciar([transitoria.name, permanente.name])
     await getJobQueue().enqueue({ queue: transitoria.name, payload: {} })
     const { jobId } = await getJobQueue().enqueue({ queue: permanente.name, payload: {} })
     await esperarAte(() => tentativas.length === 3, { descricao: 'três tentativas' })
     expect(tentativas).toEqual([0, 1, 2])
-    await esperarAte(() => pendencias.length === 1)
+    await esperarAte(() =>
+      pendencias.some(
+        (evento) =>
+          evento.queue === permanente.name && evento.ref === jobId && evento.reason === 'permanent',
+      ),
+    )
     expect(chamadasPermanente).toBe(1) // sem loop
-    expect(pendencias[0]).toMatchObject({
+    expect(pendencias.find((evento) => evento.ref === jobId)).toMatchObject({
       source: 'job',
       reason: 'permanent',
       queue: permanente.name,
       ref: jobId,
     })
-    expect(pendencias[0]?.error).toContain('credencial inválida')
+    expect(pendencias.find((evento) => evento.ref === jobId)?.error).toContain(
+      'credencial inválida',
+    )
   })
 
   it('esgotada a política, abre pendência uma única vez', async () => {
@@ -151,7 +158,7 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
       chamadas += 1
       return Promise.reject(new Error('sempre falha'))
     })
-    await iniciar()
+    await iniciar([fila.name])
     await getJobQueue().enqueue({ queue: fila.name, payload: {} })
     await esperarAte(() => pendencias.length === 1)
     expect(chamadas).toBe(2) // 1 execução + 1 retentativa
@@ -170,7 +177,7 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
       rodou.push('interno')
       return Promise.resolve()
     })
-    await iniciar()
+    await iniciar([efeito.name, interno.name])
     await setRecoveryMode(banco.contexto({ atorId: null }), {
       active: true,
       operator: 'teste',
@@ -198,7 +205,7 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
       vistos.push(payload.id)
       return Promise.resolve()
     })
-    await iniciar()
+    await iniciar([fila.name])
     const agendado = await getJobQueue().enqueue({
       queue: fila.name,
       payload: { id: 'agendado' },
@@ -221,7 +228,7 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
     await banco.db.execute(
       sql`update pgboss.job set start_after = now() where id = ${agendado.jobId}`,
     )
-    await iniciar() // novo processo
+    await iniciar([fila.name]) // novo processo
     await esperarAte(() => vistos.length === 2, { descricao: 'jobs retomados' })
     expect([...vistos].sort()).toEqual(['agendado', 'durante-a-parada'])
     expect(await estadoDoJob(agendado.jobId ?? '')).toBe('completed')
@@ -238,7 +245,7 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
         return Promise.resolve()
       },
     })
-    await iniciar()
+    await iniciar([])
     const ctx = banco.contexto()
     await banco.db.transaction((tx) =>
       drizzleOutbox.publishInTx(
@@ -248,5 +255,44 @@ describe('worker (pg-boss + outbox) com Postgres real', { timeout: 120_000 }, ()
     )
     await esperarAte(() => recebidos.length === 1)
     expect(recebidos).toEqual([5])
+  })
+
+  it('stop respeita o prazo mesmo quando um handler do outbox não retorna', async () => {
+    const Evento = defineEvent<'EventoTravadoDoWorker', { n: number }>('EventoTravadoDoWorker', 1)
+    let iniciado = false
+    let liberar: (() => void) | undefined
+    const espera = new Promise<void>((resolver) => {
+      liberar = resolver
+    })
+    registerEventHandler({
+      name: filaUnica('w-evento-travado'),
+      eventType: 'EventoTravadoDoWorker',
+      handle: async () => {
+        iniciado = true
+        await espera
+      },
+    })
+    await iniciar([])
+    const ctx = banco.contexto()
+    await banco.db.transaction((tx) =>
+      drizzleOutbox.publishInTx(
+        tx,
+        Evento.create(ctx, { aggregateId: 'agg-travado', aggregateRevision: 1, payload: { n: 1 } }),
+      ),
+    )
+    await esperarAte(() => iniciado)
+
+    const inicio = performance.now()
+    await worker?.stop(300)
+    worker = undefined
+    expect(performance.now() - inicio).toBeLessThan(2_000)
+
+    liberar?.()
+    await esperarAte(async () => {
+      const resultado = await banco.db.execute(
+        sql`select estado from public.outbox where tipo = 'EventoTravadoDoWorker' and agregado_id = 'agg-travado'`,
+      )
+      return (resultado.rows[0] as { estado: string } | undefined)?.estado === 'processado'
+    })
   })
 })
