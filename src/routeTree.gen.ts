@@ -9,50 +9,356 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as publicoRouteRouteImport } from './routes/(publico)/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as AppRouteRouteImport } from './routes/app/route'
+import { Route as EquipeRouteRouteImport } from './routes/equipe/route'
+import { Route as publicoIndexRouteImport } from './routes/(publico)/index'
+import { Route as publicoPaginaRouteImport } from './routes/(publico)/$pagina'
+import { Route as DevUiRouteImport } from './routes/[_]dev/ui'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminSecaoRouteImport } from './routes/admin/$secao'
+import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AppSecaoRouteImport } from './routes/app/$secao'
+import { Route as EquipeIndexRouteImport } from './routes/equipe/index'
+import { Route as EquipeSecaoRouteImport } from './routes/equipe/$secao'
+import { Route as publicoBoasVindasIndexRouteImport } from './routes/(publico)/boas-vindas/index'
 
-const IndexRoute = IndexRouteImport.update({
+const publicoRouteRoute = publicoRouteRouteImport.update({
+  id: '/(publico)',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquipeRouteRoute = EquipeRouteRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicoIndexRoute = publicoIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => publicoRouteRoute,
+} as any)
+const publicoPaginaRoute = publicoPaginaRouteImport.update({
+  id: '/$pagina',
+  path: '/$pagina',
+  getParentRoute: () => publicoRouteRoute,
+} as any)
+const DevUiRoute = DevUiRouteImport.update({
+  id: '/_dev/ui',
+  path: '/_dev/ui',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSecaoRoute = AdminSecaoRouteImport.update({
+  id: '/$secao',
+  path: '/$secao',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppSecaoRoute = AppSecaoRouteImport.update({
+  id: '/$secao',
+  path: '/$secao',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const EquipeIndexRoute = EquipeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EquipeRouteRoute,
+} as any)
+const EquipeSecaoRoute = EquipeSecaoRouteImport.update({
+  id: '/$secao',
+  path: '/$secao',
+  getParentRoute: () => EquipeRouteRoute,
+} as any)
+const publicoBoasVindasIndexRoute = publicoBoasVindasIndexRouteImport.update({
+  id: '/boas-vindas/',
+  path: '/boas-vindas/',
+  getParentRoute: () => publicoRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/app': typeof AppRouteRouteWithChildren
+  '/equipe': typeof EquipeRouteRouteWithChildren
+  '/$pagina': typeof publicoPaginaRoute
+  '/_dev/ui': typeof DevUiRoute
+  '/admin/$secao': typeof AdminSecaoRoute
+  '/app/$secao': typeof AppSecaoRoute
+  '/equipe/$secao': typeof EquipeSecaoRoute
+  '/': typeof publicoIndexRoute
+  '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
+  '/equipe/': typeof EquipeIndexRoute
+  '/boas-vindas/': typeof publicoBoasVindasIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/$pagina': typeof publicoPaginaRoute
+  '/_dev/ui': typeof DevUiRoute
+  '/admin/$secao': typeof AdminSecaoRoute
+  '/app/$secao': typeof AppSecaoRoute
+  '/equipe/$secao': typeof EquipeSecaoRoute
+  '/': typeof publicoIndexRoute
+  '/admin': typeof AdminIndexRoute
+  '/app': typeof AppIndexRoute
+  '/equipe': typeof EquipeIndexRoute
+  '/boas-vindas': typeof publicoBoasVindasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/(publico)': typeof publicoRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/app': typeof AppRouteRouteWithChildren
+  '/equipe': typeof EquipeRouteRouteWithChildren
+  '/(publico)/$pagina': typeof publicoPaginaRoute
+  '/_dev/ui': typeof DevUiRoute
+  '/admin/$secao': typeof AdminSecaoRoute
+  '/app/$secao': typeof AppSecaoRoute
+  '/equipe/$secao': typeof EquipeSecaoRoute
+  '/(publico)/': typeof publicoIndexRoute
+  '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
+  '/equipe/': typeof EquipeIndexRoute
+  '/(publico)/boas-vindas/': typeof publicoBoasVindasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/admin'
+    | '/app'
+    | '/equipe'
+    | '/$pagina'
+    | '/_dev/ui'
+    | '/admin/$secao'
+    | '/app/$secao'
+    | '/equipe/$secao'
+    | '/'
+    | '/admin/'
+    | '/app/'
+    | '/equipe/'
+    | '/boas-vindas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/$pagina'
+    | '/_dev/ui'
+    | '/admin/$secao'
+    | '/app/$secao'
+    | '/equipe/$secao'
+    | '/'
+    | '/admin'
+    | '/app'
+    | '/equipe'
+    | '/boas-vindas'
+  id:
+    | '__root__'
+    | '/(publico)'
+    | '/admin'
+    | '/app'
+    | '/equipe'
+    | '/(publico)/$pagina'
+    | '/_dev/ui'
+    | '/admin/$secao'
+    | '/app/$secao'
+    | '/equipe/$secao'
+    | '/(publico)/'
+    | '/admin/'
+    | '/app/'
+    | '/equipe/'
+    | '/(publico)/boas-vindas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  publicoRouteRoute: typeof publicoRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  AppRouteRoute: typeof AppRouteRouteWithChildren
+  EquipeRouteRoute: typeof EquipeRouteRouteWithChildren
+  DevUiRoute: typeof DevUiRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/(publico)': {
+      id: '/(publico)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof publicoRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/equipe': {
+      id: '/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof EquipeRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(publico)/': {
+      id: '/(publico)/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof publicoIndexRouteImport
+      parentRoute: typeof publicoRouteRoute
+    }
+    '/(publico)/$pagina': {
+      id: '/(publico)/$pagina'
+      path: '/$pagina'
+      fullPath: '/$pagina'
+      preLoaderRoute: typeof publicoPaginaRouteImport
+      parentRoute: typeof publicoRouteRoute
+    }
+    '/_dev/ui': {
+      id: '/_dev/ui'
+      path: '/_dev/ui'
+      fullPath: '/_dev/ui'
+      preLoaderRoute: typeof DevUiRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/$secao': {
+      id: '/admin/$secao'
+      path: '/$secao'
+      fullPath: '/admin/$secao'
+      preLoaderRoute: typeof AdminSecaoRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/$secao': {
+      id: '/app/$secao'
+      path: '/$secao'
+      fullPath: '/app/$secao'
+      preLoaderRoute: typeof AppSecaoRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/equipe/': {
+      id: '/equipe/'
+      path: '/'
+      fullPath: '/equipe/'
+      preLoaderRoute: typeof EquipeIndexRouteImport
+      parentRoute: typeof EquipeRouteRoute
+    }
+    '/equipe/$secao': {
+      id: '/equipe/$secao'
+      path: '/$secao'
+      fullPath: '/equipe/$secao'
+      preLoaderRoute: typeof EquipeSecaoRouteImport
+      parentRoute: typeof EquipeRouteRoute
+    }
+    '/(publico)/boas-vindas/': {
+      id: '/(publico)/boas-vindas/'
+      path: '/boas-vindas'
+      fullPath: '/boas-vindas/'
+      preLoaderRoute: typeof publicoBoasVindasIndexRouteImport
+      parentRoute: typeof publicoRouteRoute
     }
   }
 }
 
+interface publicoRouteRouteChildren {
+  publicoPaginaRoute: typeof publicoPaginaRoute
+  publicoIndexRoute: typeof publicoIndexRoute
+  publicoBoasVindasIndexRoute: typeof publicoBoasVindasIndexRoute
+}
+
+const publicoRouteRouteChildren: publicoRouteRouteChildren = {
+  publicoPaginaRoute: publicoPaginaRoute,
+  publicoIndexRoute: publicoIndexRoute,
+  publicoBoasVindasIndexRoute: publicoBoasVindasIndexRoute,
+}
+
+const publicoRouteRouteWithChildren = publicoRouteRoute._addFileChildren(
+  publicoRouteRouteChildren,
+)
+
+interface AdminRouteRouteChildren {
+  AdminSecaoRoute: typeof AdminSecaoRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminSecaoRoute: AdminSecaoRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
+interface AppRouteRouteChildren {
+  AppSecaoRoute: typeof AppSecaoRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppSecaoRoute: AppSecaoRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
+
+interface EquipeRouteRouteChildren {
+  EquipeSecaoRoute: typeof EquipeSecaoRoute
+  EquipeIndexRoute: typeof EquipeIndexRoute
+}
+
+const EquipeRouteRouteChildren: EquipeRouteRouteChildren = {
+  EquipeSecaoRoute: EquipeSecaoRoute,
+  EquipeIndexRoute: EquipeIndexRoute,
+}
+
+const EquipeRouteRouteWithChildren = EquipeRouteRoute._addFileChildren(
+  EquipeRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  publicoRouteRoute: publicoRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
+  AppRouteRoute: AppRouteRouteWithChildren,
+  EquipeRouteRoute: EquipeRouteRouteWithChildren,
+  DevUiRoute: DevUiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = 3100
+// A porta é configurável (E2E_PORT) para duas worktrees rodarem E2E ao mesmo tempo sem colidir.
+const PORT = Number(process.env['E2E_PORT'] ?? 3100)
 
 export default defineConfig({
   testDir: 'tests/e2e',

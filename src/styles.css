@@ -1,16 +1,117 @@
 @import 'tailwindcss';
 
-/* Tokens placeholder; o design system real é definido em T05. */
+/*
+ * Tokens do design system (T05, D0001/D0047). Os valores abaixo são os padrões neutros; a marca real
+ * (T08) sobrescreve as mesmas variáveis em :root por meio de <BrandStyle> (src/ui/brand), então todo
+ * componente usa só estes nomes e nunca uma cor literal.
+ */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
   --color-fundo: #0f0f10;
+  --color-superficie: #1a1a1c;
+  --color-elevada: #252528;
   --color-texto: #f5f5f4;
-  --color-destaque: #d6a84b;
+  --color-suave: #b9b9b4;
+  --color-borda: #3d3d42;
+  --color-borda-forte: #8d8d94;
+  --color-primaria: #d6a84b;
+  --color-sobre-primaria: #14110a;
+  --color-sucesso: #62d690;
+  --color-alerta: #f2b84f;
+  --color-perigo: #ff8f86;
+  --color-info: #86bfff;
+  --color-foco: #9bcbff;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.45), 0 6px 20px rgb(0 0 0 / 0.28);
+  --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.5);
+}
+
+html {
+  color-scheme: dark;
+  background-color: var(--color-fundo);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  min-height: 100dvh;
   background-color: var(--color-fundo);
   color: var(--color-texto);
   font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* PRD §4.1: foco visível em tudo que recebe teclado. */
+:focus-visible {
+  outline: 3px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* Tom semântico usado por Badge, avisos e Toast: o texto usa a cor cheia e o fundo uma mistura leve. */
+[data-tom='sucesso'] {
+  --tom: var(--color-sucesso);
+}
+[data-tom='alerta'] {
+  --tom: var(--color-alerta);
+}
+[data-tom='perigo'] {
+  --tom: var(--color-perigo);
+}
+[data-tom='info'] {
+  --tom: var(--color-info);
+}
+[data-tom='neutro'] {
+  --tom: var(--color-suave);
+}
+
+@keyframes ui-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ui-pulsar {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Folha (ConfirmSheet): <dialog> nativo, painel inferior no celular e centralizado no desktop. */
+dialog.ui-folha {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 32rem;
+  padding: 0;
+  border: 1px solid var(--color-borda);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: var(--color-elevada);
+  color: var(--color-texto);
+  box-shadow: var(--shadow-sheet);
+}
+dialog.ui-folha::backdrop {
+  background: rgb(0 0 0 / 0.65);
+}
+@media (min-width: 640px) {
+  dialog.ui-folha {
+    margin: auto;
+    border-radius: var(--radius-xl);
+  }
 }

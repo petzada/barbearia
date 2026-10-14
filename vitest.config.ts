@@ -13,10 +13,11 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           include: [
-            'tests/unit/**/*.test.ts',
+            // .tsx: testes de componente (T05) pedem `// @vitest-environment jsdom` no próprio arquivo.
+            'tests/unit/**/*.test.{ts,tsx}',
             'tests/security/**/*.test.ts',
             'tests/contract/**/*.test.ts',
-            'src/**/*.test.ts',
+            'src/**/*.test.{ts,tsx}',
           ],
         },
       },
