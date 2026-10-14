@@ -22,7 +22,11 @@ import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppSecaoRouteImport } from './routes/app/$secao'
 import { Route as EquipeIndexRouteImport } from './routes/equipe/index'
 import { Route as EquipeSecaoRouteImport } from './routes/equipe/$secao'
+import { Route as publicoBarbeirosIndexRouteImport } from './routes/(publico)/barbeiros/index'
 import { Route as publicoBoasVindasIndexRouteImport } from './routes/(publico)/boas-vindas/index'
+import { Route as publicoServicosIndexRouteImport } from './routes/(publico)/servicos/index'
+import { Route as AdminServicosIndexRouteImport } from './routes/admin/servicos/index'
+import { Route as AdminEquipeMatrizIndexRouteImport } from './routes/admin/equipe/matriz/index'
 
 const publicoRouteRoute = publicoRouteRouteImport.update({
   id: '/(publico)',
@@ -88,10 +92,30 @@ const EquipeSecaoRoute = EquipeSecaoRouteImport.update({
   path: '/$secao',
   getParentRoute: () => EquipeRouteRoute,
 } as any)
+const publicoBarbeirosIndexRoute = publicoBarbeirosIndexRouteImport.update({
+  id: '/barbeiros/',
+  path: '/barbeiros/',
+  getParentRoute: () => publicoRouteRoute,
+} as any)
 const publicoBoasVindasIndexRoute = publicoBoasVindasIndexRouteImport.update({
   id: '/boas-vindas/',
   path: '/boas-vindas/',
   getParentRoute: () => publicoRouteRoute,
+} as any)
+const publicoServicosIndexRoute = publicoServicosIndexRouteImport.update({
+  id: '/servicos/',
+  path: '/servicos/',
+  getParentRoute: () => publicoRouteRoute,
+} as any)
+const AdminServicosIndexRoute = AdminServicosIndexRouteImport.update({
+  id: '/servicos/',
+  path: '/servicos/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEquipeMatrizIndexRoute = AdminEquipeMatrizIndexRouteImport.update({
+  id: '/equipe/matriz/',
+  path: '/equipe/matriz/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -107,7 +131,11 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/equipe/': typeof EquipeIndexRoute
+  '/barbeiros/': typeof publicoBarbeirosIndexRoute
   '/boas-vindas/': typeof publicoBoasVindasIndexRoute
+  '/servicos/': typeof publicoServicosIndexRoute
+  '/admin/servicos/': typeof AdminServicosIndexRoute
+  '/admin/equipe/matriz/': typeof AdminEquipeMatrizIndexRoute
 }
 export interface FileRoutesByTo {
   '/$pagina': typeof publicoPaginaRoute
@@ -119,7 +147,11 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/equipe': typeof EquipeIndexRoute
+  '/barbeiros': typeof publicoBarbeirosIndexRoute
   '/boas-vindas': typeof publicoBoasVindasIndexRoute
+  '/servicos': typeof publicoServicosIndexRoute
+  '/admin/servicos': typeof AdminServicosIndexRoute
+  '/admin/equipe/matriz': typeof AdminEquipeMatrizIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -136,7 +168,11 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/equipe/': typeof EquipeIndexRoute
+  '/(publico)/barbeiros/': typeof publicoBarbeirosIndexRoute
   '/(publico)/boas-vindas/': typeof publicoBoasVindasIndexRoute
+  '/(publico)/servicos/': typeof publicoServicosIndexRoute
+  '/admin/servicos/': typeof AdminServicosIndexRoute
+  '/admin/equipe/matriz/': typeof AdminEquipeMatrizIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -153,7 +189,11 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/equipe/'
+    | '/barbeiros/'
     | '/boas-vindas/'
+    | '/servicos/'
+    | '/admin/servicos/'
+    | '/admin/equipe/matriz/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/$pagina'
@@ -165,7 +205,11 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/equipe'
+    | '/barbeiros'
     | '/boas-vindas'
+    | '/servicos'
+    | '/admin/servicos'
+    | '/admin/equipe/matriz'
   id:
     | '__root__'
     | '/(publico)'
@@ -181,7 +225,11 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/equipe/'
+    | '/(publico)/barbeiros/'
     | '/(publico)/boas-vindas/'
+    | '/(publico)/servicos/'
+    | '/admin/servicos/'
+    | '/admin/equipe/matriz/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -285,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EquipeSecaoRouteImport
       parentRoute: typeof EquipeRouteRoute
     }
+    '/(publico)/barbeiros/': {
+      id: '/(publico)/barbeiros/'
+      path: '/barbeiros'
+      fullPath: '/barbeiros/'
+      preLoaderRoute: typeof publicoBarbeirosIndexRouteImport
+      parentRoute: typeof publicoRouteRoute
+    }
     '/(publico)/boas-vindas/': {
       id: '/(publico)/boas-vindas/'
       path: '/boas-vindas'
@@ -292,19 +347,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof publicoBoasVindasIndexRouteImport
       parentRoute: typeof publicoRouteRoute
     }
+    '/(publico)/servicos/': {
+      id: '/(publico)/servicos/'
+      path: '/servicos'
+      fullPath: '/servicos/'
+      preLoaderRoute: typeof publicoServicosIndexRouteImport
+      parentRoute: typeof publicoRouteRoute
+    }
+    '/admin/servicos/': {
+      id: '/admin/servicos/'
+      path: '/servicos'
+      fullPath: '/admin/servicos/'
+      preLoaderRoute: typeof AdminServicosIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/equipe/matriz/': {
+      id: '/admin/equipe/matriz/'
+      path: '/equipe/matriz'
+      fullPath: '/admin/equipe/matriz/'
+      preLoaderRoute: typeof AdminEquipeMatrizIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
 interface publicoRouteRouteChildren {
   publicoPaginaRoute: typeof publicoPaginaRoute
   publicoIndexRoute: typeof publicoIndexRoute
+  publicoBarbeirosIndexRoute: typeof publicoBarbeirosIndexRoute
   publicoBoasVindasIndexRoute: typeof publicoBoasVindasIndexRoute
+  publicoServicosIndexRoute: typeof publicoServicosIndexRoute
 }
 
 const publicoRouteRouteChildren: publicoRouteRouteChildren = {
   publicoPaginaRoute: publicoPaginaRoute,
   publicoIndexRoute: publicoIndexRoute,
+  publicoBarbeirosIndexRoute: publicoBarbeirosIndexRoute,
   publicoBoasVindasIndexRoute: publicoBoasVindasIndexRoute,
+  publicoServicosIndexRoute: publicoServicosIndexRoute,
 }
 
 const publicoRouteRouteWithChildren = publicoRouteRoute._addFileChildren(
@@ -314,11 +394,15 @@ const publicoRouteRouteWithChildren = publicoRouteRoute._addFileChildren(
 interface AdminRouteRouteChildren {
   AdminSecaoRoute: typeof AdminSecaoRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminServicosIndexRoute: typeof AdminServicosIndexRoute
+  AdminEquipeMatrizIndexRoute: typeof AdminEquipeMatrizIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminSecaoRoute: AdminSecaoRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminServicosIndexRoute: AdminServicosIndexRoute,
+  AdminEquipeMatrizIndexRoute: AdminEquipeMatrizIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

@@ -14,11 +14,30 @@ export default defineConfig(({ command, mode }) => {
     for (const [chave, valor] of Object.entries(loadEnv(mode, process.cwd(), ''))) {
       process.env[chave] ??= valor
     }
+    if (process.env['E2E_FAKE_SESSION'] === '1') {
+      const testUrl = process.env['DATABASE_URL_TEST']
+      const bancoEsperado = (() => {
+        try {
+          return !!testUrl && new URL(testUrl).pathname.replace(/^\//, '') === 'barbearia_t06_test'
+        } catch {
+          return false
+        }
+      })()
+      if (!bancoEsperado) {
+        throw new Error('E2E_FAKE_SESSION exige DATABASE_URL_TEST apontando para o banco T06.')
+      }
+      process.env['DATABASE_URL'] = testUrl
+    }
   }
 
   return {
     server: { port: 3000 },
     resolve: { tsconfigPaths: true },
+    define: {
+      'import.meta.env.E2E_FAKE_SESSION': JSON.stringify(
+        command === 'serve' && process.env['E2E_FAKE_SESSION'] === '1',
+      ),
+    },
     plugins: [tanstackStart(), react(), tailwindcss()],
   }
 })

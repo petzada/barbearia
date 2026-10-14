@@ -51,11 +51,11 @@ function fonteAtual(): UiSessionSource {
 }
 
 async function carregarSessao(): Promise<UiSessionSnapshot> {
-  // Só em desenvolvimento: sessão de teste por cookie para exercitar abas e guardas antes do T04.
-  // `import.meta.env.MODE` vira a constante "production" no build e o ramo inteiro some do bundle. Não
-  // usar `import.meta.env.DEV`: o Vite o deriva do NODE_ENV do .env.local, que em máquina de dev vale
-  // "development" e deixaria o ramo no build local.
-  if (import.meta.env.MODE === 'development') {
+  // Só em E2E: o flag é exposto como booleano pelo vite.config apenas em `vite dev`.
+  // `import.meta.env.MODE` vira "production" no build e remove este ramo do bundle.
+  const fakeDeE2E = (import.meta.env as ImportMetaEnv & { E2E_FAKE_SESSION?: boolean })
+    .E2E_FAKE_SESSION
+  if (import.meta.env.MODE === 'development' && fakeDeE2E === true) {
     const dev = devSessionFromCookie()
     if (dev) return { status: 'ready', session: dev, failed: false }
   }

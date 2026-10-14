@@ -49,7 +49,18 @@ describe('regras do shell de UI (T05)', () => {
   })
 
   it('a UI não importa servidor, banco nem módulos de negócio', () => {
-    expect(usos(/from '~\/(modules|integrations)\//)).toEqual([])
+    const rotasDeCatalogo = [
+      'src/routes/(publico)/barbeiros/index.tsx',
+      'src/routes/(publico)/servicos/index.tsx',
+      'src/routes/admin/equipe/matriz/index.tsx',
+      'src/routes/admin/servicos/index.tsx',
+    ]
+    expect(usos(/from '~\/(modules|integrations)\//, rotasDeCatalogo)).toEqual([])
+    expect(
+      fontes
+        .filter((f) => rotasDeCatalogo.includes(f.caminho))
+        .some((f) => /from '~\/modules\/catalog\/ui\//.test(f.codigo)),
+    ).toBe(true)
     expect(usos(/from '~\/platform\/(db|audit|idempotency|authz)/)).toEqual([])
     expect(usos(/createServerFn/)).toEqual([])
   })
@@ -63,9 +74,7 @@ describe('regras do shell de UI (T05)', () => {
     expect(quemLe).toEqual(['src/ui/session/ui-session.ts'])
     const sessao = fontes.find((f) => f.caminho === 'src/ui/session/ui-session.ts')!.texto
     const antes = sessao.slice(0, sessao.indexOf('devSessionFromCookie()'))
-    expect(antes.lastIndexOf("if (import.meta.env.MODE === 'development')")).toBeGreaterThan(
-      antes.lastIndexOf('async function carregarSessao'),
-    )
+    expect(antes).toMatch(/if \(import\.meta\.env\.MODE === 'development' && fakeDeE2E === true\)/)
     expect(usos(/dev_sessao|DEV_SESSION_COOKIE/, ['src/ui/session/dev-session.ts'])).toEqual([])
   })
 

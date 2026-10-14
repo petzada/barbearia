@@ -13,6 +13,9 @@ export async function entrarComo(
   papeis: readonly Papel[],
   baseURL: string,
 ) {
+  if (process.env['E2E_FAKE_SESSION'] !== '1') {
+    throw new Error('Sessão falsa de E2E exige E2E_FAKE_SESSION=1.')
+  }
   await context.addCookies([
     { name: 'dev_sessao', value: encodeURIComponent(papeis.join(',')), url: baseURL },
   ])
