@@ -1,0 +1,26 @@
+# Copie para .dev.vars (local). Em produção use `wrangler secret put <NOME>`.
+APP_BASE_URL=http://localhost:3000
+BETTER_AUTH_SECRET=troque-por-um-segredo-com-32-caracteres-ou-mais
+# Telefones (DDI+DDD+número) promovidos a admin+barbeiro no primeiro login.
+ADMIN_PHONE_NUMBERS=5511999999999
+
+# Login secundário com Google (console.cloud.google.com > Credenciais > OAuth)
+# URI de redirecionamento: <APP_BASE_URL>/api/auth/callback/google
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# WhatsMiau (login por código no WhatsApp + lembretes)
+WHATSMIAU_BASE_URL=https://api.whatsmiau.dev
+WHATSMIAU_API_KEY=
+WHATSMIAU_WEBHOOK_SECRET=
+
+# AbacatePay (Pix dinâmico + assinaturas). Chave dev = modo de teste.
+ABACATEPAY_API_KEY=
+ABACATEPAY_WEBHOOK_SECRET=
+
+# Protege /api/cron/lembretes (o Cron Trigger do worker envia esse segredo).
+CRON_SECRET=
+
+# SOMENTE DESENVOLVIMENTO: quando definido e fora de produção, o código de
+# login é escrito no log do servidor e este valor fixo também é aceito.
+AUTH_DEV_OTP=

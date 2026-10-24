@@ -1,0 +1,45 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Worker da Barbearia do Moura (Next.js via OpenNext).
+  // worker.ts envolve o worker gerado pelo OpenNext e adiciona o Cron Trigger.
+  "name": "barbearia-do-moura",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "barbearia-do-moura"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "barbearia-do-moura",
+      // Substitua pelo id gerado em `wrangler d1 create barbearia-do-moura`.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "drizzle/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      // Fotos de perfil dos barbeiros e imagens enviadas pelo admin.
+      "binding": "MEDIA",
+      "bucket_name": "barbearia-do-moura-media"
+    }
+  ],
+  "triggers": {
+    // 08:00 America/Sao_Paulo (UTC-3) — lembretes do dia via WhatsApp.
+    "crons": ["0 11 * * *"]
+  },
+  "vars": {
+    "APP_TIMEZONE": "America/Sao_Paulo"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
