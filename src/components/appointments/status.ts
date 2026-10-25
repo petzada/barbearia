@@ -1,7 +1,9 @@
-import type { EntryPaymentMethod, EntryPaymentStatus, EntryStatus } from "@/server/db/schema";
+import type { EntryStatus } from "@/server/db/schema";
+import { entryPaymentBadge } from "@/lib/payments";
 
 type BadgeVariant = "soft" | "success" | "warning" | "muted" | "destructive";
 
+/** Status do agendamento → rótulo + variante (fonte única de cor de status). */
 export const ENTRY_STATUS_BADGE: Record<EntryStatus, { label: string; variant: BadgeVariant }> = {
   booked: { label: "Confirmado", variant: "soft" },
   completed: { label: "Concluído", variant: "success" },
@@ -9,13 +11,13 @@ export const ENTRY_STATUS_BADGE: Record<EntryStatus, { label: string; variant: B
   cancelled: { label: "Cancelado", variant: "muted" },
 };
 
-export function paymentLabel(
-  method: EntryPaymentMethod | null,
-  status: EntryPaymentStatus | null,
-): { label: string; variant: BadgeVariant } | null {
-  if (status === "paid") return { label: method === "pix" ? "Pago via Pix" : "Pago", variant: "success" };
-  if (method === "subscription") return { label: "Clube", variant: "soft" };
-  if (status === "pending") return { label: "Pix pendente", variant: "warning" };
-  if (method === "local" || status === "unpaid") return { label: "Pagar no local", variant: "muted" };
-  return null;
-}
+/** Cor de marcação (barra/borda) derivada do mesmo mapa. */
+export const STATUS_ACCENT: Record<BadgeVariant, { bar: string; text: string }> = {
+  soft: { bar: "bg-cta", text: "text-cta-ink" },
+  success: { bar: "bg-success", text: "text-success-ink" },
+  warning: { bar: "bg-warning", text: "text-warning-ink" },
+  muted: { bar: "bg-ink-tertiary", text: "text-ink-subtle" },
+  destructive: { bar: "bg-destructive", text: "text-destructive" },
+};
+
+export { entryPaymentBadge as paymentLabel };
