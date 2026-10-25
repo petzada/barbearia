@@ -11,6 +11,8 @@ import { DailyBarChart } from "@/components/charts/daily-bar-chart";
 import { BarberAvatar } from "@/components/booking/barber-avatar";
 import { formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
 import { resolvePeriod } from "@/lib/periods";
+import { countLabel } from "@/lib/utils";
+import { formatMinutesShort } from "@/lib/agenda/availability";
 
 export const metadata: Metadata = { title: "Painel" };
 
@@ -45,7 +47,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
                 <p className="text-[40px] font-extrabold leading-none tracking-tight">{today.occupancyPercent}%</p>
               </div>
               <p className="tabular text-right text-sm text-ink-subtle">
-                {Math.round(today.bookedMinutes / 60)}h de {Math.round(today.availableMinutes / 60)}h
+                {formatMinutesShort(today.bookedMinutes)} de {formatMinutesShort(today.availableMinutes)}
               </p>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-teal-soft" role="meter" aria-valuenow={today.occupancyPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Ocupação de hoje">
@@ -101,7 +103,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
             <StatTile label="Ticket médio" value={formatPriceCents(k.averageTicketCents)} />
             <StatTile label="Atendimentos" value={String(k.completedCount)} hint={`${k.noShowCount} falta${k.noShowCount === 1 ? "" : "s"}`} />
             <StatTile label="Assinantes" value={String(k.activeSubscribers)} hint="ativos" />
-            <StatTile label="Nota média" value={k.averageRating != null ? k.averageRating.toFixed(1).replace(".", ",") : "—"} hint={`${k.ratingsCount} avaliações`} />
+            <StatTile label="Nota média" value={k.averageRating != null ? k.averageRating.toFixed(1).replace(".", ",") : "—"} hint={countLabel(k.ratingsCount, "avaliação", "avaliações")} />
             <StatTile label="Cancelamentos" value={String(k.cancelledCount)} />
           </div>
         </section>
@@ -148,7 +150,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
                   <li key={b.barberId} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
                     <span>
                       <span className="block font-bold">{b.name}</span>
-                      <span className="text-ink-subtle">{b.completed} atendimentos</span>
+                      <span className="text-ink-subtle">{countLabel(b.completed, "atendimento", "atendimentos")}</span>
                     </span>
                     <span className="tabular text-right">
                       <span className="block font-bold">{formatPriceCents(b.revenueCents)}</span>

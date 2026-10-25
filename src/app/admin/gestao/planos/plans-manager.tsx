@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { CYCLE_OPTIONS, type PlanCycle } from "@/lib/plans";
 import { chipClass } from "@/lib/ui/classes";
-import { cn } from "@/lib/utils";
+import { cn, countLabel } from "@/lib/utils";
 
 export type PlanRow = {
   id: string;
@@ -157,7 +157,7 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
       {productChanged && plan.subscribers > 0 && (
         <p className="flex items-start gap-2 rounded-md bg-warning/12 p-3 text-sm font-semibold text-warning">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          Novo preço/ciclo vale só para novas assinaturas. Os {plan.subscribers} assinantes atuais seguem como estão.
+          Novo preço/ciclo vale só para novas assinaturas. Quem já assina ({countLabel(plan.subscribers, "assinante", "assinantes")}) segue como está.
         </p>
       )}
       <div className="flex flex-col gap-2">

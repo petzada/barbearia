@@ -12,7 +12,7 @@ import { BarberAvatar } from "@/components/booking/barber-avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
 import { resolvePeriod } from "@/lib/periods";
-import { cn } from "@/lib/utils";
+import { cn, countLabel } from "@/lib/utils";
 import { PayoutButton } from "./payout-button";
 
 export const metadata: Metadata = { title: "Financeiro" };
@@ -87,7 +87,7 @@ async function Resumo({ db, actor, period }: Ctx) {
   const { kpis: k } = await getDashboard(db, actor, period);
   const result = k.servicesRevenueCents + k.subscriptionRevenueCents - k.commissionsCents;
   const rows = [
-    { label: "Faturamento de serviços", value: k.servicesRevenueCents, hint: `${k.completedCount} atendimentos concluídos` },
+    { label: "Faturamento de serviços", value: k.servicesRevenueCents, hint: countLabel(k.completedCount, "atendimento concluído", "atendimentos concluídos") },
     { label: "Recebido online", value: k.receivedOnlineCents, hint: "Pix e cartão via AbacatePay" },
     { label: "Recebido no balcão", value: k.receivedLocalCents, hint: "Dinheiro, cartão e Pix presencial" },
     { label: "Assinaturas do clube", value: k.subscriptionRevenueCents, hint: "Pagamentos no período" },
@@ -182,7 +182,7 @@ async function Comissoes({ db, actor, period }: Ctx) {
                   <BarberAvatar name={s.name} image={s.image} size="sm" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{s.name}</p>
-                    <p className="text-sm text-ink-subtle">{s.completed} atendimentos</p>
+                    <p className="text-sm text-ink-subtle">{countLabel(s.completed, "atendimento", "atendimentos")}</p>
                   </div>
                 </div>
                 <dl className="grid grid-cols-3 gap-2 text-sm">

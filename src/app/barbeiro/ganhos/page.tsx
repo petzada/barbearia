@@ -10,6 +10,7 @@ import { PeriodFilter } from "@/components/period-filter";
 import { DailyBarChart } from "@/components/charts/daily-bar-chart";
 import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
 import { PERIOD_OPTIONS, resolvePeriod } from "@/lib/periods";
+import { countLabel } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Ganhos" };
 
@@ -113,7 +114,7 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
                       {formatSelectableDay(p.periodFrom)} – {formatSelectableDay(p.periodTo)}
                     </span>
                     <span className="text-ink-subtle">
-                      {PAYOUT_METHOD_LABELS[p.method as PayoutMethod] ?? p.method} · {p.entriesCount} atendimentos
+                      {PAYOUT_METHOD_LABELS[p.method as PayoutMethod] ?? p.method} · {countLabel(p.entriesCount, "atendimento", "atendimentos")}
                     </span>
                   </span>
                   <span className="tabular font-bold text-success">{formatPriceCents(p.amountCents)}</span>

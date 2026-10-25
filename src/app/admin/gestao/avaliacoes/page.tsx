@@ -9,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { dateKeyFromIsoInSP, formatSelectableDay } from "@/lib/agenda/availability";
 import { normalizeBrazilPhone } from "@/lib/phone";
 import { chipClass } from "@/lib/ui/classes";
-import { cn } from "@/lib/utils";
+import { cn, countLabel } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Avaliações" };
 
@@ -61,7 +61,7 @@ export default async function AvaliacoesPage({
               <div className="flex flex-col items-center">
                 <p className="text-[48px] font-extrabold leading-none tracking-tight">{fmt(stats.average ?? 0)}</p>
                 <Stars rating={Math.round(stats.average ?? 0)} />
-                <p className="mt-1 text-xs text-ink-subtle">{stats.total} avaliações</p>
+                <p className="mt-1 text-xs text-ink-subtle">{countLabel(stats.total, "avaliação", "avaliações")}</p>
               </div>
               <ul className="flex flex-1 flex-col gap-1.5" aria-label="Distribuição das notas">
                 {[5, 4, 3, 2, 1].map((n) => (

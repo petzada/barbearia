@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- fotos vêm do R2 (/media). */
 import { Star, Users } from "lucide-react";
 import { getInitials } from "@/lib/profile/display-name";
-import { cn } from "@/lib/utils";
+import { cn, countLabel } from "@/lib/utils";
 import { EmptyState } from "@/components/page-header";
 import type { BookingBarber } from "./types";
 
@@ -55,7 +55,7 @@ export function BarberStep({
                         <>
                           <Star className="size-4 fill-warning text-warning" aria-hidden />
                           {rating}
-                          <span className="sr-only">de 5 ({b.ratingCount} avaliações)</span>
+                          <span className="sr-only">de 5 ({countLabel(b.ratingCount, "avaliação", "avaliações")})</span>
                         </>
                       ) : (
                         "Novo"

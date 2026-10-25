@@ -32,7 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="pt-BR" className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-dvh overflow-x-hidden">
         {children}
-        <Toaster richColors position="top-center" />
+        <Toaster richColors position="top-center" containerAriaLabel="Avisos" />
       </body>
     </html>
   );
