@@ -35,7 +35,17 @@ describe("MonthCalendar", () => {
     fireEvent.click(screen.getByLabelText("Próximo mês"));
     expect(screen.getByText("Janeiro de 2027")).toBeInTheDocument();
     expect(screen.getByLabelText("Próximo mês")).toBeDisabled();
-    expect(screen.getByLabelText("4")).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "Segunda, 4 de janeiro, com horários" })).not.toBeDisabled();
+  });
+
+  it("acessibilidade: grupo de dias com a data completa em cada botão", () => {
+    render(
+      <MonthCalendar range={range} availableKeys={new Set(["2026-12-29"])} selected={null} onSelect={vi.fn()} />,
+    );
+    expect(screen.getByRole("group", { name: "Dias de Dezembro de 2026" })).toBeInTheDocument();
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Terça, 29 de dezembro, com horários" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Quarta, 30 de dezembro, sem horários" })).toBeDisabled();
   });
 
   it("enquanto carrega nenhum dia é tocável", () => {

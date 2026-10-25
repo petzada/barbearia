@@ -32,20 +32,28 @@ export function SettingsLink({
   icon,
   label,
   value,
+  valueTone,
   external = false,
 }: {
   href: string;
   icon: LucideIcon;
   label: string;
-  /** Status curto à direita (ex.: "6 ativos", "● Conectado"). */
+  /** Status curto à direita (ex.: "6 ativos", "Conectado"). */
   value?: ReactNode;
+  /** Cor do status (ex.: "text-success-ink"); mostra também um ponto na mesma cor. */
+  valueTone?: string;
   external?: boolean;
 }) {
   const content = (
     <>
       <RowIcon icon={icon} />
       <span className="flex-1 text-[15px] font-semibold">{label}</span>
-      {value != null && <span className="max-w-[45%] truncate text-sm text-ink-subtle">{value}</span>}
+      {value != null && (
+        <span className={cn("flex max-w-[45%] items-center gap-1.5 truncate text-sm text-ink-subtle", valueTone)}>
+          {valueTone && <span className="size-2 shrink-0 rounded-full bg-current" aria-hidden />}
+          {value}
+        </span>
+      )}
       <ChevronRight className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
     </>
   );

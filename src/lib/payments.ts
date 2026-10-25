@@ -24,6 +24,12 @@ export const LOCAL_PAYMENT_SHORT_LABELS = {
   pix_balcao: "Pix",
 } as const;
 
+/** Canais de recebimento (filtros do financeiro). */
+export const PAYMENT_CHANNEL_LABELS = {
+  online: "Online",
+  balcao: "No balcão",
+} as const;
+
 /** Como o cliente escolheu pagar o agendamento. */
 export const PAY_AT_SHOP_LABEL = "Pagar na barbearia";
 

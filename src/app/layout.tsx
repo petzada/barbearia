@@ -24,6 +24,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Valor literal: o Next grava em <meta name="theme-color">, que não lê variáveis CSS (= --cta).
   themeColor: "#0e7c86",
 };
 

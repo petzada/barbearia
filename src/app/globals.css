@@ -69,6 +69,7 @@
   --color-cta-ink: var(--cta-ink);
   /* Texto/ícones sobre superfícies escuras (cartão de membro, banner). */
   --color-on-dark: var(--on-dark);
+  --color-scrim: var(--scrim);
   --color-cta-on-dark: var(--cta-on-dark);
   --color-surface-dark: var(--surface-dark);
   --color-qr-surface: var(--qr-surface);
@@ -112,6 +113,8 @@
   --warning-ink: #7a4f0e;
   --cta-ink: #0b6c75;
   --on-dark: #ffffff;
+  /* Véu escuro sobre fotos e atrás de folhas/diálogos. */
+  --scrim: #000000;
   --cta-on-dark: #5fc1c9;
   --surface-dark: #111111;
   /* QR Codes precisam de fundo branco em qualquer tema para serem lidos. */

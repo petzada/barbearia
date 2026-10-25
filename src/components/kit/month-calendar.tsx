@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatMonthYear } from "@/lib/agenda/format";
+import { formatDayLong, formatMonthYear } from "@/lib/agenda/format";
 import { todayDateKeySP } from "@/lib/agenda/timezone";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +76,8 @@ export function MonthCalendar({
           <ChevronRight className="size-5" aria-hidden />
         </Button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center" role="grid" aria-label={`Dias de ${label}`}>
+      {/* Grupo de botões (não `grid`): cada dia tem rótulo com a data completa. */}
+      <div className="grid grid-cols-7 gap-1 text-center" role="group" aria-label={`Dias de ${label}`}>
         {WEEKDAYS.map((w, i) => (
           <span key={i} className="py-1 text-xs font-bold text-ink-tertiary" aria-hidden>
             {w}
@@ -101,7 +102,7 @@ export function MonthCalendar({
               data-available={available || undefined}
               disabled={!enabled}
               aria-pressed={isSelected}
-              aria-label={`${day}${enabled ? "" : filtered ? ", sem horários" : ", indisponível"}`}
+              aria-label={`${formatDayLong(key)}${enabled ? (available ? ", com horários" : "") : filtered ? ", sem horários" : ", indisponível"}`}
               onClick={() => onSelect(key)}
               className={cn(
                 "tabular mx-auto flex size-11 items-center justify-center rounded-full text-sm font-bold transition",
