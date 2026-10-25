@@ -41,3 +41,24 @@ export async function upsertService(
   const [row] = await db.insert(services).values(values).returning();
   return row;
 }
+
+/** Ordem em que os serviços aparecem para o cliente (lista completa de ids). */
+export async function reorderServices(db: Db, actor: Actor, orderedIds: string[]): Promise<void> {
+  assertAdmin(actor);
+  const current = await db.select({ id: services.id }).from(services);
+  const known = new Set(current.map((s) => s.id));
+  if (orderedIds.length !== known.size || new Set(orderedIds).size !== orderedIds.length || !orderedIds.every((id) => known.has(id))) {
+    throw new DomainError("invalid", "Lista de serviços desatualizada. Recarregue a página.");
+  }
+  const [first, ...rest] = orderedIds.map((id, index) =>
+    db.update(services).set({ sortOrder: index }).where(eq(services.id, id)),
+  );
+  await db.batch([first, ...rest]);
+}
+
+/** Liga/desliga um serviço direto na lista. */
+export async function setServiceActive(db: Db, actor: Actor, id: string, active: boolean): Promise<void> {
+  assertAdmin(actor);
+  const [row] = await db.update(services).set({ active }).where(eq(services.id, id)).returning({ id: services.id });
+  if (!row) throw new DomainError("not_found", "Serviço não encontrado.");
+}

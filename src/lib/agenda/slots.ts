@@ -63,3 +63,36 @@ export function hoursForDate(
     ? { openTime: row.openTime, closeTime: row.closeTime, isClosed: row.isClosed }
     : null;
 }
+
+export type BarberDayRow = {
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  isOff: boolean;
+};
+
+/**
+ * Expediente efetivo de um barbeiro num dia: interseção do horário da
+ * barbearia com a escala dele, e fechado em feriados/fechamentos especiais.
+ * Sem linha de escala para o dia = segue a barbearia.
+ */
+export function effectiveDayHours(input: {
+  dateKey: string;
+  shopWeek: { weekday: number; openTime: string; closeTime: string; isClosed: boolean }[];
+  barberWeek?: BarberDayRow[];
+  closedDates?: ReadonlySet<string>;
+}): DayHours | null {
+  const shop = hoursForDate(input.dateKey, input.shopWeek);
+  if (!shop) return null;
+  if (input.closedDates?.has(input.dateKey)) return { ...shop, isClosed: true };
+  if (shop.isClosed) return shop;
+  const weekday = weekdayFromDateKeySP(input.dateKey);
+  const own = input.barberWeek?.find((r) => r.weekday === weekday);
+  if (!own) return shop;
+  if (own.isOff) return { ...shop, isClosed: true };
+  const openTime = own.startTime > shop.openTime ? own.startTime : shop.openTime;
+  const closeTime = own.endTime < shop.closeTime ? own.endTime : shop.closeTime;
+  return closeTime > openTime
+    ? { openTime, closeTime, isClosed: false }
+    : { openTime: shop.openTime, closeTime: shop.closeTime, isClosed: true };
+}

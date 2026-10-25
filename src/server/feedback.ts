@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import type { Db } from "./db";
 import { feedbacks, scheduleEntries, services, user } from "./db/schema";
@@ -76,7 +76,7 @@ export async function listPendingFeedback(db: Db, clientId: string, now: Date = 
 export async function listFeedbackHistory(
   db: Db,
   actor: Actor,
-  opts: { barberId?: string; limit?: number } = {},
+  opts: { barberId?: string; limit?: number; lowOnly?: boolean } = {},
 ) {
   if (opts.barberId && opts.barberId === actor.id && actor.isBarber) {
     // barbeiro vê as próprias avaliações
@@ -90,6 +90,7 @@ export async function listFeedbackHistory(
       comment: feedbacks.comment,
       createdAt: feedbacks.createdAt,
       clientName: clientUser.name,
+      clientPhone: clientUser.phoneNumber,
       barberName: barberUser.name,
       serviceName: services.name,
       startsAt: scheduleEntries.startsAt,
@@ -99,7 +100,12 @@ export async function listFeedbackHistory(
     .innerJoin(barberUser, eq(barberUser.id, feedbacks.barberId))
     .innerJoin(clientUser, eq(clientUser.id, feedbacks.clientId))
     .leftJoin(services, eq(services.id, scheduleEntries.serviceId))
-    .where(opts.barberId ? eq(feedbacks.barberId, opts.barberId) : undefined)
+    .where(
+      and(
+        opts.barberId ? eq(feedbacks.barberId, opts.barberId) : undefined,
+        opts.lowOnly ? lte(feedbacks.rating, 3) : undefined,
+      ),
+    )
     .orderBy(desc(feedbacks.createdAt))
     .limit(opts.limit ?? 50);
 }
@@ -115,4 +121,40 @@ export async function getRatingsByBarber(db: Db) {
     .from(feedbacks)
     .innerJoin(barberUser, eq(barberUser.id, feedbacks.barberId))
     .groupBy(feedbacks.barberId, barberUser.name);
+}
+
+export type FeedbackStats = {
+  average: number | null;
+  total: number;
+  /** Quantidade por nota: índice 0 = 1★ … índice 4 = 5★. */
+  distribution: [number, number, number, number, number];
+  byBarber: { barberId: string; name: string; average: number; count: number }[];
+};
+
+/** Resumo da gestão: média, distribuição 5★–1★ e média por barbeiro. */
+export async function getFeedbackStats(db: Db, actor: Actor): Promise<FeedbackStats> {
+  assertAdmin(actor);
+  const [counts, byBarber] = await Promise.all([
+    db
+      .select({ rating: feedbacks.rating, n: sql<number>`count(*)` })
+      .from(feedbacks)
+      .groupBy(feedbacks.rating),
+    getRatingsByBarber(db),
+  ]);
+  const distribution: FeedbackStats["distribution"] = [0, 0, 0, 0, 0];
+  let sum = 0;
+  let total = 0;
+  for (const c of counts) {
+    distribution[c.rating - 1] = c.n;
+    sum += c.rating * c.n;
+    total += c.n;
+  }
+  return {
+    average: total ? Math.round((sum / total) * 10) / 10 : null,
+    total,
+    distribution,
+    byBarber: byBarber
+      .map((b) => ({ ...b, average: Number(b.average) }))
+      .sort((a, b) => b.average - a.average),
+  };
 }

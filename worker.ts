@@ -1,5 +1,6 @@
 // Worker de entrada: reaproveita o handler gerado pelo OpenNext e adiciona
-// o Cron Trigger que dispara os lembretes de WhatsApp pela rota interna.
+// o Cron Trigger (de hora em hora) que chama a rota interna de lembretes;
+// a rota só envia na hora configurada no painel do WhatsApp.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- arquivo pode ou não existir antes do build.
 // @ts-ignore `.open-next/worker.js` é gerado no build (opennextjs-cloudflare build).
 import { default as handler } from "./.open-next/worker.js";

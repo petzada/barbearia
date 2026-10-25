@@ -10,6 +10,7 @@ import type { ServerEnv } from "../env";
 import { DomainError } from "../errors";
 import { sendLoginCode, type WhatsappGateway } from "../whatsapp/service";
 import { isE164BrazilPhone } from "@/lib/phone";
+import { applyTeamInvite } from "../team";
 
 /** E-mail técnico para contas criadas por telefone (o Better Auth exige e-mail). */
 export const phoneTempEmail = (phone: string) =>
@@ -124,6 +125,8 @@ export function createAuth({ db, env, gateway, withNextCookies = true }: AuthDep
               .set({ isAdmin: true, isBarber: true })
               .where(eq(user.id, verified.id));
           }
+          // Convite da equipe feito pelo admin antes da pessoa ter conta.
+          await applyTeamInvite(db, verified.id, phone);
         },
       }),
       ...(withNextCookies ? [nextCookies()] : []),

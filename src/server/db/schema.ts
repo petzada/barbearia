@@ -3,6 +3,7 @@ import {
   check,
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
   uniqueIndex,
@@ -63,6 +64,11 @@ export const user = sqliteTable("user", {
   whatsappReminders: integer("whatsapp_reminders", { mode: "boolean" })
     .notNull()
     .default(true),
+  /**
+   * Cliente de encaixe cadastrado só pelo nome no balcão (sem login, sem
+   * WhatsApp). Mantém o histórico, o financeiro e a comissão consistentes.
+   */
+  isWalkIn: integer("is_walk_in", { mode: "boolean" }).notNull().default(false),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -228,6 +234,8 @@ export const scheduleEntries = sqliteTable(
     /** Snapshot da comissão gravado na conclusão. */
     commissionPercent: integer("commission_percent"),
     commissionCents: integer("commission_cents"),
+    /** Repasse de comissão que já pagou este atendimento (null = a pagar). */
+    payoutId: text("payout_id"),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
     completedById: text("completed_by_id").references(() => user.id, {
       onDelete: "set null",
@@ -434,10 +442,12 @@ export const whatsappConfig = sqliteTable("whatsapp_config", {
     .notNull()
     .default(true),
   reminderTemplate: text("reminder_template"),
+  /** Hora (America/Sao_Paulo) do envio diário dos lembretes. */
+  reminderHour: integer("reminder_hour").notNull().default(8),
   updatedAt: updatedAt(),
 });
 
-export const WHATSAPP_LOG_KINDS = ["otp", "reminder", "test"] as const;
+export const WHATSAPP_LOG_KINDS = ["otp", "reminder", "test", "invite"] as const;
 export const WHATSAPP_LOG_STATUSES = [
   "pending",
   "sent",
@@ -470,6 +480,69 @@ export const whatsappLogs = sqliteTable(
   (t) => [index("whatsapp_logs_created_idx").on(t.createdAt)],
 );
 
+// ---------------------------------------------------------------------------
+// Escala por barbeiro, fechamentos especiais, repasses e convites da equipe
+// ---------------------------------------------------------------------------
+
+/**
+ * Escala semanal do barbeiro. Sem linha para o dia = segue o horário da
+ * barbearia. A disponibilidade usa a interseção barbearia ∩ barbeiro.
+ */
+export const barberHours = sqliteTable(
+  "barber_hours",
+  {
+    barberId: text("barber_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    weekday: integer("weekday").notNull(),
+    startTime: text("start_time").notNull(),
+    endTime: text("end_time").notNull(),
+    isOff: integer("is_off", { mode: "boolean" }).notNull().default(false),
+  },
+  (t) => [
+    primaryKey({ columns: [t.barberId, t.weekday] }),
+    check("barber_hours_weekday_range", sql`${t.weekday} between 0 and 6`),
+    check("barber_hours_end_after_start", sql`${t.isOff} = 1 or ${t.endTime} > ${t.startTime}`),
+  ],
+);
+
+/** Feriados e fechamentos especiais (a barbearia não abre no dia). */
+export const shopClosures = sqliteTable("shop_closures", {
+  dateKey: text("date_key").primaryKey(),
+  reason: text("reason").notNull(),
+  createdAt: createdAt(),
+});
+
+/** Repasse de comissões pago a um barbeiro por um período. */
+export const commissionPayouts = sqliteTable(
+  "commission_payouts",
+  {
+    id: id(),
+    barberId: text("barber_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    periodFrom: text("period_from").notNull(),
+    periodTo: text("period_to").notNull(),
+    amountCents: integer("amount_cents").notNull().default(0),
+    entriesCount: integer("entries_count").notNull().default(0),
+    method: text("method").notNull(),
+    note: text("note"),
+    paidAt: integer("paid_at", { mode: "timestamp_ms" }).notNull(),
+    recordedById: text("recorded_by_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("commission_payouts_barber_idx").on(t.barberId, t.paidAt)],
+);
+
+/** Convite para a equipe: aplicado no primeiro login com este WhatsApp. */
+export const teamInvites = sqliteTable("team_invites", {
+  phoneNumber: text("phone_number").primaryKey(),
+  isBarber: integer("is_barber", { mode: "boolean" }).notNull().default(true),
+  isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
+  invitedById: text("invited_by_id").references(() => user.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+});
+
 export const schema = {
   user,
   session,
@@ -487,4 +560,8 @@ export const schema = {
   webhookEvents,
   whatsappConfig,
   whatsappLogs,
+  barberHours,
+  shopClosures,
+  commissionPayouts,
+  teamInvites,
 };

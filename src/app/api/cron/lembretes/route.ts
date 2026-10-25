@@ -13,6 +13,7 @@ export async function GET(request: Request) {
   if (!env.cronSecret || auth !== `Bearer ${env.cronSecret}`) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const summary = await runDailyReminders(await getDb(), createWhatsappGateway(env));
+  const force = new URL(request.url).searchParams.get("force") === "1";
+  const summary = await runDailyReminders(await getDb(), createWhatsappGateway(env), new Date(), { force });
   return NextResponse.json({ ok: true, ...summary });
 }

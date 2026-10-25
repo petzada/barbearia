@@ -292,14 +292,21 @@ export async function deleteInstance(
 export async function updateReminderSettings(
   db: Db,
   actor: Actor,
-  input: { remindersEnabled: boolean; reminderTemplate: string | null },
+  input: { remindersEnabled: boolean; reminderTemplate: string | null; reminderHour?: number },
 ): Promise<WhatsappConfig> {
   assertAdmin(actor);
   const template = input.reminderTemplate?.trim() || null;
   if (template && template.length > 1000) {
     throw new DomainError("invalid", "A mensagem pode ter no máximo 1000 caracteres.");
   }
-  return updateConfig(db, { remindersEnabled: input.remindersEnabled, reminderTemplate: template });
+  if (input.reminderHour != null && !(Number.isInteger(input.reminderHour) && input.reminderHour >= 6 && input.reminderHour <= 20)) {
+    throw new DomainError("invalid", "Escolha um horário de envio entre 6h e 20h.");
+  }
+  return updateConfig(db, {
+    remindersEnabled: input.remindersEnabled,
+    reminderTemplate: template,
+    ...(input.reminderHour != null ? { reminderHour: input.reminderHour } : {}),
+  });
 }
 
 export async function sendTestMessage(
@@ -317,9 +324,39 @@ export async function sendTestMessage(
   }
 }
 
-export async function listWhatsappLogs(db: Db, actor: Actor, limit = 50) {
+export async function listWhatsappLogs(
+  db: Db,
+  actor: Actor,
+  opts: { kind?: WhatsappLogKind; limit?: number } = {},
+) {
   assertAdmin(actor);
-  return db.select().from(whatsappLogs).orderBy(desc(whatsappLogs.createdAt)).limit(limit);
+  return db
+    .select()
+    .from(whatsappLogs)
+    .where(opts.kind ? eq(whatsappLogs.kind, opts.kind) : undefined)
+    .orderBy(desc(whatsappLogs.createdAt))
+    .limit(opts.limit ?? 50);
+}
+
+/** Convite para a equipe pelo WhatsApp (pessoa ainda sem conta). */
+export async function sendTeamInvite(
+  db: Db,
+  gateway: WhatsappGateway | null,
+  input: { to: string; appBaseUrl: string },
+): Promise<void> {
+  const { shopName } = await getShopSettings(db);
+  const text = `Você foi convidado para a equipe da ${shopName}! Entre em ${input.appBaseUrl}/login com este WhatsApp para acessar sua agenda.`;
+  const result = await sendWithLog(db, gateway, { kind: "invite", to: input.to, text, logText: text });
+  if (!result.sent) {
+    throw new DomainError("provider", `Convite não enviado: ${result.error ?? "erro desconhecido"}`);
+  }
+}
+
+/** Hora atual (0–23) em America/Sao_Paulo. */
+export function currentHourSP(now: Date): number {
+  return Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", hour12: false }).format(now),
+  ) % 24;
 }
 
 /** Webhook `connection.update` da WhatsMiau: atualiza status e QR. */
@@ -351,17 +388,23 @@ export type ReminderSummary = {
   failed: number;
   skipped: number;
   alreadySent: number;
+  /** Fora da hora configurada de envio (cron horário). */
+  notThisHour?: boolean;
 };
 
 export async function runDailyReminders(
   db: Db,
   gateway: WhatsappGateway | null,
   now: Date = new Date(),
+  opts: { force?: boolean } = {},
 ): Promise<ReminderSummary> {
   const dateKey = todayDateKeySP(now);
   const summary: ReminderSummary = { date: dateKey, found: 0, sent: 0, failed: 0, skipped: 0, alreadySent: 0 };
-  const config = gateway ? await syncInstanceStatus(db, gateway).catch(() => getWhatsappConfig(db)) : await getWhatsappConfig(db);
-  if (!config.remindersEnabled) return summary;
+  // O Cron Trigger roda de hora em hora; só envia na hora configurada.
+  const stored = await getWhatsappConfig(db);
+  if (!stored.remindersEnabled) return summary;
+  if (!opts.force && currentHourSP(now) !== stored.reminderHour) return { ...summary, notThisHour: true };
+  const config = gateway ? await syncInstanceStatus(db, gateway).catch(() => stored) : stored;
 
   const settings = await getShopSettings(db);
   const { end } = spDayBounds(dateKey);

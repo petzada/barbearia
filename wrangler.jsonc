@@ -33,8 +33,8 @@
     }
   ],
   "triggers": {
-    // 08:00 America/Sao_Paulo (UTC-3) — lembretes do dia via WhatsApp.
-    "crons": ["0 11 * * *"]
+    // De hora em hora: a rota só envia na hora configurada no painel (padrão 08h SP).
+    "crons": ["0 * * * *"]
   },
   "vars": {
     "APP_TIMEZONE": "America/Sao_Paulo"

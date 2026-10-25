@@ -1,6 +1,6 @@
 import { and, asc, eq, or, sql } from "drizzle-orm";
 import type { Db } from "./db";
-import { feedbacks, user } from "./db/schema";
+import { feedbacks, teamInvites, user } from "./db/schema";
 import { assertAdmin, type Actor } from "./actor";
 import { DomainError } from "./errors";
 import { teamMemberSchema, type TeamMemberInput } from "@/lib/validations/profile";
@@ -112,4 +112,68 @@ export async function updateTeamMember(
   }
   const [row] = await db.update(user).set(values).where(eq(user.id, userId)).returning({ id: user.id });
   if (!row) throw new DomainError("not_found", "Pessoa não encontrada.");
+}
+
+/**
+ * Convida alguém para a equipe pelo WhatsApp. Se a pessoa já tem conta, o
+ * papel é aplicado na hora; senão fica um convite que vale no primeiro login.
+ */
+export async function inviteTeamMember(
+  db: Db,
+  actor: Actor,
+  input: { phone: string; isBarber: boolean; isAdmin: boolean },
+  send: (to: string) => Promise<void>,
+): Promise<{ status: "promoted" | "invited"; name?: string }> {
+  assertAdmin(actor);
+  const phone = normalizeBrazilPhone(input.phone);
+  if (!phone.isValid || !phone.normalized) {
+    throw new DomainError("invalid", phone.reason ?? "Telefone inválido.");
+  }
+  if (!input.isBarber && !input.isAdmin) {
+    throw new DomainError("invalid", "Escolha pelo menos um papel: barbeiro ou gestão.");
+  }
+  const e164 = `+${phone.normalized}`;
+  const existing = await db.query.user.findFirst({ where: eq(user.phoneNumber, e164) });
+  if (existing) {
+    await db
+      .update(user)
+      .set({ isBarber: existing.isBarber || input.isBarber, isAdmin: existing.isAdmin || input.isAdmin })
+      .where(eq(user.id, existing.id));
+    return { status: "promoted", name: existing.name };
+  }
+  await db
+    .insert(teamInvites)
+    .values({ phoneNumber: e164, isBarber: input.isBarber, isAdmin: input.isAdmin, invitedById: actor.id })
+    .onConflictDoUpdate({
+      target: teamInvites.phoneNumber,
+      set: { isBarber: input.isBarber, isAdmin: input.isAdmin, invitedById: actor.id },
+    });
+  await send(phone.normalized);
+  return { status: "invited" };
+}
+
+/** Aplica (e consome) o convite pendente no login com este WhatsApp. */
+export async function applyTeamInvite(db: Db, userId: string, phoneE164: string): Promise<boolean> {
+  const invite = await db.query.teamInvites.findFirst({ where: eq(teamInvites.phoneNumber, phoneE164) });
+  if (!invite) return false;
+  const current = await db.query.user.findFirst({ where: eq(user.id, userId) });
+  if (!current) return false;
+  await db.batch([
+    db
+      .update(user)
+      .set({ isBarber: current.isBarber || invite.isBarber, isAdmin: current.isAdmin || invite.isAdmin })
+      .where(eq(user.id, userId)),
+    db.delete(teamInvites).where(eq(teamInvites.phoneNumber, phoneE164)),
+  ]);
+  return true;
+}
+
+export async function listPendingInvites(db: Db, actor: Actor) {
+  assertAdmin(actor);
+  return db.select().from(teamInvites).orderBy(asc(teamInvites.createdAt));
+}
+
+export async function cancelInvite(db: Db, actor: Actor, phoneE164: string) {
+  assertAdmin(actor);
+  await db.delete(teamInvites).where(eq(teamInvites.phoneNumber, phoneE164));
 }

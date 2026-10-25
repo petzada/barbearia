@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeAvailableSlots, hoursForDate } from "./slots";
+import { computeAvailableSlots, effectiveDayHours, hoursForDate } from "./slots";
 import { formatSlotTime } from "./availability";
 
 const rules = { slotIntervalMinutes: 30, minLeadMinutes: 30 };
@@ -83,5 +83,36 @@ describe("hoursForDate", () => {
     expect(hoursForDate("2026-11-02", week)?.openTime).toBe("10:00");
     expect(hoursForDate("2026-11-01", week)?.isClosed).toBe(true);
     expect(hoursForDate("2026-11-03", week)).toBeNull();
+  });
+});
+
+describe("effectiveDayHours (barbearia ∩ escala ∩ feriados)", () => {
+  const shopWeek = [
+    { weekday: 0, openTime: "09:00", closeTime: "19:00", isClosed: true },
+    { weekday: 1, openTime: "09:00", closeTime: "19:00", isClosed: false },
+    { weekday: 2, openTime: "09:00", closeTime: "19:00", isClosed: false },
+  ];
+  it("sem escala segue a barbearia", () => {
+    expect(effectiveDayHours({ dateKey: "2026-11-02", shopWeek })).toEqual({
+      openTime: "09:00", closeTime: "19:00", isClosed: false,
+    });
+  });
+  it("interseção com a escala do barbeiro", () => {
+    const barberWeek = [{ weekday: 1, startTime: "13:00", endTime: "21:00", isOff: false }];
+    expect(effectiveDayHours({ dateKey: "2026-11-02", shopWeek, barberWeek })).toEqual({
+      openTime: "13:00", closeTime: "19:00", isClosed: false,
+    });
+  });
+  it("folga do barbeiro, dia fechado e feriado fecham o dia", () => {
+    const barberWeek = [{ weekday: 2, startTime: "09:00", endTime: "19:00", isOff: true }];
+    expect(effectiveDayHours({ dateKey: "2026-11-03", shopWeek, barberWeek })?.isClosed).toBe(true);
+    expect(effectiveDayHours({ dateKey: "2026-11-01", shopWeek })?.isClosed).toBe(true);
+    expect(
+      effectiveDayHours({ dateKey: "2026-11-02", shopWeek, closedDates: new Set(["2026-11-02"]) })?.isClosed,
+    ).toBe(true);
+  });
+  it("escala fora do funcionamento fecha o dia", () => {
+    const barberWeek = [{ weekday: 1, startTime: "19:30", endTime: "22:00", isOff: false }];
+    expect(effectiveDayHours({ dateKey: "2026-11-02", shopWeek, barberWeek })?.isClosed).toBe(true);
   });
 });

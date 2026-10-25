@@ -3,7 +3,8 @@ import { drizzle, type DrizzleD1Database } from "drizzle-orm/d1";
 import { cache } from "react";
 import { schema } from "./schema";
 
-export type Db = DrizzleD1Database<typeof schema>;
+/** Drizzle + acesso ao binding D1 nativo (`$client`) para batches em SQL puro. */
+export type Db = DrizzleD1Database<typeof schema> & { $client: D1Database };
 
 export function createDb(d1: D1Database): Db {
   return drizzle(d1, { schema });

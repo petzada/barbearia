@@ -11,9 +11,10 @@ import {
 } from "./db/schema";
 import { assertCanManageBarberAgenda, type Actor } from "./actor";
 import { DomainError } from "./errors";
-import { getBusinessHours, getShopSettings } from "./settings";
+import { getShopSettings } from "./settings";
+import { loadScheduleContext } from "./schedule-config";
 import { getService } from "./catalog";
-import { computeAvailableSlots, hoursForDate } from "@/lib/agenda/slots";
+import { computeAvailableSlots } from "@/lib/agenda/slots";
 import {
   canClientCancel,
   dateKeyFromIsoInSP,
@@ -66,9 +67,9 @@ export async function getAvailableSlots(
   input: { barberId: string; serviceId: string; dateKey: string; now?: Date },
 ): Promise<number[]> {
   const now = input.now ?? new Date();
-  const [settings, week, service, busy] = await Promise.all([
+  const [settings, schedule, service, busy] = await Promise.all([
     getShopSettings(db),
-    getBusinessHours(db),
+    loadScheduleContext(db, input.barberId, input.dateKey, input.dateKey),
     getService(db, input.serviceId),
     busyRangesForDay(db, input.barberId, input.dateKey),
   ]);
@@ -77,7 +78,7 @@ export async function getAvailableSlots(
 
   return computeAvailableSlots({
     dateKey: input.dateKey,
-    hours: hoursForDate(input.dateKey, week),
+    hours: schedule.hoursFor(input.dateKey),
     durationMinutes: service.durationMinutes,
     rules: settings,
     busy,
@@ -97,9 +98,9 @@ export async function getAvailableDays(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.from) || !/^\d{4}-\d{2}-\d{2}$/.test(input.to)) {
     throw new DomainError("invalid", "Período inválido.");
   }
-  const [settings, week, service, busy] = await Promise.all([
+  const [settings, schedule, service, busy] = await Promise.all([
     getShopSettings(db),
-    getBusinessHours(db),
+    loadScheduleContext(db, input.barberId, input.from, input.to),
     getService(db, input.serviceId),
     busyRangesBetween(db, input.barberId, input.from, input.to),
   ]);
@@ -110,7 +111,7 @@ export async function getAvailableDays(
     if (dateKey < input.from || dateKey > input.to) continue;
     const slots = computeAvailableSlots({
       dateKey,
-      hours: hoursForDate(dateKey, week),
+      hours: schedule.hoursFor(dateKey),
       durationMinutes: service.durationMinutes,
       rules: settings,
       busy,
@@ -126,7 +127,7 @@ export async function getAvailableDays(
  * Um único INSERT … SELECT … WHERE NOT EXISTS é atômico no D1 (as escritas
  * são serializadas), substituindo a exclusion constraint do Postgres.
  */
-async function insertWithoutOverlap(
+export async function insertWithoutOverlap(
   db: Db,
   values: {
     barberId: string;
