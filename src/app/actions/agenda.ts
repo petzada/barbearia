@@ -6,12 +6,21 @@ import { toActionResult } from "@/server/errors";
 import {
   cancelAppointment,
   completeAppointment,
-  createBlock,
   markNoShow,
   registerLocalPayment,
   removeBlock,
 } from "@/server/scheduling";
-import type { CreateBlockInput, LocalPaymentMethod } from "@/lib/validations/agendamento";
+import {
+  createBlockRange,
+  createWalkInAppointment,
+  lookupClientByPhone,
+  previewBlockConflicts,
+} from "@/server/staff-agenda";
+import type {
+  BlockRangeInput,
+  LocalPaymentMethod,
+  WalkInInput,
+} from "@/lib/validations/agendamento";
 
 const refreshAgendaViews = () => {
   for (const path of [
@@ -37,13 +46,6 @@ function run<T>(fn: (ctx: Awaited<ReturnType<typeof actionContext>>) => Promise<
   });
 }
 
-export async function createBlockAction(input: CreateBlockInput) {
-  return run(async ({ db, actor }) => {
-    await createBlock(db, actor, input);
-    return null;
-  });
-}
-
 export async function removeBlockAction(entryId: string) {
   return run(({ db, actor }) => removeBlock(db, actor, entryId).then(() => null));
 }
@@ -62,4 +64,35 @@ export async function noShowEntryAction(entryId: string) {
 
 export async function registerLocalPaymentAction(entryId: string, method: LocalPaymentMethod) {
   return run(({ db, actor }) => registerLocalPayment(db, actor, entryId, method).then(() => null));
+}
+
+// Encaixe, férias e prévia de conflitos -----------------------------------------
+
+export async function lookupClientAction(phone: string) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    return lookupClientByPhone(db, actor, phone);
+  });
+}
+
+export async function createWalkInAction(input: WalkInInput) {
+  return run(async ({ db, actor }) => {
+    await createWalkInAppointment(db, actor, input);
+    return null;
+  });
+}
+
+export async function previewBlockRangeAction(input: BlockRangeInput) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    const preview = await previewBlockConflicts(db, actor, input);
+    return {
+      days: preview.days,
+      conflicts: preview.conflicts.map((c) => ({ ...c, startsAt: c.startsAt.getTime() })),
+    };
+  });
+}
+
+export async function createBlockRangeAction(input: BlockRangeInput) {
+  return run(async ({ db, actor }) => createBlockRange(db, actor, input));
 }

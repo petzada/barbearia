@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { Star } from "lucide-react";
+import { Star, Wallet } from "lucide-react";
 import { getDb } from "@/server/db";
 import { requireBarberUser, toActor } from "@/server/auth";
-import { getBarberEarnings } from "@/server/reports";
+import { eachDateKey, getBarberEarnings } from "@/server/reports";
 import { listFeedbackHistory } from "@/server/feedback";
+import { getBarberPayoutStatus, listPayouts, PAYOUT_METHOD_LABELS, type PayoutMethod } from "@/server/payouts";
 import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
-import { PeriodFilter, StatTile } from "@/components/period-filter";
+import { PeriodFilter } from "@/components/period-filter";
+import { DailyBarChart } from "@/components/charts/daily-bar-chart";
 import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
-import { resolvePeriod } from "@/lib/periods";
+import { PERIOD_OPTIONS, resolvePeriod } from "@/lib/periods";
 
 export const metadata: Metadata = { title: "Ganhos" };
 
@@ -16,49 +18,110 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
   const actor = toActor(user);
   const period = resolvePeriod((await searchParams).periodo);
   const db = await getDb();
-  const [earnings, feedback] = await Promise.all([
+  const [earnings, payout, payouts, feedback] = await Promise.all([
     getBarberEarnings(db, actor, user.id, period),
+    getBarberPayoutStatus(db, actor, user.id, period),
+    listPayouts(db, actor, { barberId: user.id, limit: 3 }),
     listFeedbackHistory(db, actor, { barberId: user.id, limit: 5 }),
   ]);
-  const avg = feedback.length ? feedback.reduce((s, f) => s + f.rating, 0) / feedback.length : null;
+
+  const byDay = new Map<string, typeof earnings.items>();
+  for (const item of earnings.items) {
+    const key = dateKeyFromIsoInSP(item.startsAt);
+    byDay.set(key, [...(byDay.get(key) ?? []), item]);
+  }
+  const chart = eachDateKey(period).map((dateKey) => ({
+    dateKey,
+    valueCents: (byDay.get(dateKey) ?? []).reduce((s, i) => s + i.commissionCents, 0),
+  }));
+  const periodLabel = PERIOD_OPTIONS.find((p) => p.key === period.key)?.label.toLowerCase() ?? "";
 
   return (
     <main className="flex flex-1 flex-col">
-      <PageHeader title="Ganhos" description={`Comissão de ${user.commissionPercent}% sobre o preço de tabela.`} />
-      <PageBody className="gap-8">
+      <PageHeader title="Ganhos" />
+      <PageBody className="gap-7">
         <PeriodFilter basePath="/barbeiro/ganhos" current={period.key} />
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-          <StatTile label="Sua comissão" value={formatPriceCents(earnings.totalCommissionCents)} tone="brand" />
-          <StatTile label="Atendimentos" value={String(earnings.completedCount)} hint={`${formatPriceCents(earnings.totalServicesCents)} em serviços`} />
-          {avg != null && <StatTile label="Nota média" value={avg.toFixed(1)} hint={`últimas ${feedback.length} avaliações`} />}
-        </div>
 
-        <section className="flex flex-col gap-3">
-          <SectionTitle>Atendimentos concluídos</SectionTitle>
-          {earnings.items.length === 0 ? (
-            <EmptyState title="Nenhum atendimento concluído no período" />
-          ) : (
-            <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
-              {earnings.items
-                .slice()
-                .reverse()
-                .map((i) => (
-                  <li key={i.id} className="flex items-center gap-3 px-5 py-4 text-sm">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold">{i.serviceName ?? "Serviço"} · {i.clientName ?? "Cliente"}</p>
-                      <p className="text-ink-subtle capitalize">
-                        {formatSelectableDay(dateKeyFromIsoInSP(i.startsAt))} · {formatSlotTime(i.startsAt)}
-                      </p>
-                    </div>
-                    <div className="tabular text-right">
-                      <p className="font-bold text-cta">{formatPriceCents(i.commissionCents)}</p>
-                      <p className="text-xs text-ink-subtle">de {formatPriceCents(i.priceCents)}</p>
-                    </div>
-                  </li>
-                ))}
-            </ul>
+        <section className="flex flex-col gap-1 rounded-lg bg-card p-5 shadow-card">
+          <p className="text-sm font-semibold text-ink-subtle">Sua comissão · {periodLabel}</p>
+          <p className="text-[44px] font-extrabold leading-none tracking-tight">{formatPriceCents(earnings.totalCommissionCents)}</p>
+          <p className="text-sm text-ink-subtle">
+            {earnings.completedCount} atendimento{earnings.completedCount === 1 ? "" : "s"} · {user.commissionPercent}% de{" "}
+            {formatPriceCents(earnings.totalServicesCents)}
+          </p>
+          <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-hairline pt-4 text-sm">
+            <div>
+              <dt className="text-ink-subtle">Recebido</dt>
+              <dd className="tabular font-bold text-success">{formatPriceCents(payout.receivedCents)}</dd>
+            </div>
+            <div>
+              <dt className="text-ink-subtle">A receber</dt>
+              <dd className="tabular font-bold">{formatPriceCents(payout.toReceiveCents)}</dd>
+            </div>
+          </dl>
+          {payout.pendingAllTimeCents > payout.toReceiveCents && (
+            <p className="mt-2 text-xs text-ink-subtle">
+              Total a receber de todos os períodos: {formatPriceCents(payout.pendingAllTimeCents)}
+            </p>
           )}
         </section>
+
+        {chart.length > 1 && (
+          <section className="flex flex-col gap-3">
+            <SectionTitle>Comissão por dia</SectionTitle>
+            <div className="rounded-lg bg-card p-4 shadow-card">
+              <DailyBarChart data={chart} label="Comissão por dia no período" />
+            </div>
+          </section>
+        )}
+
+        <section className="flex flex-col gap-3">
+          <SectionTitle>Extrato</SectionTitle>
+          {earnings.items.length === 0 ? (
+            <EmptyState icon={Wallet} title="Nenhum atendimento concluído no período" />
+          ) : (
+            [...byDay.entries()].reverse().map(([dateKey, items]) => (
+              <div key={dateKey} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-1 text-xs font-bold uppercase tracking-wider text-ink-subtle">
+                  <span>{formatSelectableDay(dateKey)}</span>
+                  <span className="tabular">{formatPriceCents(items.reduce((s, i) => s + i.commissionCents, 0))}</span>
+                </div>
+                <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+                  {items.map((i) => (
+                    <li key={i.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                      <span className="tabular w-12 shrink-0 text-ink-subtle">{formatSlotTime(i.startsAt)}</span>
+                      <span className="min-w-0 flex-1 truncate font-semibold">
+                        {i.serviceName ?? "Serviço"} · {i.clientName ?? "Cliente"}
+                      </span>
+                      <span className="tabular font-bold">{formatPriceCents(i.commissionCents)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          )}
+        </section>
+
+        {payouts.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <SectionTitle>Últimos repasses</SectionTitle>
+            <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+              {payouts.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                  <span>
+                    <span className="block font-semibold">
+                      {formatSelectableDay(p.periodFrom)} – {formatSelectableDay(p.periodTo)}
+                    </span>
+                    <span className="text-ink-subtle">
+                      {PAYOUT_METHOD_LABELS[p.method as PayoutMethod] ?? p.method} · {p.entriesCount} atendimentos
+                    </span>
+                  </span>
+                  <span className="tabular font-bold text-success">{formatPriceCents(p.amountCents)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {feedback.length > 0 && (
           <section className="flex flex-col gap-3">
@@ -68,8 +131,8 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
                 <li key={f.id} className="rounded-lg bg-card p-4 shadow-card">
                   <div className="flex items-center justify-between">
                     <p className="font-bold">{f.clientName}</p>
-                    <span className="flex items-center gap-1 text-sm font-bold text-warning">
-                      <Star className="size-4 fill-warning" aria-hidden />
+                    <span className="flex items-center gap-1 text-sm font-bold text-ink" aria-label={`${f.rating} de 5`}>
+                      <Star className="size-4 fill-warning text-warning" aria-hidden />
                       {f.rating}
                     </span>
                   </div>

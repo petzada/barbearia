@@ -29,3 +29,14 @@ export async function dayBoundsFor(db: Db, dateKey: string, barberId?: string): 
     closedReason: closure?.reason ?? null,
   };
 }
+
+/** Serviços ativos no formato das folhas de encaixe. */
+export async function sheetServices(db: Db) {
+  const { listServices } = await import("./catalog");
+  return (await listServices(db)).map(({ id, name, durationMinutes, priceCents }) => ({
+    id,
+    name,
+    durationMinutes,
+    priceCents,
+  }));
+}

@@ -14,6 +14,7 @@ import {
   timelineRowsHeightPx,
 } from "@/lib/agenda/timeline";
 import { todayDateKeySP } from "@/lib/agenda/timezone";
+import { formatSlotTime } from "@/lib/agenda/availability";
 import { cn } from "@/lib/utils";
 
 export type TimelineEntry = {
@@ -72,7 +73,13 @@ export function AgendaDayTimeline({
   }, [isToday]);
 
   const displayBounds = useMemo(() => {
-    if (dayBounds.isClosed) return dayBounds;
+    if (dayBounds.isClosed) {
+      // Dia de folga/fechado ainda mostra encaixes feitos pela equipe.
+      if (entries.length === 0) return dayBounds;
+      const first = entries.map((e) => e.starts_at).sort()[0];
+      const time = formatSlotTime(first);
+      return { ...dayBounds, isClosed: false, ...expandBoundsForEntries(time, time, entries) };
+    }
     return {
       ...dayBounds,
       ...expandBoundsForEntries(
@@ -132,9 +139,9 @@ export function AgendaDayTimeline({
     el.scrollTo({ top: target, behavior: "smooth" });
   }, [nowTop]);
 
-  if (dayBounds.isClosed) {
+  if (displayBounds.isClosed) {
     return (
-      <p className="text-sm text-ink-subtle">A barbearia não abre neste dia.</p>
+      <p className="p-2 text-sm text-ink-subtle">Sem expediente neste dia.</p>
     );
   }
 
