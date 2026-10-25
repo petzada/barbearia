@@ -56,3 +56,31 @@ Registro das decisões humanas tomadas na unificação de `barbeariadomoura`
 > Histórico: as specs antigas do mourabarber (que descreviam Supabase) ficam no
 > repositório `petzada/mourabarber`. Este repositório usa só Cloudflare (D1, R2,
 > Workers, Cron Triggers).
+
+### Barbeiro
+
+| # | Tela | Decisão |
+|---|---|---|
+| 16 | Hoje | **Lista do dia direto**: números do dia no topo; lista cronológica de todos os horários do expediente (inclusive livres), com ação em cada linha |
+| 17 | Agenda | Linha do tempo do dia (‹ › e calendário, linha do "agora", bloqueios tracejados) + **folha de ações** ao tocar (WhatsApp, Concluir/Faltou, pagamento no balcão, Cancelar). Botão **+** para **encaixe** ou bloqueio |
+| 17b | Encaixe | Barbeiro busca o cliente pelo WhatsApp (vincula se tiver conta) ou informa **só o nome** (atendimento avulso: conta no financeiro e na comissão). Respeita a trava de sobreposição |
+| 18 | Bloqueios | Lista dos **próximos bloqueios** agrupados por data (com remover) + "Novo bloqueio" em folha: atalhos Almoço/Manhã/Tarde/Dia inteiro/**Vários dias (férias)**, datas, horários, motivo; avisa conflitos com agendamentos |
+| 19 | Ganhos | Filtro de período; **comissão total em destaque**; gráfico de barras por dia; extrato agrupado por dia; avaliações recentes |
+
+### Gestão (admin)
+
+| # | Tela | Decisão |
+|---|---|---|
+| 20 | Painel | **Operação de hoje** (ocupação, próximo atendimento por barbeiro, pendências: sem conclusão, Pix pendente) + **KPIs do período** (faturamento, ticket médio, atendimentos, assinantes ativos, faltas, nota média), gráfico de faturamento por dia, ranking de serviços e barbeiros |
+| 21 | Financeiro | Filtro de período + abas **Resumo · Recebimentos · Comissões**; exportar CSV. Resumo: serviços, recebido online, recebido no balcão, assinaturas, (−) comissões, resultado estimado |
+| 21b | Repasse de comissões | Admin **fecha o período por barbeiro e marca como pago** (data e forma); barbeiro vê em Ganhos o recebido e o a receber |
+| 22 | Agenda geral | Mesmo topo da agenda do barbeiro; **uma coluna por barbeiro** lado a lado (rolagem horizontal no celular), chips para filtrar, mesma folha de ações, "+" para encaixe/bloqueio em qualquer barbeiro |
+| 23 | Clube (gestão) | Resumo (ativos, receita recorrente mensal, vencendo em 7 dias), busca por nome/WhatsApp, filtros Ativos/Vencendo/Cancelados, folha com histórico, renovar manual e cancelar; "+ Registrar pagamento no balcão" |
+| 24 | Hub Gestão | Lista agrupada estilo Ajustes: Catálogo (Serviços, Planos), Equipe e agenda (Equipe, Horários e regras), Relacionamento (Avaliações com nota, WhatsApp com status), Conta (Meu perfil) |
+| 25 | Serviços | Lista com duração, preço e chave Ativo na linha; **arrastar para ordenar**; edição em folha (duração em chips 15/30/45/60/90 + personalizado, preço com máscara) |
+| 26 | Equipe | Cards por pessoa (foto, papéis, %, "Recebendo agendamentos"); folha de edição (foto, papéis, comissão 0–100%, agendamentos on/off); "+ Adicionar" busca pelo WhatsApp ou convida pelo WhatsApp |
+| 27 | Horários e regras | Seções: Funcionamento (7 dias com chave e horário, "copiar para dias úteis"), **Feriados e fechamentos especiais**, Regras de agendamento (seletores), Barbearia (nome, WhatsApp, endereço, Instagram) |
+| 27b | Escala | **Escala semanal por barbeiro** (dias/horários próprios dentro do funcionamento), editada na Equipe; a disponibilidade usa a interseção barbearia ∩ barbeiro |
+| 28 | Planos | Prévia do card como o cliente vê (chips Ativo/Recomendado, nº de assinantes); edição em folha (nome, descrição, preço, ciclo, benefícios reordenáveis, recomendado, ativo); aviso de que preço/ciclo novos valem só para novas assinaturas |
+| 29 | Avaliações | Nota média + total, distribuição 5★–1★, chips de média por barbeiro (filtram), filtro "só notas baixas (≤3)", lista com "Responder no WhatsApp" |
+| 30 | WhatsApp | Card de status no topo com a ação do momento (QR que atualiza sozinho, Sincronizar, Desconectar) e aviso de que sem conexão o login por código para; seções Lembretes (liga/desliga, horário do envio, editor com variáveis clicáveis e prévia em balão), Teste, Histórico (filtro OTP/Lembrete/Teste) |
