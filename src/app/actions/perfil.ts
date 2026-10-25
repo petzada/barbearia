@@ -10,19 +10,34 @@ import { profileSchema, type ProfileInput } from "@/lib/validations/profile";
 import { deleteOwnAccount } from "@/server/account";
 import { createPaymentGateway } from "@/server/payments/service";
 
-/** Salva o nome (e conclui o cadastro de quem entrou pelo telefone). */
+async function saveName(input: ProfileInput) {
+  const { db, user: current } = await actionContext({ allowIncompleteProfile: true });
+  const parsed = profileSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new DomainError("invalid", parsed.error.issues[0]?.message ?? "Dados inválidos.");
+  }
+  await db
+    .update(user)
+    .set({ name: parsed.data.fullName, profileCompleted: true })
+    .where(eq(user.id, current.id));
+}
+
+/** Salva o nome no perfil. */
 export async function saveProfileAction(input: ProfileInput) {
   return toActionResult(async () => {
-    const { db, user: current } = await actionContext({ allowIncompleteProfile: true });
-    const parsed = profileSchema.safeParse(input);
-    if (!parsed.success) {
-      throw new DomainError("invalid", parsed.error.issues[0]?.message ?? "Dados inválidos.");
-    }
-    await db
-      .update(user)
-      .set({ name: parsed.data.fullName, profileCompleted: true })
-      .where(eq(user.id, current.id));
+    await saveName(input);
     revalidatePath("/", "layout");
+    return null;
+  });
+}
+
+/**
+ * Conclui o cadastro de quem entrou pelo telefone. Não revalida: o
+ * re-render de /bem-vindo redirecionaria antes da tela "Tudo pronto!".
+ */
+export async function saveOnboardingNameAction(input: ProfileInput) {
+  return toActionResult(async () => {
+    await saveName(input);
     return null;
   });
 }

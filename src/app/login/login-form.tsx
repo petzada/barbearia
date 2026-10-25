@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronLeft, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
@@ -14,7 +13,6 @@ import { GoogleIcon } from "@/components/google-icon";
 import { useResendCountdown } from "@/components/auth/use-resend-countdown";
 
 export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
-  const router = useRouter();
   const [step, setStepState] = useState<"phone" | "code">("phone");
   const [phoneInput, setPhoneInput] = useState("");
   const [phone, setPhone] = useState<string | null>(null);
@@ -63,8 +61,9 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
       setError(authErrorMessage(err));
       return;
     }
-    router.replace("/entrar");
-    router.refresh();
+    // Navegação completa: /entrar decide o destino pela sessão recém-criada
+    // e nada do cache do roteador (anterior ao login) é reaproveitado.
+    window.location.replace("/entrar");
   }
 
   async function google() {

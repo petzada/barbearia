@@ -7,7 +7,7 @@ import { CheckCircle2, ChevronLeft } from "lucide-react";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 import { maskBrazilPhoneInput, toE164BrazilPhone, formatBrazilPhone } from "@/lib/phone";
 import { getFirstName } from "@/lib/profile/display-name";
-import { saveProfileAction } from "@/app/actions/perfil";
+import { saveOnboardingNameAction } from "@/app/actions/perfil";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OtpInput } from "@/components/auth/otp-input";
@@ -48,7 +48,7 @@ export function OnboardingFlow({
   async function submitName() {
     setPending(true);
     setError(null);
-    const result = await saveProfileAction({ fullName: name });
+    const result = await saveOnboardingNameAction({ fullName: name });
     setPending(false);
     if (!result.ok) return setError(result.error);
     go(needsPhone ? "phone" : "done");
@@ -106,9 +106,10 @@ export function OnboardingFlow({
           <Link href="/agendar" className={buttonVariants({ size: "lg", className: "w-full" })} onClick={() => router.refresh()}>
             Agendar meu primeiro horário
           </Link>
-          <Link href="/entrar" className={buttonVariants({ size: "lg", variant: "ghost", className: "w-full" })}>
+          {/* /entrar é um route handler que decide pela sessão: navegação completa. */}
+          <a href="/entrar" className={buttonVariants({ size: "lg", variant: "ghost", className: "w-full" })}>
             Ir para o início
-          </Link>
+          </a>
         </div>
       </main>
     );

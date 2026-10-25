@@ -52,12 +52,12 @@ export default async function LandingPage() {
         />
         <header className="relative z-10 flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] lg:px-10">
           <BrandMark inverted />
-          <Link
+          <a
             href={user ? "/entrar" : "/login"}
             className="rounded-md bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/25"
           >
             {user ? "Abrir app" : "Entrar"}
-          </Link>
+          </a>
         </header>
         <div className="relative z-10 mt-auto flex flex-col items-center gap-3 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-center lg:pb-16">
           <h1 className="text-[40px] font-extrabold leading-[1.05] tracking-tight lg:text-6xl">
