@@ -3,9 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { actionContext } from "./context";
 import { DomainError, toActionResult } from "@/server/errors";
-import { upsertService } from "@/server/catalog";
+import { reorderServices, setServiceActive, upsertService } from "@/server/catalog";
+import { addClosure, removeClosure, saveBarberWeek } from "@/server/schedule-config";
+import { closePayout, type PayoutMethod } from "@/server/payouts";
+import { getSubscriptionDetail } from "@/server/club-admin";
 import { saveBusinessHours, updateShopSettings } from "@/server/settings";
-import { findUserByPhone, updateTeamMember } from "@/server/team";
+import { cancelInvite, findUserByPhone, inviteTeamMember, updateTeamMember } from "@/server/team";
 import { cancelSubscription, createPaymentGateway, grantManualSubscription, upsertPlan } from "@/server/payments/service";
 import {
   createInstance,
@@ -14,6 +17,7 @@ import {
   refreshQrCode,
   sendTestMessage,
   syncInstanceStatus,
+  sendTeamInvite,
   updateReminderSettings,
 } from "@/server/whatsapp/service";
 import { assertAdmin } from "@/server/actor";
@@ -21,6 +25,7 @@ import type { ServiceFormInput } from "@/lib/validations/servico";
 import type { BusinessHoursFormInput, ShopSettingsInput } from "@/lib/validations/settings";
 import type { TeamMemberInput } from "@/lib/validations/profile";
 import type { PlanFormInput } from "@/lib/validations/plano";
+import type { BarberWeekInput, ClosureInput } from "@/lib/validations/escala";
 
 function revalidate(...paths: string[]) {
   for (const p of paths) revalidatePath(p);
@@ -50,13 +55,6 @@ export async function saveShopSettingsAction(input: ShopSettingsInput) {
     await updateShopSettings(db, actor, input);
     revalidate("/admin/gestao/horarios", "/agendar", "/agendamentos", "/");
     return null;
-  });
-}
-
-export async function findUserByPhoneAction(phone: string) {
-  return toActionResult(async () => {
-    const { db, actor } = await actionContext();
-    return findUserByPhone(db, actor, phone);
   });
 }
 
@@ -143,7 +141,11 @@ export async function whatsappDeleteInstanceAction() {
   });
 }
 
-export async function whatsappSaveRemindersAction(input: { remindersEnabled: boolean; reminderTemplate: string | null }) {
+export async function whatsappSaveRemindersAction(input: {
+  remindersEnabled: boolean;
+  reminderTemplate: string | null;
+  reminderHour?: number;
+}) {
   return toActionResult(async () => {
     const { db, actor } = await whatsappContext();
     await updateReminderSettings(db, actor, input);
@@ -157,6 +159,139 @@ export async function whatsappTestAction(phone: string) {
     const { db, actor, gateway } = await whatsappContext();
     await sendTestMessage(db, actor, gateway, phone);
     revalidate("/admin/gestao/whatsapp");
+    return null;
+  });
+}
+
+// Serviços: ordem e ativo -----------------------------------------------------
+
+export async function reorderServicesAction(orderedIds: string[]) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    await reorderServices(db, actor, orderedIds);
+    revalidate("/admin/gestao/servicos", "/agendar", "/");
+    return null;
+  });
+}
+
+export async function setServiceActiveAction(id: string, active: boolean) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    await setServiceActive(db, actor, id, active);
+    revalidate("/admin/gestao/servicos", "/admin/gestao", "/agendar", "/");
+    return null;
+  });
+}
+
+// Escala e feriados ------------------------------------------------------------
+
+export async function saveBarberWeekAction(input: BarberWeekInput) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    await saveBarberWeek(db, actor, input);
+    revalidate("/admin/gestao/equipe", "/agendar", "/admin/agenda", "/barbeiro");
+    return null;
+  });
+}
+
+export async function addClosureAction(input: ClosureInput) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    await addClosure(db, actor, input);
+    revalidate("/admin/gestao/horarios", "/agendar", "/admin/agenda");
+    return null;
+  });
+}
+
+export async function removeClosureAction(dateKey: string) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    await removeClosure(db, actor, dateKey);
+    revalidate("/admin/gestao/horarios", "/agendar", "/admin/agenda");
+    return null;
+  });
+}
+
+// Equipe: convite --------------------------------------------------------------
+
+export async function inviteTeamMemberAction(input: { phone: string; isBarber: boolean; isAdmin: boolean }) {
+  return toActionResult(async () => {
+    const { db, env, actor } = await actionContext();
+    const gateway = createWhatsappGateway(env);
+    const result = await inviteTeamMember(db, actor, input, (to) =>
+      sendTeamInvite(db, gateway, { to, appBaseUrl: env.appBaseUrl }),
+    );
+    revalidate("/admin/gestao/equipe");
+    return result;
+  });
+}
+
+export async function cancelInviteAction(phone: string) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    await cancelInvite(db, actor, phone);
+    revalidate("/admin/gestao/equipe");
+    return null;
+  });
+}
+
+// Repasses ---------------------------------------------------------------------
+
+export async function closePayoutAction(input: {
+  barberId: string;
+  from: string;
+  to: string;
+  method: PayoutMethod;
+  note?: string;
+}) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    const payout = await closePayout(db, actor, {
+      barberId: input.barberId,
+      period: { from: input.from, to: input.to },
+      method: input.method,
+      note: input.note,
+    });
+    revalidate("/admin/financeiro", "/barbeiro/ganhos");
+    return { amountCents: payout.amountCents, entriesCount: payout.entriesCount };
+  });
+}
+
+// Clube ------------------------------------------------------------------------
+
+export async function subscriptionDetailAction(subscriptionId: string) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    const detail = await getSubscriptionDetail(db, actor, subscriptionId);
+    return {
+      planId: detail.plan.id,
+      planName: detail.plan.name,
+      memberName: detail.member.name,
+      memberPhone: detail.member.phoneNumber,
+      status: detail.subscription.status,
+      provider: detail.subscription.provider,
+      method: detail.subscription.method,
+      currentPeriodEnd: detail.subscription.currentPeriodEnd?.getTime() ?? null,
+      history: detail.history.map((p) => ({
+        id: p.id,
+        paidAt: p.paidAt?.getTime() ?? null,
+        amountCents: p.amountCents,
+        method: p.method,
+      })),
+    };
+  });
+}
+
+export async function renewManualSubscriptionAction(input: { subscriptionId: string; method: string }) {
+  return toActionResult(async () => {
+    const { db, actor } = await actionContext();
+    const detail = await getSubscriptionDetail(db, actor, input.subscriptionId);
+    await grantManualSubscription(db, actor, {
+      userId: detail.member.id,
+      planId: detail.plan.id,
+      method: input.method,
+    });
+    revalidate("/admin/clube", "/admin/financeiro", "/admin");
     return null;
   });
 }

@@ -235,12 +235,23 @@ export async function upsertPlan(db: Db, actor: Actor, input: PlanFormInput): Pr
       .set({ ...values, ...(productChanged ? { providerProductId: null } : {}) })
       .where(eq(plans.id, id))
       .returning();
+    await keepSingleHighlight(db, row);
     return row;
   }
   const existingSlug = await db.query.plans.findFirst({ where: eq(plans.slug, values.slug) });
   if (existingSlug) throw new DomainError("conflict", "Já existe um plano com esse identificador.");
   const [row] = await db.insert(plans).values(values).returning();
+  await keepSingleHighlight(db, row);
   return row;
+}
+
+/** Só um plano pode ser o "Recomendado" da vitrine. */
+async function keepSingleHighlight(db: Db, saved: Plan) {
+  if (!saved.highlighted) return;
+  await db
+    .update(plans)
+    .set({ highlighted: false })
+    .where(and(eq(plans.highlighted, true), sql`${plans.id} <> ${saved.id}`));
 }
 
 export async function getActiveSubscription(
@@ -402,41 +413,6 @@ export async function grantManualSubscription(
     recordedById: actor.id,
   });
   return (await db.query.subscriptions.findFirst({ where: eq(subscriptions.id, subscriptionId!) }))!;
-}
-
-export type SubscriberRow = {
-  subscriptionId: string;
-  userId: string;
-  name: string;
-  phoneNumber: string | null;
-  planName: string;
-  priceCents: number;
-  status: Subscription["status"];
-  provider: Subscription["provider"];
-  method: string | null;
-  currentPeriodEnd: Date | null;
-};
-
-export async function listSubscribers(db: Db, actor: Actor): Promise<SubscriberRow[]> {
-  assertAdmin(actor);
-  return db
-    .select({
-      subscriptionId: subscriptions.id,
-      userId: user.id,
-      name: user.name,
-      phoneNumber: user.phoneNumber,
-      planName: plans.name,
-      priceCents: plans.priceCents,
-      status: subscriptions.status,
-      provider: subscriptions.provider,
-      method: subscriptions.method,
-      currentPeriodEnd: subscriptions.currentPeriodEnd,
-    })
-    .from(subscriptions)
-    .innerJoin(user, eq(user.id, subscriptions.userId))
-    .innerJoin(plans, eq(plans.id, subscriptions.planId))
-    .where(inArray(subscriptions.status, ["active", "cancelled"]))
-    .orderBy(desc(subscriptions.updatedAt));
 }
 
 export async function listUserPayments(db: Db, userId: string, limit = 20) {

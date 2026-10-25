@@ -315,3 +315,15 @@ describe("lembretes no horário configurado (30)", () => {
     expect(await t.db.select().from(whatsappLogs)).toHaveLength(1);
   });
 });
+
+describe("planos (28)", () => {
+  it("só um plano fica como recomendado", async () => {
+    const admin = await createAdmin(t.db);
+    const base = { cycle: "MONTHLY" as const, benefits: [], active: true, sortOrder: 0 };
+    const a = await upsertPlan(t.db, admin, { ...base, slug: "plano-a", name: "Plano A", priceCents: 8900, highlighted: true });
+    await upsertPlan(t.db, admin, { ...base, slug: "plano-b", name: "Plano B", priceCents: 12900, highlighted: true });
+    const plans = await listPlansWithSubscribers(t.db, admin);
+    expect(plans.filter((p) => p.highlighted).map((p) => p.name)).toEqual(["Plano B"]);
+    expect(plans.find((p) => p.id === a.id)?.highlighted).toBe(false);
+  });
+});
