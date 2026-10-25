@@ -119,7 +119,7 @@
   --border: #e6e6e6;
   --input: #d4d4d4;
   --ring: var(--cta);
-  --chart-1: #0e7c86;
+  --chart-1: #008c99; /* teal da marca 1 passo mais saturado: passa no piso de croma (dataviz) */
   --chart-2: #5fb3ba;
   --chart-3: #111111;
   --chart-4: #9a9a9a;

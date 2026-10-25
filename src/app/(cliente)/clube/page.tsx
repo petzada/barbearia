@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay } from "@/lib/agenda/availability";
 import { CYCLE_LABELS } from "@/lib/plans";
 import { cn } from "@/lib/utils";
+import { PlanCard } from "@/components/club/plan-card";
 import { ClubActions, SubscriptionReturnToast } from "./club-actions";
 
 export const metadata: Metadata = { title: "Clube" };
@@ -95,50 +96,19 @@ export default async function ClubePage() {
         ) : (
           <section aria-label="Planos" className="flex flex-col gap-4">
             {ordered.map((plan) => (
-              <article
+              <PlanCard
                 key={plan.id}
-                className={cn(
-                  "flex flex-col gap-4 rounded-lg p-6 shadow-card",
-                  plan.highlighted ? "bg-ink text-white ring-2 ring-cta" : "bg-card",
-                )}
-              >
-                {plan.highlighted && (
-                  <Badge className="w-fit bg-cta text-cta-foreground">
-                    <Sparkles aria-hidden />
-                    Recomendado
-                  </Badge>
-                )}
-                <div>
-                  <h2 className="text-xl font-extrabold">{plan.name}</h2>
-                  {plan.description && (
-                    <p className={cn("text-sm", plan.highlighted ? "text-white/70" : "text-ink-subtle")}>{plan.description}</p>
-                  )}
-                </div>
-                <p>
-                  <span className="tabular text-4xl font-extrabold tracking-tight">{formatPriceCents(plan.priceCents)}</span>
-                  <span className={cn("text-sm", plan.highlighted ? "text-white/60" : "text-ink-subtle")}>
-                    {" "}
-                    /{CYCLE_LABELS[plan.cycle]}
-                  </span>
-                </p>
-                {plan.benefits.length > 0 && (
-                  <ul className="flex flex-col gap-2">
-                    {plan.benefits.map((b) => (
-                      <li key={b} className="flex items-start gap-2 text-[15px]">
-                        <Check className="mt-0.5 size-4 shrink-0 text-cta" aria-hidden />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {online ? (
-                  <ClubActions mode="subscribe" planId={plan.id} highlighted={plan.highlighted} />
-                ) : (
-                  <p className={cn("text-sm", plan.highlighted ? "text-white/70" : "text-ink-subtle")}>
-                    Assine direto na barbearia.
-                  </p>
-                )}
-              </article>
+                plan={plan}
+                footer={
+                  online ? (
+                    <ClubActions mode="subscribe" planId={plan.id} highlighted={plan.highlighted} />
+                  ) : (
+                    <p className={cn("text-sm", plan.highlighted ? "text-white/70" : "text-ink-subtle")}>
+                      Assine direto na barbearia.
+                    </p>
+                  )
+                }
+              />
             ))}
             <p className="text-xs text-ink-subtle">
               Cobrança recorrente no cartão ou Pix Automático, processada pelo AbacatePay. Cancele quando quiser.

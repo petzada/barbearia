@@ -2,14 +2,23 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PERIOD_OPTIONS, type PeriodKey } from "@/lib/periods";
 
-export function PeriodFilter({ basePath, current }: { basePath: string; current: PeriodKey }) {
+export function PeriodFilter({
+  basePath,
+  current,
+  query = {},
+}: {
+  basePath: string;
+  current: PeriodKey;
+  /** Outros parâmetros da URL a manter (ex.: aba do Financeiro). */
+  query?: Record<string, string>;
+}) {
   return (
     <nav aria-label="Período" className="scrollbar-none -mx-5 flex gap-1 overflow-x-auto px-5 lg:mx-0 lg:px-0">
       <div className="flex gap-1 rounded-lg bg-muted p-1">
         {PERIOD_OPTIONS.map((p) => (
           <Link
             key={p.key}
-            href={`${basePath}?periodo=${p.key}`}
+            href={`${basePath}?${new URLSearchParams({ ...query, periodo: p.key }).toString()}`}
             aria-current={p.key === current ? "true" : undefined}
             className={cn(
               "flex h-9 shrink-0 items-center rounded-md px-4 text-sm font-bold transition",
