@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Star, Wallet } from "lucide-react";
 import { getDb } from "@/server/db";
 import { requireBarberUser, toActor } from "@/server/auth";
@@ -8,7 +9,9 @@ import { getBarberPayoutStatus, listPayouts, PAYOUT_METHOD_LABELS, type PayoutMe
 import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
 import { PeriodFilter } from "@/components/period-filter";
 import { DailyBarChart } from "@/components/charts/daily-bar-chart";
-import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
+import { dateKeyFromIsoInSP, formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
+import { formatDateRange, formatDayLabel } from "@/lib/agenda/format";
+import { buttonVariants } from "@/components/ui/button";
 import { PERIOD_OPTIONS, resolvePeriod } from "@/lib/periods";
 import { countLabel } from "@/lib/utils";
 
@@ -45,15 +48,15 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
 
         <section className="flex flex-col gap-1 rounded-lg bg-card p-5 shadow-card">
           <p className="text-sm font-semibold text-ink-subtle">Sua comissão · {periodLabel}</p>
-          <p className="text-[44px] font-extrabold leading-none tracking-tight">{formatPriceCents(earnings.totalCommissionCents)}</p>
+          <p className="text-display">{formatPriceCents(earnings.totalCommissionCents)}</p>
           <p className="text-sm text-ink-subtle">
-            {earnings.completedCount} atendimento{earnings.completedCount === 1 ? "" : "s"} · {user.commissionPercent}% de{" "}
+            {countLabel(earnings.completedCount, "atendimento", "atendimentos")} · {user.commissionPercent}% de{" "}
             {formatPriceCents(earnings.totalServicesCents)}
           </p>
           <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-hairline pt-4 text-sm">
             <div>
               <dt className="text-ink-subtle">Recebido</dt>
-              <dd className="tabular font-bold text-success">{formatPriceCents(payout.receivedCents)}</dd>
+              <dd className="tabular font-bold text-success-ink">{formatPriceCents(payout.receivedCents)}</dd>
             </div>
             <div>
               <dt className="text-ink-subtle">A receber</dt>
@@ -79,12 +82,21 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
         <section className="flex flex-col gap-3">
           <SectionTitle>Extrato</SectionTitle>
           {earnings.items.length === 0 ? (
-            <EmptyState icon={Wallet} title="Nenhum atendimento concluído no período" />
+            <EmptyState
+              icon={Wallet}
+              title="Nenhum atendimento concluído no período"
+              description="Os atendimentos concluídos na agenda entram aqui."
+              action={
+                <Link href="/barbeiro/agenda" className={buttonVariants({ size: "lg" })}>
+                  Abrir agenda
+                </Link>
+              }
+            />
           ) : (
             [...byDay.entries()].reverse().map(([dateKey, items]) => (
               <div key={dateKey} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between px-1 text-xs font-bold uppercase tracking-wider text-ink-subtle">
-                  <span>{formatSelectableDay(dateKey)}</span>
+                  <span>{formatDayLabel(dateKey)}</span>
                   <span className="tabular">{formatPriceCents(items.reduce((s, i) => s + i.commissionCents, 0))}</span>
                 </div>
                 <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
@@ -110,14 +122,12 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
               {payouts.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                   <span>
-                    <span className="block font-semibold">
-                      {formatSelectableDay(p.periodFrom)} – {formatSelectableDay(p.periodTo)}
-                    </span>
+                    <span className="tabular block font-semibold">{formatDateRange(p.periodFrom, p.periodTo)}</span>
                     <span className="text-ink-subtle">
                       {PAYOUT_METHOD_LABELS[p.method as PayoutMethod] ?? p.method} · {countLabel(p.entriesCount, "atendimento", "atendimentos")}
                     </span>
                   </span>
-                  <span className="tabular font-bold text-success">{formatPriceCents(p.amountCents)}</span>
+                  <span className="tabular font-bold text-success-ink">{formatPriceCents(p.amountCents)}</span>
                 </li>
               ))}
             </ul>

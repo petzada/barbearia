@@ -8,14 +8,6 @@ import { periodBounds, type Period } from "./reports";
 const clientUser = alias(user, "client_user");
 const barberUser = alias(user, "barber_user");
 
-export const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  PIX: "Pix online",
-  CARD: "Cartão online",
-  dinheiro: "Dinheiro",
-  cartao: "Cartão (balcão)",
-  pix_balcao: "Pix (balcão)",
-};
-
 export type ReceiptRow = {
   id: string;
   paidAt: Date | null;

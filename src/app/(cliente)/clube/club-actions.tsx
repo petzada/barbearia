@@ -5,17 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { cancelMySubscriptionAction, subscribeAction } from "@/app/actions/cliente";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Ban } from "lucide-react";
+import { ConfirmDialog } from "@/components/kit/confirm-dialog";
 
 export function ClubActions(
   props: { mode: "subscribe"; planId: string; highlighted?: boolean } | { mode: "cancel"; subscriptionId: string },
@@ -44,34 +35,26 @@ export function ClubActions(
   }
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="ghost" size="sm" className="text-ink-subtle" />}>
-        Cancelar assinatura
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Cancelar assinatura?</AlertDialogTitle>
-          <AlertDialogDescription>
-            O cancelamento vale na hora e não haverá novas cobranças.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Manter</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() =>
-              startTransition(async () => {
-                const result = await cancelMySubscriptionAction(props.subscriptionId);
-                if (!result.ok) return void toast.error(result.error);
-                toast.success("Assinatura cancelada.");
-                router.refresh();
-              })
-            }
-          >
-            Sim, cancelar
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmDialog
+      trigger={
+        <Button variant="ghost" className="text-destructive">
+          <Ban aria-hidden />
+          Cancelar assinatura
+        </Button>
+      }
+      title="Cancelar sua assinatura?"
+      description="O cancelamento vale na hora e não haverá novas cobranças."
+      confirmLabel="Cancelar assinatura"
+      onConfirm={async () => {
+        const result = await cancelMySubscriptionAction(props.subscriptionId);
+        if (!result.ok) {
+          toast.error(result.error);
+          return false;
+        }
+        toast.success("Assinatura cancelada.");
+        router.refresh();
+      }}
+    />
   );
 }
 

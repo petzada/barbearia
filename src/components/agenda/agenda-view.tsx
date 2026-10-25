@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { chipClass } from "@/lib/ui/classes";
-import { cn } from "@/lib/utils";
+import { cn, countLabel } from "@/lib/utils";
 import { AgendaDayTimeline, type TimelineEntry } from "./agenda-day-timeline";
 import { DayNav } from "./day-nav";
 import { EntrySheet } from "./entry-sheet";
@@ -56,15 +56,19 @@ export function AgendaView({
 
       {showBarberFilter && columns.length > 1 && (
         <div className="scrollbar-none -mx-5 flex gap-2 overflow-x-auto px-5 lg:mx-0 lg:px-0">
-          <Link href={`${basePath}?dia=${dateKey}`} aria-pressed={!selectedBarberId} className={cn("flex h-10 shrink-0 items-center px-4", chipClass)}>
+          <Link
+            href={`${basePath}?dia=${dateKey}`}
+            aria-current={!selectedBarberId ? "true" : undefined}
+            className={cn("shrink-0 px-4", chipClass)}
+          >
             Todos
           </Link>
           {columns.map((c) => (
             <Link
               key={c.barber.id}
               href={hrefFor(dateKey, c.barber.id)}
-              aria-pressed={selectedBarberId === c.barber.id}
-              className={cn("flex h-10 shrink-0 items-center px-4", chipClass)}
+              aria-current={selectedBarberId === c.barber.id ? "true" : undefined}
+              className={cn("shrink-0 px-4", chipClass)}
             >
               {c.barber.name}
             </Link>
@@ -77,7 +81,7 @@ export function AgendaView({
           ? `Fechado: ${closedReason}.`
           : appointments.length === 0
             ? "Nenhum atendimento neste dia."
-            : `${appointments.length} atendimento${appointments.length > 1 ? "s" : ""} · toque para ver ações`}
+            : `${countLabel(appointments.length, "atendimento", "atendimentos")} · toque para ver ações`}
       </p>
 
       {single ? (

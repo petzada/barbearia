@@ -52,7 +52,7 @@ export default async function InicioPage() {
           <section aria-label="Próximo horário" className="flex flex-col gap-3">
             <SectionTitle
               action={
-                <Link href="/agendamentos" className="text-sm font-bold text-cta">
+                <Link href="/agendamentos" className="text-sm font-bold text-cta-ink">
                   Ver todos
                 </Link>
               }
@@ -106,13 +106,13 @@ export default async function InicioPage() {
         )}
 
         {!subscription && plans.length > 0 && (
-          <Link href="/clube" className="flex items-center gap-4 rounded-lg bg-ink p-5 text-white shadow-card">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-white/10 text-cta">
+          <Link href="/clube" className="flex items-center gap-4 rounded-lg bg-surface-dark p-5 text-on-dark shadow-card">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-on-dark/10 text-cta-on-dark">
               <Crown className="size-6" aria-hidden />
             </span>
             <span className="flex-1">
               <span className="block text-lg font-bold">Clube Moura</span>
-              <span className="text-sm text-white/70">Assine e economize em todo corte.</span>
+              <span className="text-sm text-on-dark/70">Assine e economize em todo corte.</span>
             </span>
             <span className={cn(buttonVariants({ size: "sm" }), "shrink-0")}>Conhecer</span>
           </Link>

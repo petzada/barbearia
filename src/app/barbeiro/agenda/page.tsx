@@ -7,7 +7,7 @@ import { PageBody, PageHeader } from "@/components/page-header";
 import { AgendaView } from "@/components/agenda/agenda-view";
 import { toTimelineEntries } from "@/components/agenda/to-timeline";
 
-export const metadata: Metadata = { title: "Minha agenda" };
+export const metadata: Metadata = { title: "Agenda" };
 
 export default async function BarbeiroAgendaPage({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
   const user = await requireBarberUser();

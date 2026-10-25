@@ -6,7 +6,10 @@ import { requireOnboardedUser, toActor } from "@/server/auth";
 import { getEntry } from "@/server/scheduling";
 import { DomainError } from "@/server/errors";
 import { createPaymentGateway, startAppointmentPix } from "@/server/payments/service";
-import { PageBody, PageHeader } from "@/components/page-header";
+import Link from "next/link";
+import { QrCode, RotateCcw } from "lucide-react";
+import { EmptyState, PageBody, PageHeader } from "@/components/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { PixPanel } from "./pix-panel";
 
@@ -47,10 +50,22 @@ export default async function PixPage({ params }: { params: Promise<{ id: string
             devMode={payment.devMode}
           />
         ) : (
-          <div className="flex flex-col gap-3 rounded-lg bg-card p-6 text-center shadow-card">
-            <p className="font-bold">{error}</p>
-            <p className="text-sm text-ink-subtle">Seu horário continua marcado. Você pode pagar na barbearia.</p>
-          </div>
+          <EmptyState
+            icon={QrCode}
+            title={error ?? "Não foi possível gerar o Pix agora."}
+            description="Seu horário continua marcado. Tente de novo ou pague na barbearia."
+            action={
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link href={`/agendamentos/${id}/pix`} className={buttonVariants()}>
+                  <RotateCcw aria-hidden />
+                  Tentar de novo
+                </Link>
+                <Link href="/agendamentos" className={buttonVariants({ variant: "outline" })}>
+                  Pagar na barbearia
+                </Link>
+              </div>
+            }
+          />
         )}
       </PageBody>
     </main>

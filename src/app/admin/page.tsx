@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertCircle, ChevronRight, QrCode } from "lucide-react";
+import { AlertCircle, BarChart3, ChevronRight, QrCode, Users } from "lucide-react";
 import { getDb } from "@/server/db";
 import { requireAdminUser, toActor } from "@/server/auth";
 import { getDashboard } from "@/server/reports";
 import { getTodayOperation } from "@/server/staff-agenda";
-import { PageBody, PageHeader, SectionTitle } from "@/components/page-header";
+import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
 import { PeriodFilter, StatTile } from "@/components/period-filter";
 import { DailyBarChart } from "@/components/charts/daily-bar-chart";
 import { BarberAvatar } from "@/components/booking/barber-avatar";
-import { formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
+import { formatMinutesShort, formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
 import { resolvePeriod } from "@/lib/periods";
 import { countLabel } from "@/lib/utils";
-import { formatMinutesShort } from "@/lib/agenda/availability";
 
 export const metadata: Metadata = { title: "Painel" };
 
@@ -33,7 +32,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
         <section className="flex flex-col gap-3" aria-label="Operação de hoje">
           <SectionTitle
             action={
-              <Link href="/admin/agenda" className="text-sm font-bold text-cta">
+              <Link href="/admin/agenda" className="text-sm font-bold text-cta-ink">
                 Abrir agenda
               </Link>
             }
@@ -44,7 +43,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
             <div className="flex items-end justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-ink-subtle">Ocupação</p>
-                <p className="text-[40px] font-extrabold leading-none tracking-tight">{today.occupancyPercent}%</p>
+                <p className="text-display">{today.occupancyPercent}%</p>
               </div>
               <p className="tabular text-right text-sm text-ink-subtle">
                 {formatMinutesShort(today.bookedMinutes)} de {formatMinutesShort(today.availableMinutes)}
@@ -75,20 +74,18 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
           {(today.pendingCompletion > 0 || today.pendingPix > 0) && (
             <div className="flex flex-col gap-2">
               {today.pendingCompletion > 0 && (
-                <Link href="/admin/agenda" className="flex items-center gap-3 rounded-lg bg-warning/12 p-4 text-sm font-semibold text-warning">
+                <Link href="/admin/agenda" className="flex items-center gap-3 rounded-lg bg-warning/12 p-4 text-sm font-semibold text-warning-ink">
                   <AlertCircle className="size-5 shrink-0" aria-hidden />
                   <span className="flex-1">
-                    {today.pendingCompletion} atendimento{today.pendingCompletion > 1 ? "s" : ""} sem conclusão
+                    {countLabel(today.pendingCompletion, "atendimento", "atendimentos")} sem conclusão
                   </span>
                   <ChevronRight className="size-4" aria-hidden />
                 </Link>
               )}
               {today.pendingPix > 0 && (
                 <Link href="/admin/financeiro?aba=recebimentos" className="flex items-center gap-3 rounded-lg bg-card p-4 text-sm font-semibold shadow-card">
-                  <QrCode className="size-5 shrink-0 text-cta" aria-hidden />
-                  <span className="flex-1">
-                    {today.pendingPix} Pix aguardando pagamento
-                  </span>
+                  <QrCode className="size-5 shrink-0 text-cta-ink" aria-hidden />
+                  <span className="flex-1">{today.pendingPix} Pix aguardando pagamento</span>
                   <ChevronRight className="size-4 text-ink-tertiary" aria-hidden />
                 </Link>
               )}
@@ -101,7 +98,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             <StatTile label="Faturamento" value={formatPriceCents(k.servicesRevenueCents + k.subscriptionRevenueCents)} hint="serviços + clube" tone="brand" />
             <StatTile label="Ticket médio" value={formatPriceCents(k.averageTicketCents)} />
-            <StatTile label="Atendimentos" value={String(k.completedCount)} hint={`${k.noShowCount} falta${k.noShowCount === 1 ? "" : "s"}`} />
+            <StatTile label="Atendimentos" value={String(k.completedCount)} hint={countLabel(k.noShowCount, "falta", "faltas")} />
             <StatTile label="Assinantes" value={String(k.activeSubscribers)} hint="ativos" />
             <StatTile label="Nota média" value={k.averageRating != null ? k.averageRating.toFixed(1).replace(".", ",") : "—"} hint={countLabel(k.ratingsCount, "avaliação", "avaliações")} />
             <StatTile label="Cancelamentos" value={String(k.cancelledCount)} />
@@ -121,7 +118,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
           <section className="flex flex-col gap-3">
             <SectionTitle>Serviços mais vendidos</SectionTitle>
             {dash.topServices.length === 0 ? (
-              <p className="rounded-lg bg-card p-5 text-sm text-ink-subtle shadow-card">Sem atendimentos concluídos no período.</p>
+              <EmptyState compact icon={BarChart3} title="Sem atendimentos concluídos no período" />
             ) : (
               <ul className="flex flex-col gap-3 rounded-lg bg-card p-5 shadow-card">
                 {dash.topServices.map((s) => (
@@ -143,7 +140,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
           <section className="flex flex-col gap-3">
             <SectionTitle>Por barbeiro</SectionTitle>
             {dash.byBarber.length === 0 ? (
-              <p className="rounded-lg bg-card p-5 text-sm text-ink-subtle shadow-card">Sem atendimentos concluídos no período.</p>
+              <EmptyState compact icon={Users} title="Sem atendimentos concluídos no período" />
             ) : (
               <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
                 {dash.byBarber.map((b) => (

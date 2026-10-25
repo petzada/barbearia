@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { Check, Crown, Sparkles } from "lucide-react";
 import { getDb } from "@/server/db";
 import { getServerEnv } from "@/server/env";
@@ -7,7 +8,11 @@ import { requireOnboardedUser } from "@/server/auth";
 import { getActiveSubscription, listPlans, listUserPayments } from "@/server/payments/service";
 import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay } from "@/lib/agenda/availability";
+import { buttonVariants } from "@/components/ui/button";
+import { rowGroupClass } from "@/lib/ui/classes";
+import { formatPriceCents } from "@/lib/agenda/availability";
+import { formatDayMonth } from "@/lib/agenda/format";
+import { paymentMethodLabel } from "@/lib/payments";
 import { CYCLE_LABELS } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { PlanCard } from "@/components/club/plan-card";
@@ -15,15 +20,7 @@ import { ClubActions, SubscriptionReturnToast } from "./club-actions";
 
 export const metadata: Metadata = { title: "Clube" };
 
-const METHOD_LABELS: Record<string, string> = {
-  CARD: "Cartão",
-  PIX: "Pix",
-  dinheiro: "Dinheiro",
-  cartao: "Cartão (balcão)",
-  pix_balcao: "Pix (balcão)",
-};
-
-const formatDay = (date: Date | null) => (date ? formatSelectableDay(dateKeyFromIsoInSP(date)).split(", ")[1] : "—");
+const formatDay = (date: Date | null) => (date ? formatDayMonth(date) : "—");
 
 export default async function ClubePage() {
   const user = await requireOnboardedUser();
@@ -50,23 +47,23 @@ export default async function ClubePage() {
           <>
             <section
               aria-label="Cartão de membro"
-              className="relative flex aspect-[1.6/1] max-w-md flex-col justify-between overflow-hidden rounded-[22px] bg-ink p-6 text-white shadow-card"
+              className="relative flex aspect-[1.6/1] max-w-md flex-col justify-between overflow-hidden rounded-xl bg-surface-dark p-6 text-on-dark shadow-card"
             >
               <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-cta/30 blur-2xl" aria-hidden />
               <div className="relative flex items-start justify-between">
-                <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white/70">
-                  <Crown className="size-5 text-cta" aria-hidden />
+                <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-on-dark/70">
+                  <Crown className="size-5 text-cta-on-dark" aria-hidden />
                   Clube Moura
                 </span>
-                <Badge className="bg-success/25 text-white">Ativa</Badge>
+                <Badge variant="on-dark">Ativa</Badge>
               </div>
               <div className="relative">
                 <p className="text-2xl font-extrabold uppercase tracking-tight">{active.plan.name}</p>
-                <p className="text-sm text-white/70">{user.name}</p>
+                <p className="text-sm text-on-dark/70">{user.name}</p>
               </div>
               <div className="relative flex items-end justify-between text-sm">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-white/50">
+                  <p className="text-xs uppercase tracking-wider text-on-dark/70">
                     {active.provider === "abacatepay" ? "Renova em" : "Válida até"}
                   </p>
                   <p className="tabular font-bold">{formatDay(active.currentPeriodEnd)}</p>
@@ -83,7 +80,7 @@ export default async function ClubePage() {
                 <ul className="flex flex-col gap-2 rounded-lg bg-card p-5 shadow-card">
                   {active.plan.benefits.map((b) => (
                     <li key={b} className="flex items-start gap-2 text-[15px]">
-                      <Check className="mt-0.5 size-4 shrink-0 text-cta" aria-hidden />
+                      <Check className="mt-0.5 size-4 shrink-0 text-cta-ink" aria-hidden />
                       {b}
                     </li>
                   ))}
@@ -92,7 +89,16 @@ export default async function ClubePage() {
             )}
           </>
         ) : ordered.length === 0 ? (
-          <EmptyState icon={Sparkles} title="Planos em breve" description="O Clube Moura está sendo preparado. Fique de olho!" />
+          <EmptyState
+            icon={Sparkles}
+            title="Planos em breve"
+            description="O Clube Moura está sendo preparado. Enquanto isso, agende seu horário."
+            action={
+              <Link href="/agendar" className={buttonVariants()}>
+                Agendar horário
+              </Link>
+            }
+          />
         ) : (
           <section aria-label="Planos" className="flex flex-col gap-4">
             {ordered.map((plan) => (
@@ -103,7 +109,7 @@ export default async function ClubePage() {
                   online ? (
                     <ClubActions mode="subscribe" planId={plan.id} highlighted={plan.highlighted} />
                   ) : (
-                    <p className={cn("text-sm", plan.highlighted ? "text-white/70" : "text-ink-subtle")}>
+                    <p className={cn("text-sm", plan.highlighted ? "text-on-dark/70" : "text-ink-subtle")}>
                       Assine direto na barbearia.
                     </p>
                   )
@@ -119,13 +125,13 @@ export default async function ClubePage() {
         {history.length > 0 && (
           <section className="flex flex-col gap-3">
             <SectionTitle>Pagamentos</SectionTitle>
-            <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+            <ul className={rowGroupClass}>
               {history.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-4 text-sm">
                   <div>
                     <p className="font-bold">{p.kind === "subscription" ? "Clube Moura" : "Agendamento"}</p>
                     <p className="text-ink-subtle">
-                      {formatDay(p.paidAt)} · {METHOD_LABELS[p.method] ?? p.method}
+                      {formatDay(p.paidAt)} · {paymentMethodLabel(p.method)}
                     </p>
                   </div>
                   <span className="tabular font-bold">{formatPriceCents(p.amountCents)}</span>

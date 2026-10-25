@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
-import { authClient, authErrorMessage } from "@/lib/auth-client";
+import { authClient, authErrorMessage, isFieldAuthError } from "@/lib/auth-client";
 import { formatBrazilPhone, maskBrazilPhoneInput, toE164BrazilPhone } from "@/lib/phone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,9 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
     const { error: err } = await authClient.phoneNumber.sendOtp({ phoneNumber: target });
     setPending(false);
     if (err) {
-      setError(authErrorMessage(err));
+      // Campo (número inválido) → inline; serviço (WhatsApp/rede/limite) → toast.
+      if (isFieldAuthError(err)) setError(authErrorMessage(err));
+      else toast.error(authErrorMessage(err));
       return false;
     }
     resend.start();
@@ -58,7 +60,8 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
     if (err) {
       setPending(false);
       setCode("");
-      setError(authErrorMessage(err));
+      if (isFieldAuthError(err)) setError(authErrorMessage(err));
+      else toast.error(authErrorMessage(err));
       return;
     }
     // Navegação completa: /entrar decide o destino pela sessão recém-criada
@@ -85,7 +88,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
         <button
           type="button"
           onClick={() => setStep("phone")}
-          className="-ml-1 inline-flex h-10 w-fit items-center gap-1 text-sm font-semibold text-cta"
+          className="-ml-2 inline-flex h-11 w-fit items-center gap-1 rounded-md pl-1 pr-3 text-sm font-semibold text-cta-ink"
         >
           <ChevronLeft className="size-5" aria-hidden />
           Trocar número
@@ -110,7 +113,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
           ) : (
             <button
               type="button"
-              className="font-bold text-cta"
+              className="inline-flex min-h-11 items-center font-bold text-cta-ink"
               disabled={pending}
               onClick={() => phone && sendCode(phone)}
             >

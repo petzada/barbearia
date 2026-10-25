@@ -77,7 +77,7 @@ test("gestão cria serviço, cliente agenda, barbeiro conclui e o faturamento ap
     await sheet.getByLabel("Preço").click();
     await admin.keyboard.type("5000");
     await expect(sheet.getByLabel("Preço")).toHaveValue(PRICE);
-    await sheet.getByRole("button", { name: "Salvar" }).click();
+    await sheet.getByRole("button", { name: "Criar serviço" }).click();
     await expect(sheet).toBeHidden();
     await expect(admin.getByRole("button", { name: new RegExp(`^${SERVICE} 45 min · R\\$\\s50,00`) })).toBeVisible();
   });

@@ -2,10 +2,10 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { getSelectableDateKeys } from "@/lib/agenda/availability";
 import { bookAppointmentAction, fetchAvailableDaysAction, fetchSlotsAction } from "@/app/actions/cliente";
+import { PageBody, PageHeader } from "@/components/page-header";
 import { BarberAvatar } from "./barber-avatar";
 import { BarberStep } from "./barber-step";
 import { ConfirmSheet, type PaymentChoice } from "./confirm-sheet";
@@ -21,6 +21,7 @@ export function BookingWizard({
   initialBarberId,
   initialServiceId,
   initialSchedule,
+  shopWhatsapp,
 }: {
   services: BookingService[];
   barbers: BookingBarber[];
@@ -29,6 +30,8 @@ export function BookingWizard({
   initialServiceId?: string;
   /** Disponibilidade já calculada no servidor para a pré-seleção ("Agendar de novo"). */
   initialSchedule?: { days: string[]; day: string | null; slots: number[] };
+  /** WhatsApp da barbearia (dígitos) para o "Falar com a barbearia" dos estados vazios. */
+  shopWhatsapp: string | null;
 }) {
   const router = useRouter();
   const singleBarber = barbers.length === 1 ? barbers[0] : null;
@@ -94,8 +97,12 @@ export function BookingWizard({
   function goBack() {
     if (step === "schedule") return setStep("service");
     if (step === "service" && !singleBarber) return setStep("barber");
-    router.push("/inicio");
+    // Primeira etapa: volta de onde veio (ou para o início, se abriu direto).
+    if (window.history.length > 1) router.back();
+    else router.push("/inicio");
   }
+
+  const contactHref = shopWhatsapp ? `https://wa.me/${shopWhatsapp}` : null;
 
   function confirm() {
     if (!barber || !service || slot == null) return;
@@ -126,25 +133,18 @@ export function BookingWizard({
   }
 
   return (
-    <div className="flex flex-col gap-5 pt-[calc(1rem+env(safe-area-inset-top))] lg:pt-8">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={goBack}
-          aria-label="Voltar"
-          className="-ml-2 flex size-11 items-center justify-center rounded-full text-cta transition hover:bg-muted"
-        >
-          <ChevronLeft className="size-6" aria-hidden />
-        </button>
-        <h1 className="flex-1 text-xl font-extrabold tracking-tight">Novo agendamento</h1>
-        {barber && step !== "barber" && <BarberAvatar name={barber.name} image={barber.image} size="sm" />}
-      </div>
-
-      <StepIndicator current={sheetOpen ? "summary" : step} />
-
+    <>
+      <PageHeader
+        title="Novo agendamento"
+        onBack={goBack}
+        description={<StepIndicator current={sheetOpen ? "summary" : step} />}
+        actions={barber && step !== "barber" ? <BarberAvatar name={barber.name} image={barber.image} size="sm" /> : undefined}
+      />
+      <PageBody>
       {step === "barber" && (
         <BarberStep
           barbers={barbers}
+          contactHref={contactHref}
           onSelect={(b) => {
             setBarber(b);
             setStep("service");
@@ -155,6 +155,8 @@ export function BookingWizard({
       {step === "schedule" && (
         <ScheduleStep
           windowKeys={windowKeys}
+          onChangeBarber={singleBarber ? undefined : () => setStep("barber")}
+          contactHref={contactHref}
           availableDays={availableDays}
           day={day}
           slots={slots}
@@ -186,6 +188,7 @@ export function BookingWizard({
           onConfirm={confirm}
         />
       )}
-    </div>
+      </PageBody>
+    </>
   );
 }

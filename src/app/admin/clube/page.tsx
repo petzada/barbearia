@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Crown, Search } from "lucide-react";
+import { Crown, Search, X } from "lucide-react";
 import { getDb } from "@/server/db";
 import { requireAdminUser, toActor } from "@/server/auth";
 import { getClubOverview, type ClubFilter } from "@/server/club-admin";
 import { listPlans } from "@/server/payments/service";
 import { EmptyState, PageBody, PageHeader } from "@/components/page-header";
 import { StatTile } from "@/components/period-filter";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { chipClass } from "@/lib/ui/classes";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { cn } from "@/lib/utils";
 import { ClubMembers, RegisterButton } from "./club-admin-client";
@@ -47,7 +49,23 @@ export default async function AdminClubePage({
         <form className="relative" role="search">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-subtle" aria-hidden />
           <input type="hidden" name="filtro" value={filter} />
-          <Input name="q" defaultValue={params.q ?? ""} placeholder="Buscar nome ou WhatsApp" className="pl-10" aria-label="Buscar assinante" />
+          <Input
+            name="q"
+            type="search"
+            defaultValue={params.q ?? ""}
+            placeholder="Buscar nome ou WhatsApp"
+            className={cn("pl-10", params.q && "pr-12")}
+            aria-label="Buscar assinante"
+          />
+          {params.q && (
+            <Link
+              href={`/admin/clube?filtro=${filter}`}
+              aria-label="Limpar busca"
+              className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "absolute right-0 top-1/2 -translate-y-1/2")}
+            >
+              <X aria-hidden />
+            </Link>
+          )}
         </form>
 
         <nav className="flex gap-2" aria-label="Filtrar assinantes">
@@ -55,11 +73,8 @@ export default async function AdminClubePage({
             <Link
               key={f.key}
               href={`/admin/clube?${new URLSearchParams({ filtro: f.key, ...(params.q ? { q: params.q } : {}) }).toString()}`}
-              aria-pressed={filter === f.key}
-              className={cn(
-                "flex h-10 items-center rounded-md border border-hairline-strong bg-card px-4 text-sm font-semibold",
-                "aria-pressed:border-cta aria-pressed:bg-cta aria-pressed:text-cta-foreground",
-              )}
+              aria-current={filter === f.key ? "true" : undefined}
+              className={cn("px-4", chipClass)}
             >
               {f.label}
             </Link>
@@ -67,11 +82,36 @@ export default async function AdminClubePage({
         </nav>
 
         {overview.list.length === 0 ? (
-          <EmptyState
-            icon={Crown}
-            title={filter === "ativos" ? "Nenhum assinante ainda" : "Nada por aqui"}
-            description={filter === "ativos" ? "Cadastre os planos em Gestão › Planos e divulgue o clube." : undefined}
-          />
+          params.q ? (
+            <EmptyState
+              compact
+              icon={Search}
+              title="Ninguém encontrado"
+              description={`Nenhum assinante com “${params.q}”.`}
+              action={
+                <Link href={`/admin/clube?filtro=${filter}`} className={buttonVariants({ variant: "outline" })}>
+                  Limpar busca
+                </Link>
+              }
+            />
+          ) : filter === "ativos" ? (
+            <EmptyState
+              icon={Crown}
+              title="Nenhum assinante ainda"
+              description="Cadastre os planos e divulgue o clube."
+              action={
+                <Link href="/admin/gestao/planos" className={buttonVariants({ size: "lg" })}>
+                  Abrir planos
+                </Link>
+              }
+            />
+          ) : (
+            <EmptyState
+              compact
+              icon={Crown}
+              title={filter === "vencendo" ? "Nenhuma assinatura vencendo" : "Nenhuma assinatura cancelada"}
+            />
+          )
         ) : (
           <ClubMembers
             rows={overview.list.map((r) => ({

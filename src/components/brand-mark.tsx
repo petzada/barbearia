@@ -8,12 +8,12 @@ export function BrandMark({ className, inverted = false }: { className?: string;
       <span
         className={cn(
           "flex size-9 items-center justify-center rounded-md",
-          inverted ? "bg-white/15 text-white" : "bg-cta text-cta-foreground",
+          inverted ? "bg-on-dark/15 text-on-dark" : "bg-cta text-cta-foreground",
         )}
       >
         <Scissors className="size-[18px]" strokeWidth={2.25} aria-hidden />
       </span>
-      <span className={cn("text-[15px] font-extrabold leading-tight tracking-tight", inverted ? "text-white" : "text-ink")}>
+      <span className={cn("text-[15px] font-extrabold leading-tight tracking-tight", inverted ? "text-on-dark" : "text-ink")}>
         Barbearia
         <br />
         do Moura

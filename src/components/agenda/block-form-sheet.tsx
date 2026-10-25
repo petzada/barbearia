@@ -9,9 +9,10 @@ import { BottomSheet } from "@/components/kit/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { dateKeyFromIsoInSP, formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
+import { formatSlotTime } from "@/lib/agenda/availability";
+import { formatDayLabel } from "@/lib/agenda/format";
 import { chipClass } from "@/lib/ui/classes";
-import { cn } from "@/lib/utils";
+import { cn, countLabel } from "@/lib/utils";
 
 type Preset = "almoco" | "manha" | "tarde" | "dia" | "varios";
 
@@ -100,17 +101,27 @@ export function BlockFormSheet({
       }
       const result = await createBlockRangeAction(input);
       if (!result.ok) return void toast.error(result.error);
-      toast.success(result.data > 1 ? `${result.data} dias bloqueados.` : "Horário bloqueado.");
+      toast.success(result.data > 1 ? `${countLabel(result.data, "dia bloqueado", "dias bloqueados")}.` : "Horário bloqueado.");
       onOpenChange(false);
       router.refresh();
     });
   }
 
   return (
-    <BottomSheet open={open} onOpenChange={onOpenChange} title="Novo bloqueio" description="Horários bloqueados não aparecem para os clientes.">
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Novo bloqueio"
+      description="Horários bloqueados não aparecem para os clientes."
+      footer={
+        <Button size="lg" className="w-full" disabled={pending} onClick={submit}>
+          {pending ? "Verificando…" : "Bloquear horário"}
+        </Button>
+      }
+    >
       <div className="flex flex-wrap gap-2" role="group" aria-label="Atalhos">
         {PRESETS.map((p) => (
-          <button key={p.key} type="button" aria-pressed={preset === p.key} onClick={() => choose(p.key)} className={cn("h-10 px-4", chipClass)}>
+          <button key={p.key} type="button" aria-pressed={preset === p.key} onClick={() => choose(p.key)} className={cn("px-4", chipClass)}>
             {p.label}
           </button>
         ))}
@@ -160,15 +171,15 @@ export function BlockFormSheet({
       </div>
 
       {conflicts && conflicts.length > 0 && (
-        <div role="alert" className="flex flex-col gap-2 rounded-md bg-warning/12 p-4 text-sm text-warning">
+        <div role="alert" className="flex flex-col gap-2 rounded-md bg-warning/12 p-4 text-sm text-warning-ink">
           <p className="flex items-center gap-2 font-bold">
             <AlertTriangle className="size-4" aria-hidden />
-            Já há {conflicts.length} horário{conflicts.length > 1 ? "s" : ""} no período
+            Já há {countLabel(conflicts.length, "horário", "horários")} no período
           </p>
           <ul className="flex flex-col gap-1 text-ink-muted">
             {conflicts.slice(0, 6).map((c) => (
-              <li key={c.id} className="capitalize">
-                {formatSelectableDay(dateKeyFromIsoInSP(c.startsAt))} · {formatSlotTime(c.startsAt)} ·{" "}
+              <li key={c.id}>
+                {formatDayLabel(c.startsAt)} · {formatSlotTime(c.startsAt)} ·{" "}
                 {c.type === "block" ? "bloqueio" : `${c.clientName ?? "Cliente"} (${c.serviceName ?? "serviço"})`}
               </li>
             ))}
@@ -177,9 +188,6 @@ export function BlockFormSheet({
         </div>
       )}
 
-      <Button size="lg" disabled={pending} onClick={submit}>
-        {pending ? "Verificando…" : "Bloquear"}
-      </Button>
     </BottomSheet>
   );
 }

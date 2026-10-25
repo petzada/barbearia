@@ -46,9 +46,9 @@ export function DailyBarChart({ data, label }: { data: DailyPoint[]; label: stri
                 if (!active || !payload?.[0]) return null;
                 const p = payload[0].payload as DailyPoint;
                 return (
-                  <div className="rounded-md bg-ink px-3 py-2 text-white shadow-card">
+                  <div className="rounded-md bg-ink px-3 py-2 text-on-dark shadow-card">
                     <p className="tabular text-sm font-extrabold">{formatPriceCents(p.valueCents)}</p>
-                    <p className="text-xs text-white/70">{dayLabel(p.dateKey)}</p>
+                    <p className="text-xs text-on-dark/70">{dayLabel(p.dateKey)}</p>
                   </div>
                 );
               }}

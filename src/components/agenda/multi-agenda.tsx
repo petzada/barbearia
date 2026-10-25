@@ -14,6 +14,9 @@ import {
 } from "@/lib/agenda/timeline";
 import { todayDateKeySP } from "@/lib/agenda/timezone";
 import { formatSlotTime } from "@/lib/agenda/availability";
+import { formatHoursRange } from "@/lib/agenda/format";
+import { ENTRY_STATUS_BADGE, STATUS_ACCENT } from "@/components/appointments/status";
+import type { EntryStatus } from "@/server/db/schema";
 import { cn } from "@/lib/utils";
 import type { TimelineEntry } from "./agenda-day-timeline";
 
@@ -69,7 +72,7 @@ export function MultiAgenda({
             <div key={c.barber.id} className="w-40 shrink-0 px-2 py-3 text-center text-sm font-bold sm:w-48">
               <span className="block truncate">{c.barber.name}</span>
               <span className="block text-[11px] font-semibold text-ink-subtle">
-                {c.dayBounds.isClosed ? "Folga / fechado" : `${c.dayBounds.openTime}–${c.dayBounds.closeTime}`}
+                {c.dayBounds.isClosed ? "Folga ou fechado" : formatHoursRange(c.dayBounds.openTime, c.dayBounds.closeTime)}
               </span>
             </div>
           ))}
@@ -135,6 +138,11 @@ export function MultiAgenda({
                       <span className="tabular truncate text-[11px] text-ink-subtle">
                         {formatSlotTime(e.starts_at)} · {e.type === "block" ? e.note ?? "" : e.serviceName}
                       </span>
+                      {done && e.type === "appointment" && (
+                        <span className={cn("text-[11px] font-bold", STATUS_ACCENT[ENTRY_STATUS_BADGE[e.status as EntryStatus].variant].text)}>
+                          {ENTRY_STATUS_BADGE[e.status as EntryStatus].label}
+                        </span>
+                      )}
                     </button>
                   );
                 })}

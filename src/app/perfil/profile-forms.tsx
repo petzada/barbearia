@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Camera, Check, ChevronRight, LogOut, User } from "lucide-react";
+import { Bell, Camera, Check, ChevronRight, LogOut, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 import {
@@ -14,20 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { BottomSheet } from "@/components/kit/bottom-sheet";
+import { ConfirmDialog } from "@/components/kit/confirm-dialog";
 import { GoogleIcon } from "@/components/google-icon";
-import { RowIcon, rowClass } from "./settings-list";
+import { RowIcon, rowClass } from "@/components/kit/settings-list";
 
 
 export function NameRow({ initialName }: { initialName: string }) {
@@ -49,24 +39,34 @@ export function NameRow({ initialName }: { initialName: string }) {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={`${rowClass} active:bg-muted`}>
+      <button type="button" onClick={() => setOpen(true)} className={rowClass}>
         <RowIcon icon={User} />
-        <span className="flex-1 font-semibold">Nome</span>
+        <span className="flex-1 text-[15px] font-semibold">Nome</span>
         <span className="max-w-[45%] truncate text-ink-subtle">{initialName}</span>
         <ChevronRight className="size-4 text-ink-tertiary" aria-hidden />
       </button>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="rounded-t-[28px] border-0 bg-background p-0 sm:mx-auto sm:max-w-lg">
-          <form onSubmit={save} className="flex flex-col gap-4 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-6">
-            <SheetTitle className="text-xl font-extrabold">Seu nome</SheetTitle>
-            <SheetDescription className="text-sm text-ink-subtle">É assim que o barbeiro vê você na agenda.</SheetDescription>
-            <Input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" autoFocus className="h-14 text-lg" />
-            <Button type="submit" size="lg" disabled={pending || name.trim().length < 2}>
-              {pending ? "Salvando…" : "Salvar"}
-            </Button>
-          </form>
-        </SheetContent>
-      </Sheet>
+      <BottomSheet
+        open={open}
+        onOpenChange={setOpen}
+        title="Seu nome"
+        description="É assim que o barbeiro vê você na agenda."
+        footer={
+          <Button type="submit" form="name-form" size="lg" className="w-full" disabled={pending || name.trim().length < 2}>
+            {pending ? "Salvando…" : "Salvar"}
+          </Button>
+        }
+      >
+        <form id="name-form" onSubmit={save}>
+          <Input
+            aria-label="Nome"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="name"
+            autoFocus
+            className="h-14 text-lg"
+          />
+        </form>
+      </BottomSheet>
     </>
   );
 }
@@ -77,13 +77,13 @@ export function AvatarRow({ userId }: { userId?: string }) {
   const [pending, startTransition] = useTransition();
   return (
     <>
-      <button type="button" disabled={pending} onClick={() => input.current?.click()} className={`${rowClass} active:bg-muted`}>
+      <button type="button" disabled={pending} onClick={() => input.current?.click()} className={rowClass}>
         <RowIcon icon={Camera} />
         <span className="flex flex-1 flex-col">
-          <span className="font-semibold">Foto</span>
+          <span className="text-[15px] font-semibold">Foto</span>
           <span className="text-xs text-ink-subtle">Aparece para os clientes no agendamento.</span>
         </span>
-        <span className="text-sm font-semibold text-cta">{pending ? "Enviando…" : "Trocar"}</span>
+        <span className="text-sm font-semibold text-cta-ink">{pending ? "Enviando…" : "Trocar"}</span>
       </button>
       <input
         ref={input}
@@ -118,7 +118,7 @@ export function GoogleRow({ connected }: { connected: boolean }) {
           <GoogleIcon className="size-[18px]" />
         </span>
         <span className="flex-1 font-semibold">Google</span>
-        <span className="inline-flex items-center gap-1 text-sm font-semibold text-success">
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-success-ink">
           <Check className="size-4" aria-hidden />
           Conectado
         </span>
@@ -129,7 +129,7 @@ export function GoogleRow({ connected }: { connected: boolean }) {
     <button
       type="button"
       disabled={pending}
-      className={`${rowClass} active:bg-muted`}
+      className={rowClass}
       onClick={async () => {
         setPending(true);
         const { error } = await authClient.linkSocial({ provider: "google", callbackURL: "/perfil" });
@@ -146,7 +146,7 @@ export function GoogleRow({ connected }: { connected: boolean }) {
         <span className="font-semibold">Google</span>
         <span className="text-xs text-ink-subtle">Entre mesmo sem receber o código.</span>
       </span>
-      <span className="text-sm font-semibold text-cta">{pending ? "Abrindo…" : "Conectar"}</span>
+      <span className="text-sm font-semibold text-cta-ink">{pending ? "Abrindo…" : "Conectar"}</span>
     </button>
   );
 }
@@ -204,38 +204,27 @@ export function SignOutButton() {
 
 export function DeleteAccountButton() {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
   return (
-    <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="ghost" className="text-destructive" disabled={pending} />}>
-        Excluir minha conta
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Excluir sua conta?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Seus horários futuros e sua assinatura do clube serão cancelados e seus dados pessoais apagados. Isso não pode
-            ser desfeito.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Voltar</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            onClick={() =>
-              startTransition(async () => {
-                const result = await deleteMyAccountAction();
-                if (!result.ok) return void toast.error(result.error);
-                toast.success("Conta excluída. Até logo!");
-                router.replace("/");
-                router.refresh();
-              })
-            }
-          >
-            Excluir conta
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmDialog
+      trigger={
+        <Button variant="ghost" className="text-destructive">
+          <Trash2 aria-hidden />
+          Excluir minha conta
+        </Button>
+      }
+      title="Excluir sua conta?"
+      description="Seus horários futuros e sua assinatura do clube serão cancelados e seus dados pessoais apagados. Isso não pode ser desfeito."
+      confirmLabel="Excluir conta"
+      onConfirm={async () => {
+        const result = await deleteMyAccountAction();
+        if (!result.ok) {
+          toast.error(result.error);
+          return false;
+        }
+        toast.success("Conta excluída. Até logo!");
+        router.replace("/");
+        router.refresh();
+      }}
+    />
   );
 }

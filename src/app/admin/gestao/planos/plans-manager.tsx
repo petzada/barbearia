@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowDown, ArrowUp, Crown, Pencil, Plus, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Crown, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { savePlanAction } from "@/app/actions/admin";
 import { PlanCard } from "@/components/club/plan-card";
 import { BottomSheet } from "@/components/kit/bottom-sheet";
 import { MoneyInput } from "@/components/kit/money-input";
 import { moveItem } from "@/components/kit/reorder-list";
-import { EmptyState } from "@/components/page-header";
+import { EmptyState, PageBody, PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,37 +47,54 @@ export function PlansManager({ plans }: { plans: PlanRow[] }) {
   const [editing, setEditing] = useState<PlanRow | "new" | null>(null);
   return (
     <>
-      <Button size="lg" onClick={() => setEditing("new")}>
-        <Plus aria-hidden />
-        Novo plano
-      </Button>
-      {plans.length === 0 ? (
-        <EmptyState icon={Crown} title="Nenhum plano ainda" description="Crie os planos do Clube Moura. Eles só aparecem para o cliente quando ativos." />
-      ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
-          {plans.map((p) => (
-            <li key={p.id}>
-              <PlanCard
-                plan={p}
-                header={
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={p.active ? "success" : "muted"}>{p.active ? "Ativo" : "Inativo"}</Badge>
-                    <Badge variant="soft">
-                      {p.subscribers} assinante{p.subscribers === 1 ? "" : "s"}
-                    </Badge>
-                  </div>
-                }
-                footer={
-                  <Button variant="outline" onClick={() => setEditing(p)} className={p.highlighted ? "border-white/20 bg-transparent text-white hover:bg-white/10" : undefined}>
-                    <Pencil aria-hidden />
-                    Editar
-                  </Button>
-                }
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <PageHeader
+        title="Planos do clube"
+        backHref="/admin/gestao"
+        backLabel="Gestão"
+        description="Assim o cliente vê cada plano no app."
+        actions={
+          <Button size="sm" onClick={() => setEditing("new")}>
+            <Plus aria-hidden />
+            Novo plano
+          </Button>
+        }
+      />
+      <PageBody>
+        {plans.length === 0 ? (
+          <EmptyState
+            icon={Crown}
+            title="Nenhum plano ainda"
+            description="Crie os planos do Clube Moura. Eles só aparecem para o cliente quando ativos."
+            action={
+              <Button size="lg" onClick={() => setEditing("new")}>
+                Criar plano
+              </Button>
+            }
+          />
+        ) : (
+          <ul className="grid gap-4 md:grid-cols-2">
+            {plans.map((p) => (
+              <li key={p.id}>
+                <PlanCard
+                  plan={p}
+                  header={
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={p.active ? "success" : "muted"}>{p.active ? "Ativo" : "Inativo"}</Badge>
+                      <Badge variant="soft">{countLabel(p.subscribers, "assinante", "assinantes")}</Badge>
+                    </div>
+                  }
+                  footer={
+                    <Button variant="outline" onClick={() => setEditing(p)} className={p.highlighted ? "border-on-dark/20 bg-transparent text-on-dark hover:bg-on-dark/10" : undefined}>
+                      <Pencil aria-hidden />
+                      Editar
+                    </Button>
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </PageBody>
       <PlanSheet
         key={editing === "new" ? "new" : editing?.id ?? "closed"}
         plan={editing === "new" ? null : editing}
@@ -131,7 +148,16 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
   }
 
   return (
-    <BottomSheet open={open} onOpenChange={(o) => !o && onClose()} title={plan ? "Editar plano" : "Novo plano"}>
+    <BottomSheet
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title={plan ? "Editar plano" : "Novo plano"}
+      footer={
+        <Button size="lg" className="w-full" disabled={pending || name.trim().length < 2 || price < 100} onClick={save}>
+          {pending ? "Salvando…" : plan ? "Salvar" : "Criar plano"}
+        </Button>
+      }
+    >
       <div className="flex flex-col gap-2">
         <Label htmlFor="plan-name">Nome</Label>
         <Input id="plan-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Ex.: Premium" />
@@ -148,14 +174,14 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
         <Label>Ciclo</Label>
         <div className="flex flex-wrap gap-2">
           {CYCLE_OPTIONS.map((c) => (
-            <button key={c.value} type="button" aria-pressed={cycle === c.value} onClick={() => setCycle(c.value)} className={cn("h-10 px-4", chipClass)}>
+            <button key={c.value} type="button" aria-pressed={cycle === c.value} onClick={() => setCycle(c.value)} className={cn("px-4", chipClass)}>
               {c.label}
             </button>
           ))}
         </div>
       </div>
       {productChanged && plan.subscribers > 0 && (
-        <p className="flex items-start gap-2 rounded-md bg-warning/12 p-3 text-sm font-semibold text-warning">
+        <p className="flex items-start gap-2 rounded-md bg-warning/12 p-3 text-sm font-semibold text-warning-ink">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           Novo preço/ciclo vale só para novas assinaturas. Quem já assina ({countLabel(plan.subscribers, "assinante", "assinantes")}) segue como está.
         </p>
@@ -173,8 +199,14 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
                 <Button variant="ghost" size="icon-sm" aria-label={`Descer ${b}`} disabled={i === benefits.length - 1} onClick={() => setBenefits(moveItem(benefits, i, i + 1))}>
                   <ArrowDown aria-hidden />
                 </Button>
-                <Button variant="ghost" size="icon-sm" aria-label={`Remover ${b}`} onClick={() => setBenefits(benefits.filter((x) => x !== b))}>
-                  <X aria-hidden />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Remover benefício ${b}`}
+                  className="text-destructive"
+                  onClick={() => setBenefits(benefits.filter((x) => x !== b))}
+                >
+                  <Trash2 aria-hidden />
                 </Button>
               </li>
             ))}
@@ -218,9 +250,6 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
         <p className="text-xs font-bold uppercase tracking-wider text-ink-subtle">Prévia</p>
         <PlanCard plan={{ name, description: description || null, priceCents: price, cycle, benefits, highlighted }} />
       </div>
-      <Button size="lg" disabled={pending || name.trim().length < 2 || price < 100} onClick={save}>
-        {pending ? "Salvando…" : "Salvar plano"}
-      </Button>
     </BottomSheet>
   );
 }

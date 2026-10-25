@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { formatAgendaDayHeader } from "@/lib/agenda/timeline";
+import { formatDayLabel, formatDayMonth } from "@/lib/agenda/format";
 import { todayDateKeySP } from "@/lib/agenda/timezone";
 import { chipClass } from "@/lib/ui/classes";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BookingCalendarSheet } from "./booking-calendar-sheet";
 
@@ -30,32 +31,25 @@ export function DayNav({
   const isToday = dateKey === todayDateKeySP();
   return (
     <div className="flex items-center gap-2">
-      <Link href={hrefFor(shiftDateKey(dateKey, -1))} aria-label="Dia anterior" className={cn("flex size-11 shrink-0 items-center justify-center", chipClass)}>
+      <Link href={hrefFor(shiftDateKey(dateKey, -1))} aria-label="Dia anterior" className={buttonVariants({ variant: "outline", size: "icon-sm" })}>
         <ChevronLeft className="size-5" aria-hidden />
       </Link>
       <button
         type="button"
         onClick={() => setCalendarOpen(true)}
-        className={cn("flex h-11 min-w-0 flex-1 items-center justify-center gap-2 px-3 capitalize", chipClass)}
+        aria-label="Escolher dia no calendário"
+        className={cn("min-w-0 flex-1 gap-2 px-3", chipClass)}
       >
-        <Calendar className="size-4 shrink-0 text-cta" aria-hidden />
-        <span className="truncate">
-          {isToday ? "Hoje, " : ""}
-          {formatAgendaDayHeader(dateKey)}
-        </span>
+        <Calendar className="size-4 shrink-0 text-cta-ink" aria-hidden />
+        <span className="truncate">{isToday ? `Hoje, ${formatDayMonth(dateKey)}` : formatDayLabel(dateKey)}</span>
       </button>
-      <Link href={hrefFor(shiftDateKey(dateKey, 1))} aria-label="Próximo dia" className={cn("flex size-11 shrink-0 items-center justify-center", chipClass)}>
+      <Link href={hrefFor(shiftDateKey(dateKey, 1))} aria-label="Próximo dia" className={buttonVariants({ variant: "outline", size: "icon-sm" })}>
         <ChevronRight className="size-5" aria-hidden />
       </Link>
       {onAdd && (
-        <button
-          type="button"
-          onClick={onAdd}
-          aria-label="Encaixe ou bloqueio"
-          className="flex size-11 shrink-0 items-center justify-center rounded-md bg-cta text-cta-foreground shadow-card transition active:scale-95"
-        >
+        <Button size="icon-sm" onClick={onAdd} aria-label="Encaixe ou bloqueio">
           <Plus className="size-5" aria-hidden />
-        </button>
+        </Button>
       )}
       <BookingCalendarSheet
         open={calendarOpen}

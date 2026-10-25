@@ -1,8 +1,10 @@
 /* eslint-disable @next/next/no-img-element -- fotos vêm do R2 (/media). */
-import { Star, Users } from "lucide-react";
+import Link from "next/link";
+import { MessageCircle, Star, Users } from "lucide-react";
 import { getInitials } from "@/lib/profile/display-name";
 import { cn, countLabel } from "@/lib/utils";
 import { EmptyState } from "@/components/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import type { BookingBarber } from "./types";
 
 export function formatRating(barber: Pick<BookingBarber, "ratingAverage" | "ratingCount">) {
@@ -14,9 +16,11 @@ export function formatRating(barber: Pick<BookingBarber, "ratingAverage" | "rati
 /** Etapa 1: barbeiros em grade de 2 colunas com foto quadrada grande. */
 export function BarberStep({
   barbers,
+  contactHref,
   onSelect,
 }: {
   barbers: BookingBarber[];
+  contactHref: string | null;
   onSelect: (barber: BookingBarber) => void;
 }) {
   return (
@@ -26,7 +30,19 @@ export function BarberStep({
         <EmptyState
           icon={Users}
           title="Nenhum barbeiro disponível"
-          description="No momento ninguém está recebendo agendamentos online. Fale com a barbearia."
+          description="No momento ninguém está recebendo agendamentos online."
+          action={
+            contactHref ? (
+              <a href={contactHref} target="_blank" rel="noreferrer" className={buttonVariants()}>
+                <MessageCircle aria-hidden />
+                Falar com a barbearia
+              </a>
+            ) : (
+              <Link href="/inicio" className={buttonVariants({ variant: "outline" })}>
+                Voltar ao início
+              </Link>
+            )
+          }
         />
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -43,7 +59,7 @@ export function BarberStep({
                     {b.image ? (
                       <img src={b.image} alt="" className="size-full object-cover transition group-hover:scale-105" />
                     ) : (
-                      <span className="flex size-full items-center justify-center text-4xl font-extrabold text-cta">
+                      <span className="flex size-full items-center justify-center text-4xl font-extrabold text-cta-ink">
                         {getInitials(b.name)}
                       </span>
                     )}

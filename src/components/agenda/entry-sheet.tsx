@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, CheckCircle2, MessageCircle, Trash2, UserX } from "lucide-react";
+import { Ban, CheckCircle2, ChevronRight, MessageCircle, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
 import {
   cancelEntryAction,
@@ -11,13 +11,16 @@ import {
   registerLocalPaymentAction,
   removeBlockAction,
 } from "@/app/actions/agenda";
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { BottomSheet } from "@/components/kit/bottom-sheet";
+import { ConfirmDialog } from "@/components/kit/confirm-dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
-import { LOCAL_PAYMENT_LABELS, LOCAL_PAYMENT_METHODS } from "@/lib/validations/agendamento";
+import { PaymentBadge, StatusBadge } from "@/components/appointments/status-badge";
+import { formatPriceCents } from "@/lib/agenda/availability";
+import { formatTimeRange } from "@/lib/agenda/format";
+import { LOCAL_PAYMENT_METHODS } from "@/lib/validations/agendamento";
+import { LOCAL_PAYMENT_SHORT_LABELS, PAYMENT_METHOD_LABELS } from "@/lib/payments";
 import { formatBrazilPhone, normalizeBrazilPhone } from "@/lib/phone";
-import { ENTRY_STATUS_BADGE, paymentLabel } from "@/components/appointments/status";
+import { rowClass, rowGroupClass, rowIconClass } from "@/lib/ui/classes";
 import type { EntryPaymentMethod, EntryPaymentStatus, EntryStatus } from "@/server/db/schema";
 import type { TimelineEntry } from "./agenda-day-timeline";
 
@@ -40,134 +43,142 @@ export function EntrySheet({
   const [pending, startTransition] = useTransition();
 
   function run(fn: () => Promise<ActionResult>, success: string) {
-    startTransition(async () => {
-      const result = await fn();
-      if (!result.ok) return void toast.error(result.error);
-      toast.success(success);
-      onClose();
-      router.refresh();
-    });
+    return new Promise<boolean>((resolve) =>
+      startTransition(async () => {
+        const result = await fn();
+        if (!result.ok) {
+          toast.error(result.error);
+          return resolve(false);
+        }
+        toast.success(success);
+        onClose();
+        router.refresh();
+        resolve(true);
+      }),
+    );
   }
 
-  const open = entry !== null;
-  const status = entry ? ENTRY_STATUS_BADGE[entry.status as EntryStatus] : null;
-  const payment = entry
-    ? paymentLabel(entry.paymentMethod as EntryPaymentMethod | null, entry.paymentStatus as EntryPaymentStatus | null)
-    : null;
   const started = entry ? Date.parse(entry.starts_at) <= openedAt : false;
   const booked = entry?.status === "booked";
   const phone = entry?.clientPhone ? normalizeBrazilPhone(entry.clientPhone).normalized : null;
+  const isAppointment = entry?.type === "appointment";
+  const subtitle = entry
+    ? [
+        formatTimeRange(entry.starts_at, entry.ends_at),
+        isAppointment ? (entry.serviceName ?? "Serviço") : null,
+        showBarber ? entry.barberName : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : null;
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent
-        side="bottom"
-        className="max-h-[90vh] rounded-t-[28px] border-0 bg-card px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6 sm:mx-auto sm:max-w-lg"
-      >
-        {entry && (
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1">
-              <SheetTitle className="text-xl font-extrabold">
-                {entry.type === "block" ? "Bloqueio" : entry.clientName}
-              </SheetTitle>
-              <SheetDescription className="tabular text-sm text-ink-subtle">
-                {formatSlotTime(entry.starts_at)} – {formatSlotTime(entry.ends_at)}
-                {entry.type === "appointment" && ` · ${entry.serviceName ?? "Serviço"}`}
-                {showBarber && ` · ${entry.barberName}`}
-              </SheetDescription>
-            </div>
-
-            {entry.type === "appointment" ? (
-              <>
-                <div className="flex flex-wrap items-center gap-2">
-                  {status && <Badge variant={status.variant}>{status.label}</Badge>}
-                  {payment && <Badge variant={payment.variant}>{payment.label}</Badge>}
-                  {entry.priceCents != null && (
-                    <span className="tabular ml-auto text-lg font-extrabold">{formatPriceCents(entry.priceCents)}</span>
-                  )}
-                </div>
-
-                {phone && (
-                  <a
-                    href={`https://wa.me/${phone}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-3 rounded-md bg-muted px-4 py-3 text-sm font-semibold"
-                  >
-                    <MessageCircle className="size-5 text-success" aria-hidden />
-                    {formatBrazilPhone(entry.clientPhone)}
-                  </a>
-                )}
-
-                {booked && started && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button disabled={pending} onClick={() => run(() => completeEntryAction(entry.id), "Atendimento concluído.")}>
-                      <CheckCircle2 aria-hidden />
-                      Concluir
-                    </Button>
-                    <Button
-                      variant="outline"
-                      disabled={pending}
-                      onClick={() => run(() => noShowEntryAction(entry.id), "Falta registrada.")}
-                    >
-                      <UserX aria-hidden />
-                      Faltou
-                    </Button>
-                  </div>
-                )}
-
-                {entry.status !== "cancelled" && entry.paymentStatus !== "paid" && entry.paymentMethod !== "subscription" && (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm font-bold">Recebeu no balcão?</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {LOCAL_PAYMENT_METHODS.map((m) => (
-                        <Button
-                          key={m}
-                          variant="outline"
-                          size="sm"
-                          disabled={pending}
-                          onClick={() => run(() => registerLocalPaymentAction(entry.id, m), "Pagamento registrado.")}
-                        >
-                          {LOCAL_PAYMENT_LABELS[m]}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {booked && (
-                  <Button
-                    variant="ghost"
-                    className="text-destructive"
-                    disabled={pending}
-                    onClick={() => {
-                      if (window.confirm("Cancelar este agendamento? O cliente perde o horário.")) {
-                        run(() => cancelEntryAction(entry.id), "Agendamento cancelado.");
-                      }
-                    }}
-                  >
-                    <Ban aria-hidden />
-                    Cancelar agendamento
-                  </Button>
-                )}
-              </>
-            ) : (
-              <>
-                {entry.note && <p className="text-sm text-ink-muted">{entry.note}</p>}
-                <Button
-                  variant="outline"
-                  className="text-destructive"
-                  disabled={pending}
-                  onClick={() => run(() => removeBlockAction(entry.id), "Bloqueio removido.")}
-                >
-                  <Trash2 aria-hidden />
-                  Remover bloqueio
-                </Button>
-              </>
-            )}
+    <BottomSheet
+      open={entry !== null}
+      onOpenChange={(o) => !o && onClose()}
+      title={entry ? (isAppointment ? entry.clientName : "Bloqueio") : ""}
+      description={subtitle}
+      headerRight={
+        isAppointment && entry?.priceCents != null ? (
+          <span className="tabular text-lg font-extrabold">{formatPriceCents(entry.priceCents)}</span>
+        ) : undefined
+      }
+    >
+      {entry && isAppointment && (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={entry.status as EntryStatus} />
+            <PaymentBadge
+              method={entry.paymentMethod as EntryPaymentMethod | null}
+              status={entry.paymentStatus as EntryPaymentStatus | null}
+            />
           </div>
-        )}
-      </SheetContent>
-    </Sheet>
+
+          {phone && (
+            <div className={rowGroupClass}>
+              <a href={`https://wa.me/${phone}`} target="_blank" rel="noreferrer" className={rowClass}>
+                <span className={rowIconClass}>
+                  <MessageCircle aria-hidden />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-sm font-bold">Chamar no WhatsApp</span>
+                  <span className="text-sm text-ink-subtle">{formatBrazilPhone(entry.clientPhone)}</span>
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+              </a>
+            </div>
+          )}
+
+          {booked && started && (
+            <div className="grid grid-cols-2 gap-2">
+              <Button disabled={pending} onClick={() => run(() => completeEntryAction(entry.id), "Atendimento concluído.")}>
+                <CheckCircle2 aria-hidden />
+                Concluir
+              </Button>
+              <Button
+                variant="outline"
+                disabled={pending}
+                onClick={() => run(() => noShowEntryAction(entry.id), "Falta registrada.")}
+              >
+                <UserX aria-hidden />
+                Faltou
+              </Button>
+            </div>
+          )}
+
+          {entry.status !== "cancelled" && entry.paymentStatus !== "paid" && entry.paymentMethod !== "subscription" && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-bold">Recebeu no balcão?</p>
+              <div className="grid grid-cols-3 gap-2">
+                {LOCAL_PAYMENT_METHODS.map((m) => (
+                  <Button
+                    key={m}
+                    variant="outline"
+                    aria-label={`Registrar pagamento: ${PAYMENT_METHOD_LABELS[m]}`}
+                    disabled={pending}
+                    onClick={() => run(() => registerLocalPaymentAction(entry.id, m), "Pagamento registrado.")}
+                  >
+                    {LOCAL_PAYMENT_SHORT_LABELS[m]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {booked && (
+            <ConfirmDialog
+              trigger={
+                <Button variant="ghost" className="text-destructive" disabled={pending}>
+                  <Ban aria-hidden />
+                  Cancelar agendamento
+                </Button>
+              }
+              title="Cancelar este agendamento?"
+              description="O cliente perde o horário e ele fica livre para outra pessoa."
+              confirmLabel="Cancelar agendamento"
+              onConfirm={() => run(() => cancelEntryAction(entry.id), "Agendamento cancelado.")}
+            />
+          )}
+        </>
+      )}
+
+      {entry && !isAppointment && (
+        <>
+          {entry.note && <p className="text-sm text-ink-muted">{entry.note}</p>}
+          <ConfirmDialog
+            trigger={
+              <Button variant="ghost" className="text-destructive" disabled={pending}>
+                <Trash2 aria-hidden />
+                Remover bloqueio
+              </Button>
+            }
+            title="Remover este bloqueio?"
+            description="O horário volta a ficar livre para agendamentos."
+            confirmLabel="Remover bloqueio"
+            onConfirm={() => run(() => removeBlockAction(entry.id), "Bloqueio removido.")}
+          />
+        </>
+      )}
+    </BottomSheet>
   );
 }

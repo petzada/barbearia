@@ -35,8 +35,8 @@ describe("MultiAgenda (colunas por barbeiro)", () => {
   it("mostra uma coluna por barbeiro com expediente e folga", () => {
     render(<MultiAgenda dateKey="2030-01-07" columns={columns} onSelect={() => {}} onAddAt={() => {}} />);
     const header = screen.getByText("Moura").parentElement!.parentElement!;
-    expect(within(header).getByText("09:00–12:00")).toBeInTheDocument();
-    expect(within(header).getByText("Folga / fechado")).toBeInTheDocument();
+    expect(within(header).getByText("09:00 – 12:00")).toBeInTheDocument();
+    expect(within(header).getByText("Folga ou fechado")).toBeInTheDocument();
     expect(screen.getByText("Cliente a")).toBeInTheDocument();
     expect(screen.getByText("Bloqueio")).toBeInTheDocument();
   });

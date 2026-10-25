@@ -16,6 +16,10 @@ import {
 import { todayDateKeySP } from "@/lib/agenda/timezone";
 import { formatSlotTime } from "@/lib/agenda/availability";
 import { cn } from "@/lib/utils";
+import { CalendarOff } from "lucide-react";
+import { EmptyState } from "@/components/page-header";
+import { ENTRY_STATUS_BADGE, STATUS_ACCENT } from "@/components/appointments/status";
+import type { EntryStatus } from "@/server/db/schema";
 
 export type TimelineEntry = {
   id: string;
@@ -141,7 +145,12 @@ export function AgendaDayTimeline({
 
   if (displayBounds.isClosed) {
     return (
-      <p className="p-2 text-sm text-ink-subtle">Sem expediente neste dia.</p>
+      <EmptyState
+        compact
+        icon={CalendarOff}
+        title="Sem expediente neste dia"
+        description="A barbearia ou o barbeiro não atende nesta data."
+      />
     );
   }
 
@@ -279,8 +288,13 @@ export function AgendaDayTimeline({
                       {e.serviceName ?? "Serviço"}
                     </span>
                     {done && (
-                      <span className="mt-auto text-[11px] font-bold text-success">
-                        {e.status === "completed" ? "Concluído" : "Falta"}
+                      <span
+                        className={cn(
+                          "mt-auto text-[11px] font-bold",
+                          STATUS_ACCENT[ENTRY_STATUS_BADGE[e.status as EntryStatus].variant].text,
+                        )}
+                      >
+                        {ENTRY_STATUS_BADGE[e.status as EntryStatus].label}
                       </span>
                     )}
                   </>

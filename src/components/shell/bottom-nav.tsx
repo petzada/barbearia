@@ -40,7 +40,7 @@ export function BottomNav({ mode }: { mode: AppMode }) {
                   >
                     <Icon className="size-6" strokeWidth={2.25} aria-hidden />
                   </span>
-                  <span className={cn("text-[11px] font-semibold", active ? "text-cta" : "text-ink-tertiary")}>
+                  <span className={cn("text-[11px] font-semibold", active ? "text-cta-ink" : "text-ink-tertiary")}>
                     {item.label}
                   </span>
                 </Link>
@@ -54,7 +54,7 @@ export function BottomNav({ mode }: { mode: AppMode }) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex w-full flex-col items-center justify-center gap-1 transition-colors",
-                  active ? "text-cta" : "text-ink-tertiary hover:text-ink-subtle",
+                  active ? "text-cta-ink" : "text-ink-tertiary hover:text-ink-subtle",
                 )}
               >
                 <Icon className="size-6 shrink-0" strokeWidth={active ? 2.25 : 1.75} aria-hidden />

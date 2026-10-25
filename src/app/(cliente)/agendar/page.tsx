@@ -8,8 +8,9 @@ import { getShopSettings } from "@/server/settings";
 import { getAvailableDays, getAvailableSlots } from "@/server/scheduling";
 import { getSelectableDateKeys } from "@/lib/agenda/availability";
 import { BookingWizard } from "@/components/booking/booking-wizard";
+import { normalizeBrazilPhone } from "@/lib/phone";
 
-export const metadata: Metadata = { title: "Agendar" };
+export const metadata: Metadata = { title: "Novo agendamento" };
 
 export default async function AgendarPage({
   searchParams,
@@ -45,7 +46,7 @@ export default async function AgendarPage({
   }
 
   return (
-    <main className="flex flex-1 flex-col px-5 pb-6 lg:px-0">
+    <main className="flex flex-1 flex-col">
       <BookingWizard
         services={services.map(({ id, name, description, durationMinutes, priceCents }) => ({
           id,
@@ -63,6 +64,7 @@ export default async function AgendarPage({
         initialBarberId={params.barbeiro}
         initialServiceId={params.servico}
         initialSchedule={initialSchedule}
+        shopWhatsapp={settings.phone ? normalizeBrazilPhone(settings.phone).normalized : null}
       />
     </main>
   );

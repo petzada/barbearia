@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { SegmentedNav } from "@/components/kit/segmented";
 import { cn } from "@/lib/utils";
 import { PERIOD_OPTIONS, type PeriodKey } from "@/lib/periods";
 
@@ -13,23 +13,15 @@ export function PeriodFilter({
   query?: Record<string, string>;
 }) {
   return (
-    <nav aria-label="Período" className="scrollbar-none -mx-5 flex gap-1 overflow-x-auto px-5 lg:mx-0 lg:px-0">
-      <div className="flex gap-1 rounded-lg bg-muted p-1">
-        {PERIOD_OPTIONS.map((p) => (
-          <Link
-            key={p.key}
-            href={`${basePath}?${new URLSearchParams({ ...query, periodo: p.key }).toString()}`}
-            aria-current={p.key === current ? "true" : undefined}
-            className={cn(
-              "flex h-9 shrink-0 items-center rounded-md px-4 text-sm font-bold transition",
-              p.key === current ? "bg-card text-ink shadow-card" : "text-ink-subtle",
-            )}
-          >
-            {p.label}
-          </Link>
-        ))}
-      </div>
-    </nav>
+    <SegmentedNav
+      label="Período"
+      scrollable
+      items={PERIOD_OPTIONS.map((p) => ({
+        href: `${basePath}?${new URLSearchParams({ ...query, periodo: p.key }).toString()}`,
+        label: p.label,
+        current: p.key === current,
+      }))}
+    />
   );
 }
 
@@ -49,7 +41,7 @@ export function StatTile({
       <span className={cn("text-xs font-bold uppercase tracking-wider", tone === "brand" ? "text-cta-foreground/75" : "text-ink-subtle")}>
         {label}
       </span>
-      <span className="tabular text-2xl font-extrabold tracking-tight">{value}</span>
+      <span className="text-display-sm">{value}</span>
       {hint && <span className={cn("text-xs", tone === "brand" ? "text-cta-foreground/75" : "text-ink-subtle")}>{hint}</span>}
     </div>
   );

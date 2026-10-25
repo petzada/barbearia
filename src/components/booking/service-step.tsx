@@ -25,7 +25,7 @@ export function ServiceStep({
                 onClick={() => onSelect(s)}
                 className={cn("flex w-full items-center gap-4 p-4 text-left", pressablePanelClass)}
               >
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-teal-soft text-cta">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-teal-soft text-cta-ink">
                   <Icon className="size-5" aria-hidden />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">

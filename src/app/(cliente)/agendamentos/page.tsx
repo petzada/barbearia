@@ -11,7 +11,7 @@ import { canClientCancel, formatMinutesShort } from "@/lib/agenda/availability";
 import { EmptyState, PageBody, PageHeader } from "@/components/page-header";
 import { AppointmentsList, type AppointmentListItem } from "@/components/appointments/appointments-list";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { SegmentedNav } from "@/components/kit/segmented";
 
 export const metadata: Metadata = { title: "Agendamentos" };
 
@@ -59,33 +59,15 @@ export default async function AgendamentosPage({ searchParams }: { searchParams:
 
   return (
     <main className="flex flex-1 flex-col">
-      <PageHeader
-        title="Agendamentos"
-        actions={
-          <Link href="/agendar" className={cn(buttonVariants({ size: "sm" }))}>
-            Novo
-          </Link>
-        }
-      />
+      <PageHeader title="Agendamentos" />
       <PageBody>
-        <nav className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1" aria-label="Filtrar agendamentos">
-          {[
-            { key: "proximos", label: `Próximos${upcoming.length ? ` (${upcoming.length})` : ""}`, href: "/agendamentos" },
-            { key: "historico", label: "Histórico", href: "/agendamentos?aba=historico" },
-          ].map((t) => (
-            <Link
-              key={t.key}
-              href={t.href}
-              aria-current={tab === t.key ? "page" : undefined}
-              className={cn(
-                "flex h-11 items-center justify-center rounded-md text-sm font-bold transition",
-                tab === t.key ? "bg-card text-ink shadow-card" : "text-ink-subtle",
-              )}
-            >
-              {t.label}
-            </Link>
-          ))}
-        </nav>
+        <SegmentedNav
+          label="Filtrar agendamentos"
+          items={[
+            { href: "/agendamentos", label: `Próximos${upcoming.length ? ` (${upcoming.length})` : ""}`, current: tab === "proximos" },
+            { href: "/agendamentos?aba=historico", label: "Histórico", current: tab === "historico" },
+          ]}
+        />
 
         {items.length === 0 ? (
           tab === "proximos" ? (
@@ -100,7 +82,16 @@ export default async function AgendamentosPage({ searchParams }: { searchParams:
               }
             />
           ) : (
-            <EmptyState icon={History} title="Nada por aqui ainda" description="Seus atendimentos anteriores aparecem aqui." />
+            <EmptyState
+              icon={History}
+              title="Nada por aqui ainda"
+              description="Seus atendimentos anteriores aparecem aqui."
+              action={
+                <Link href="/agendar" className={buttonVariants()}>
+                  Agendar agora
+                </Link>
+              }
+            />
           )
         ) : (
           <AppointmentsList items={items} />

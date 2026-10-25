@@ -4,10 +4,12 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { closePayoutAction } from "@/app/actions/admin";
-import { BottomSheet, Segmented } from "@/components/kit/bottom-sheet";
+import { BottomSheet } from "@/components/kit/bottom-sheet";
+import { Segmented } from "@/components/kit/segmented";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatPriceCents, formatSelectableDay } from "@/lib/agenda/availability";
+import { formatPriceCents } from "@/lib/agenda/availability";
+import { formatDateRange } from "@/lib/agenda/format";
 import type { PayoutMethod } from "@/server/payouts";
 
 /** Fecha o período do barbeiro e marca as comissões como pagas. */
@@ -49,9 +51,14 @@ export function PayoutButton({
         open={open}
         onOpenChange={setOpen}
         title={`Repasse para ${barberName}`}
-        description={`${formatSelectableDay(from)} a ${formatSelectableDay(to)}`}
+        description={formatDateRange(from, to)}
+        footer={
+          <Button size="lg" className="w-full" disabled={pending} onClick={confirm}>
+            {pending ? "Registrando…" : "Registrar repasse"}
+          </Button>
+        }
       >
-        <p className="text-[40px] font-extrabold leading-none tracking-tight">{formatPriceCents(amountCents)}</p>
+        <p className="text-display">{formatPriceCents(amountCents)}</p>
         <Segmented
           label="Forma de pagamento"
           value={method}
@@ -66,9 +73,6 @@ export function PayoutButton({
         <p className="text-xs text-ink-subtle">
           As comissões a pagar deste período ficam marcadas como pagas; o barbeiro vê o repasse em Ganhos.
         </p>
-        <Button size="lg" disabled={pending} onClick={confirm}>
-          {pending ? "Registrando…" : "Confirmar repasse"}
-        </Button>
       </BottomSheet>
     </>
   );

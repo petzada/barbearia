@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Plus } from "lucide-react";
+import { Ban, ChevronRight, Plus, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import {
   adminCancelSubscriptionAction,
@@ -10,15 +10,21 @@ import {
   renewManualSubscriptionAction,
   subscriptionDetailAction,
 } from "@/app/actions/admin";
-import { BottomSheet, Segmented } from "@/components/kit/bottom-sheet";
+import { BottomSheet } from "@/components/kit/bottom-sheet";
+import { ConfirmDialog } from "@/components/kit/confirm-dialog";
+import { OptionCard, OptionGroup } from "@/components/kit/option-card";
+import { Segmented } from "@/components/kit/segmented";
+import { EmptyState } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay } from "@/lib/agenda/availability";
-import { LOCAL_PAYMENT_LABELS, LOCAL_PAYMENT_METHODS, type LocalPaymentMethod } from "@/lib/validations/agendamento";
+import { formatPriceCents } from "@/lib/agenda/availability";
+import { formatDayLabel, formatDayMonth } from "@/lib/agenda/format";
+import { LOCAL_PAYMENT_SHORT_LABELS, paymentMethodLabel, subscriptionPaymentLabel } from "@/lib/payments";
+import { LOCAL_PAYMENT_METHODS, type LocalPaymentMethod } from "@/lib/validations/agendamento";
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
-import { chipClass } from "@/lib/ui/classes";
+import { rowClass, rowGroupClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
 
 type Row = {
@@ -31,8 +37,9 @@ type Row = {
   currentPeriodEnd: number | null;
 };
 
-const METHOD_LABEL: Record<string, string> = { CARD: "Cartão", PIX: "Pix", ...LOCAL_PAYMENT_LABELS };
-const fmtDay = (ms: number | null) => (ms ? formatSelectableDay(dateKeyFromIsoInSP(ms)) : "—");
+const fmtDay = (ms: number | null) => (ms ? formatDayLabel(ms) : "—");
+const LOCAL_OPTIONS = LOCAL_PAYMENT_METHODS.map((m) => ({ value: m, label: LOCAL_PAYMENT_SHORT_LABELS[m] }));
+const STATUS_LABEL: Record<string, string> = { active: "Ativa", cancelled: "Cancelada" };
 const SEVEN_DAYS = 7 * 86_400_000;
 
 type Detail = Extract<Awaited<ReturnType<typeof subscriptionDetailAction>>, { ok: true }>["data"];
@@ -41,50 +48,63 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
   const router = useRouter();
   const [detail, setDetail] = useState<(Detail & { subscriptionId: string }) | null>(null);
   const [method, setMethod] = useState<LocalPaymentMethod>("dinheiro");
+  const [openingId, setOpeningId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [now] = useState(() => Date.now());
 
   function open(subscriptionId: string) {
+    setOpeningId(subscriptionId);
     startTransition(async () => {
       const result = await subscriptionDetailAction(subscriptionId);
+      setOpeningId(null);
       if (!result.ok) return void toast.error(result.error);
       setDetail({ ...result.data, subscriptionId });
     });
   }
 
-  function act(fn: () => Promise<{ ok: boolean; error: string | null }>, message: string) {
-    startTransition(async () => {
-      const result = await fn();
-      if (!result.ok) return void toast.error(result.error);
-      toast.success(message);
-      setDetail(null);
-      router.refresh();
-    });
+  async function act(fn: () => Promise<{ ok: boolean; error: string | null }>, message: string) {
+    const result = await fn();
+    if (!result.ok) {
+      toast.error(result.error);
+      return false;
+    }
+    toast.success(message);
+    setDetail(null);
+    router.refresh();
+    return true;
   }
 
   return (
     <>
-      <ul className="divide-y divide-hairline overflow-hidden rounded-lg bg-card shadow-card">
+      <ul className={rowGroupClass}>
         {rows.map((r) => {
           const expiring = r.status === "active" && r.currentPeriodEnd != null && r.currentPeriodEnd - now <= SEVEN_DAYS;
           return (
             <li key={r.subscriptionId}>
-              <button type="button" onClick={() => open(r.subscriptionId)} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-muted">
+              <button
+                type="button"
+                onClick={() => open(r.subscriptionId)}
+                disabled={openingId !== null}
+                aria-busy={openingId === r.subscriptionId || undefined}
+                className={rowClass}
+              >
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold">{r.name}</p>
                   <p className="truncate text-sm text-ink-subtle">
-                    {r.planName} · {r.provider === "manual" ? "Balcão" : METHOD_LABEL[r.method ?? ""] ?? "Online"}
+                    {r.planName} · {subscriptionPaymentLabel(r.provider, r.method)}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   {r.status !== "active" ? (
-                    <Badge variant="muted">{r.status === "cancelled" ? "Cancelada" : "Vencida"}</Badge>
-                  ) : expiring ? (
-                    <Badge variant="warning">vence {fmtDay(r.currentPeriodEnd)}</Badge>
+                    <Badge variant="muted">{STATUS_LABEL[r.status] ?? "Vencida"}</Badge>
+                  ) : expiring && r.currentPeriodEnd ? (
+                    <Badge variant="warning">Vence {formatDayMonth(r.currentPeriodEnd)}</Badge>
                   ) : (
-                    <span className="text-xs text-ink-subtle">
-                      {r.provider === "abacatepay" ? "renova" : "vence"} {fmtDay(r.currentPeriodEnd)}
-                    </span>
+                    r.currentPeriodEnd && (
+                      <span className="tabular text-xs text-ink-subtle">
+                        {r.provider === "abacatepay" ? "Renova" : "Vence"} {formatDayMonth(r.currentPeriodEnd)}
+                      </span>
+                    )
                   )}
                 </div>
                 <ChevronRight className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
@@ -99,34 +119,31 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
         onOpenChange={(o) => !o && setDetail(null)}
         title={detail?.memberName ?? ""}
         description={detail ? `${detail.planName}${detail.memberPhone ? ` · ${formatBrazilPhone(detail.memberPhone)}` : ""}` : undefined}
+        headerRight={detail && <Badge variant={detail.status === "active" ? "success" : "muted"}>{STATUS_LABEL[detail.status] ?? "Vencida"}</Badge>}
       >
         {detail && (
           <div className="flex flex-col gap-5">
             <dl className="grid grid-cols-2 gap-3 rounded-lg bg-card p-4 text-sm shadow-card">
               <div>
-                <dt className="text-ink-subtle">Situação</dt>
-                <dd className="font-bold">{detail.status === "active" ? "Ativa" : detail.status === "cancelled" ? "Cancelada" : "Vencida"}</dd>
-              </div>
-              <div>
                 <dt className="text-ink-subtle">{detail.provider === "abacatepay" ? "Renova em" : "Válida até"}</dt>
-                <dd className="font-bold capitalize">{fmtDay(detail.currentPeriodEnd)}</dd>
+                <dd className="font-bold">{fmtDay(detail.currentPeriodEnd)}</dd>
               </div>
               <div>
                 <dt className="text-ink-subtle">Pagamento</dt>
-                <dd className="font-bold">{detail.provider === "manual" ? "Balcão" : `${METHOD_LABEL[detail.method ?? ""] ?? "Online"} (automático)`}</dd>
+                <dd className="font-bold">{subscriptionPaymentLabel(detail.provider, detail.method)}</dd>
               </div>
             </dl>
 
             <div className="flex flex-col gap-2">
               <p className="text-sm font-bold">Pagamentos</p>
               {detail.history.length === 0 ? (
-                <p className="text-sm text-ink-subtle">Nenhum pagamento registrado.</p>
+                <EmptyState compact icon={Receipt} title="Nenhum pagamento registrado" />
               ) : (
-                <ul className="divide-y divide-hairline rounded-lg bg-card text-sm shadow-card">
+                <ul className={cn(rowGroupClass, "text-sm")}>
                   {detail.history.map((p) => (
-                    <li key={p.id} className="flex justify-between px-4 py-3">
-                      <span className="capitalize">
-                        {fmtDay(p.paidAt)} · {METHOD_LABEL[p.method] ?? p.method}
+                    <li key={p.id} className="flex justify-between gap-3 px-4 py-3">
+                      <span>
+                        {fmtDay(p.paidAt)} · {paymentMethodLabel(p.method)}
                       </span>
                       <span className="tabular font-bold">{formatPriceCents(p.amountCents)}</span>
                     </li>
@@ -138,30 +155,33 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
             {detail.provider === "manual" && (
               <div className="flex flex-col gap-2">
                 <p className="text-sm font-bold">Renovar no balcão</p>
-                <Segmented
-                  label="Forma"
-                  value={method}
-                  onChange={setMethod}
-                  options={LOCAL_PAYMENT_METHODS.map((m) => ({ value: m, label: LOCAL_PAYMENT_LABELS[m] }))}
-                />
-                <Button disabled={pending} onClick={() => act(() => renewManualSubscriptionAction({ subscriptionId: detail.subscriptionId, method }), "Assinatura renovada.")}>
-                  Registrar renovação
+                <Segmented label="Forma de pagamento" value={method} onChange={setMethod} options={LOCAL_OPTIONS} />
+                <Button
+                  size="lg"
+                  disabled={pending}
+                  onClick={() =>
+                    startTransition(async () => {
+                      await act(() => renewManualSubscriptionAction({ subscriptionId: detail.subscriptionId, method }), "Assinatura renovada.");
+                    })
+                  }
+                >
+                  {pending ? "Registrando…" : "Registrar renovação"}
                 </Button>
               </div>
             )}
             {detail.status === "active" && (
-              <Button
-                variant="ghost"
-                className="text-destructive"
-                disabled={pending}
-                onClick={() => {
-                  if (window.confirm("Cancelar esta assinatura? Não haverá novas cobranças.")) {
-                    act(() => adminCancelSubscriptionAction(detail.subscriptionId), "Assinatura cancelada.");
-                  }
-                }}
-              >
-                Cancelar assinatura
-              </Button>
+              <ConfirmDialog
+                trigger={
+                  <Button variant="ghost" className="text-destructive" disabled={pending}>
+                    <Ban aria-hidden />
+                    Cancelar assinatura
+                  </Button>
+                }
+                title="Cancelar esta assinatura?"
+                description="O cancelamento vale na hora e não haverá novas cobranças."
+                confirmLabel="Cancelar assinatura"
+                onConfirm={() => act(() => adminCancelSubscriptionAction(detail.subscriptionId), "Assinatura cancelada.")}
+              />
             )}
           </div>
         )}
@@ -170,7 +190,7 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
   );
 }
 
-/** "+ Registrar" pagamento de assinatura feito no balcão. */
+/** "+ Registrar pagamento" de assinatura feito no balcão (no cabeçalho). */
 export function RegisterButton({ plans }: { plans: { id: string; name: string; priceCents: number }[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -194,33 +214,41 @@ export function RegisterButton({ plans }: { plans: { id: string; name: string; p
     <>
       <Button size="sm" onClick={() => setOpen(true)} disabled={plans.length === 0}>
         <Plus aria-hidden />
-        Registrar
+        Registrar pagamento
       </Button>
-      <BottomSheet open={open} onOpenChange={setOpen} title="Pagamento no balcão" description="Ativa ou renova a assinatura pelo ciclo do plano.">
+      <BottomSheet
+        open={open}
+        onOpenChange={setOpen}
+        title="Pagamento no balcão"
+        description="Ativa ou renova a assinatura pelo ciclo do plano."
+        footer={
+          <Button size="lg" className="w-full" disabled={pending || phone.replace(/\D/g, "").length < 10 || !planId} onClick={submit}>
+            {pending ? "Registrando…" : "Registrar pagamento"}
+          </Button>
+        }
+      >
         <div className="flex flex-col gap-2">
           <Label htmlFor="club-phone">WhatsApp do cliente</Label>
           <Input id="club-phone" type="tel" inputMode="tel" placeholder="(11) 98765-4321" value={phone} onChange={(e) => setPhone(maskBrazilPhoneInput(e.target.value))} />
         </div>
         <div className="flex flex-col gap-2">
-          <Label>Plano</Label>
-          <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold">Plano</p>
+          <OptionGroup label="Plano">
             {plans.map((p) => (
-              <button key={p.id} type="button" aria-pressed={p.id === planId} onClick={() => setPlanId(p.id)} className={cn("flex h-12 items-center justify-between px-4", chipClass)}>
-                <span>{p.name}</span>
-                <span className="tabular">{formatPriceCents(p.priceCents)}</span>
-              </button>
+              <OptionCard
+                key={p.id}
+                selected={p.id === planId}
+                onSelect={() => setPlanId(p.id)}
+                title={p.name}
+                trailing={<span className="tabular font-bold">{formatPriceCents(p.priceCents)}</span>}
+              />
             ))}
-          </div>
+          </OptionGroup>
         </div>
-        <Segmented
-          label="Forma de pagamento"
-          value={method}
-          onChange={setMethod}
-          options={LOCAL_PAYMENT_METHODS.map((m) => ({ value: m, label: LOCAL_PAYMENT_LABELS[m] }))}
-        />
-        <Button size="lg" disabled={pending || phone.replace(/\D/g, "").length < 10 || !planId} onClick={submit}>
-          {pending ? "Registrando…" : "Registrar pagamento"}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold">Forma de pagamento</p>
+          <Segmented label="Forma de pagamento" value={method} onChange={setMethod} options={LOCAL_OPTIONS} />
+        </div>
       </BottomSheet>
     </>
   );

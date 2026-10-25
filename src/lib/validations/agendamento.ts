@@ -30,12 +30,6 @@ export type CreateBlockInput = z.input<typeof createBlockSchema>;
 
 export const LOCAL_PAYMENT_METHODS = ["dinheiro", "cartao", "pix_balcao"] as const;
 export type LocalPaymentMethod = (typeof LOCAL_PAYMENT_METHODS)[number];
-export const LOCAL_PAYMENT_LABELS: Record<LocalPaymentMethod, string> = {
-  dinheiro: "Dinheiro",
-  cartao: "Cartão",
-  pix_balcao: "Pix no balcão",
-};
-
 export const walkInSchema = z
   .object({
     barberId: z.string().min(1),

@@ -10,23 +10,23 @@ import { getFeedbackStats } from "@/server/feedback";
 import { getWhatsappConfig } from "@/server/whatsapp/service";
 import { listUpcomingClosures } from "@/server/schedule-config";
 import { PageBody, PageHeader } from "@/components/page-header";
-import { RowIcon, SettingsGroup, rowClass } from "@/app/perfil/settings-list";
-import { cn } from "@/lib/utils";
+import { RowIcon, SettingsGroup, rowClass } from "@/components/kit/settings-list";
+import { cn, countLabel } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Gestão" };
 
 const WHATSAPP_STATUS: Record<string, { label: string; tone: string }> = {
-  connected: { label: "Conectado", tone: "text-success" },
-  connecting: { label: "Conectando", tone: "text-warning" },
-  qr_required: { label: "Escanear QR", tone: "text-warning" },
+  connected: { label: "Conectado", tone: "text-success-ink" },
+  connecting: { label: "Conectando", tone: "text-warning-ink" },
+  qr_required: { label: "Escanear QR", tone: "text-warning-ink" },
   disconnected: { label: "Desconectado", tone: "text-destructive" },
   not_configured: { label: "Não configurado", tone: "text-destructive" },
-  unknown: { label: "Verificar", tone: "text-warning" },
+  unknown: { label: "Verificar", tone: "text-warning-ink" },
 };
 
 function HubRow({ href, icon, label, status, statusTone }: { href: string; icon: LucideIcon; label: string; status?: string; statusTone?: string }) {
   return (
-    <Link href={href} className={cn(rowClass, "active:bg-muted")}>
+    <Link href={href} className={rowClass}>
       <RowIcon icon={icon} />
       <span className="flex-1 font-semibold">{label}</span>
       {status && (
@@ -60,16 +60,16 @@ export default async function GestaoPage() {
       <PageHeader title="Gestão" />
       <PageBody className="gap-7">
         <SettingsGroup title="Catálogo">
-          <HubRow href="/admin/gestao/servicos" icon={Scissors} label="Serviços" status={`${services.length} ativo${services.length === 1 ? "" : "s"}`} />
-          <HubRow href="/admin/gestao/planos" icon={Crown} label="Planos do clube" status={`${plans.length} ativo${plans.length === 1 ? "" : "s"}`} />
+          <HubRow href="/admin/gestao/servicos" icon={Scissors} label="Serviços" status={countLabel(services.length, "ativo", "ativos")} />
+          <HubRow href="/admin/gestao/planos" icon={Crown} label="Planos do clube" status={countLabel(plans.length, "ativo", "ativos")} />
         </SettingsGroup>
         <SettingsGroup title="Equipe e agenda">
-          <HubRow href="/admin/gestao/equipe" icon={Users} label="Equipe" status={`${barbers} barbeiro${barbers === 1 ? "" : "s"}`} />
+          <HubRow href="/admin/gestao/equipe" icon={Users} label="Equipe" status={countLabel(barbers, "barbeiro", "barbeiros")} />
           <HubRow
             href="/admin/gestao/horarios"
             icon={Clock}
             label="Horários e regras"
-            status={closures.length > 0 ? `${closures.length} feriado${closures.length > 1 ? "s" : ""}` : undefined}
+            status={closures.length > 0 ? countLabel(closures.length, "feriado", "feriados") : undefined}
           />
         </SettingsGroup>
         <SettingsGroup title="Relacionamento">

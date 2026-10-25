@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Plus, Send, X } from "lucide-react";
+import { ChevronRight, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   cancelInviteAction,
@@ -12,9 +12,10 @@ import {
 } from "@/app/actions/admin";
 import { AvatarRow } from "@/app/perfil/profile-forms";
 import { BottomSheet } from "@/components/kit/bottom-sheet";
+import { ConfirmDialog } from "@/components/kit/confirm-dialog";
 import { WeekScheduleEditor, weekFromShop, type WeekDay } from "@/components/kit/week-schedule-editor";
 import { BarberAvatar } from "@/components/booking/barber-avatar";
-import { Badge } from "@/components/ui/badge";
+import { PageBody, PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,66 +72,82 @@ export function TeamManager({
     });
   }
 
+  async function removeInvite(phoneNumber: string) {
+    const r = await cancelInviteAction(phoneNumber);
+    if (!r.ok) {
+      toast.error(r.error);
+      return false;
+    }
+    toast.success("Convite removido.");
+    router.refresh();
+  }
+
   return (
     <>
-      <Button size="lg" onClick={() => setAdding(true)}>
-        <Plus aria-hidden />
-        Adicionar à equipe
-      </Button>
+      <PageHeader
+        title="Equipe"
+        backHref="/admin/gestao"
+        backLabel="Gestão"
+        actions={
+          <Button size="sm" onClick={() => setAdding(true)}>
+            <Plus aria-hidden />
+            Adicionar pessoa
+          </Button>
+        }
+      />
+      <PageBody>
 
-      <ul className="flex flex-col gap-3">
-        {members.map((m) => (
-          <li key={m.id} className="rounded-lg bg-card shadow-card">
-            <button type="button" onClick={() => setEditing(m)} className="flex w-full items-center gap-3 p-4 text-left">
-              <BarberAvatar name={m.name} image={m.image} size="md" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-bold">{m.name}</p>
-                <p className="truncate text-sm text-ink-subtle">
-                  {roles(m)}
-                  {m.isBarber ? ` · ${m.commissionPercent}%` : ""}
-                </p>
-              </div>
-              <ChevronRight className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
-            </button>
-            {m.isBarber && (
-              <label className="flex items-center justify-between gap-3 border-t border-hairline px-4 py-3 text-sm">
-                <span className="font-semibold">Recebendo agendamentos</span>
-                <Switch checked={m.acceptingBookings} disabled={pending} onCheckedChange={(c) => toggleBookings(m, c)} />
-              </label>
-            )}
-          </li>
-        ))}
-      </ul>
+        <ul className="flex flex-col gap-3">
+          {members.map((m) => (
+            <li key={m.id} className="rounded-lg bg-card shadow-card">
+              <button type="button" onClick={() => setEditing(m)} className="flex w-full items-center gap-3 p-4 text-left">
+                <BarberAvatar name={m.name} image={m.image} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold">{m.name}</p>
+                  <p className="truncate text-sm text-ink-subtle">
+                    {roles(m)}
+                    {m.isBarber ? ` · ${m.commissionPercent}%` : ""}
+                  </p>
+                </div>
+                <ChevronRight className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
+              </button>
+              {m.isBarber && (
+                <label className="flex items-center justify-between gap-3 border-t border-hairline px-4 py-3 text-sm">
+                  <span className="font-semibold">Recebendo agendamentos</span>
+                  <Switch checked={m.acceptingBookings} disabled={pending} onCheckedChange={(c) => toggleBookings(m, c)} />
+                </label>
+              )}
+            </li>
+          ))}
+        </ul>
 
-      {invites.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h2 className="px-1 text-xs font-bold uppercase tracking-wider text-ink-subtle">Convites pendentes</h2>
-          <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
-            {invites.map((i) => (
-              <li key={i.phoneNumber} className="flex items-center gap-3 px-4 py-3 text-sm">
-                <span className="flex-1">
-                  <span className="block font-semibold">{formatBrazilPhone(i.phoneNumber)}</span>
-                  <span className="text-ink-subtle">{roles(i)} · vale no primeiro login</span>
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Cancelar convite"
-                  onClick={() =>
-                    startTransition(async () => {
-                      const r = await cancelInviteAction(i.phoneNumber);
-                      if (!r.ok) return void toast.error(r.error);
-                      router.refresh();
-                    })
-                  }
-                >
-                  <X aria-hidden />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+        {invites.length > 0 && (
+          <section className="flex flex-col gap-2">
+            <h2 className="px-1 text-xs font-bold uppercase tracking-wider text-ink-subtle">Convites pendentes</h2>
+            <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+              {invites.map((i) => (
+                <li key={i.phoneNumber} className="flex items-center gap-3 py-2 pl-4 pr-2 text-sm">
+                  <span className="flex-1">
+                    <span className="block font-semibold">{formatBrazilPhone(i.phoneNumber)}</span>
+                    <span className="text-ink-subtle">{roles(i)} · vale no primeiro login</span>
+                  </span>
+                  <ConfirmDialog
+                    title="Remover este convite?"
+                    description={`${formatBrazilPhone(i.phoneNumber)} não terá acesso de equipe ao entrar no app.`}
+                    confirmLabel="Remover convite"
+                    onConfirm={() => removeInvite(i.phoneNumber)}
+                    trigger={
+                      <Button variant="ghost" size="icon-sm" aria-label="Remover convite" className="text-destructive">
+                        <Trash2 aria-hidden />
+                      </Button>
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </PageBody>
 
       {editing && (
         <MemberSheet key={editing.id} member={editing} self={editing.id === currentUserId} shopWeek={shopWeek} onClose={() => setEditing(null)} />
@@ -169,7 +186,17 @@ function MemberSheet({ member, self, shopWeek, onClose }: { member: Member; self
   }
 
   return (
-    <BottomSheet open onOpenChange={(o) => !o && onClose()} title={member.name} description={member.phoneNumber ? formatBrazilPhone(member.phoneNumber) : undefined}>
+    <BottomSheet
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={member.name}
+      description={member.phoneNumber ? formatBrazilPhone(member.phoneNumber) : undefined}
+      footer={
+        <Button size="lg" className="w-full" disabled={pending} onClick={save}>
+          {pending ? "Salvando…" : "Salvar"}
+        </Button>
+      }
+    >
       <div className="overflow-hidden rounded-lg bg-card shadow-card">
         <AvatarRow userId={member.id} />
       </div>
@@ -239,10 +266,6 @@ function MemberSheet({ member, self, shopWeek, onClose }: { member: Member; self
           </div>
         </>
       )}
-
-      <Button size="lg" disabled={pending} onClick={save}>
-        {pending ? "Salvando…" : "Salvar"}
-      </Button>
     </BottomSheet>
   );
 }
@@ -275,6 +298,12 @@ function InviteSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
       onOpenChange={onOpenChange}
       title="Adicionar à equipe"
       description="Se a pessoa já usa o app, o acesso é liberado na hora. Senão, enviamos um convite pelo WhatsApp."
+      footer={
+        <Button size="lg" className="w-full" disabled={pending || phone.replace(/\D/g, "").length < 10 || (!isBarber && !isAdmin)} onClick={submit}>
+          <Send aria-hidden />
+          {pending ? "Enviando…" : "Adicionar à equipe"}
+        </Button>
+      }
     >
       <div className="flex flex-col gap-2">
         <Label htmlFor="invite-phone">WhatsApp</Label>
@@ -290,11 +319,7 @@ function InviteSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
           <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
         </label>
       </div>
-      <Badge variant="soft" className="w-fit">Comissão e escala você ajusta depois, no card da pessoa</Badge>
-      <Button size="lg" disabled={pending || phone.replace(/\D/g, "").length < 10 || (!isBarber && !isAdmin)} onClick={submit}>
-        <Send aria-hidden />
-        {pending ? "Enviando…" : "Adicionar ou convidar"}
-      </Button>
+      <p className="text-xs text-ink-subtle">Comissão e escala você ajusta depois, no card da pessoa.</p>
     </BottomSheet>
   );
 }

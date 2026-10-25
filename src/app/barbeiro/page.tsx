@@ -10,7 +10,7 @@ import { StatTile } from "@/components/period-filter";
 import { DayList } from "@/components/agenda/day-list";
 import { toTimelineEntries } from "@/components/agenda/to-timeline";
 import { formatPriceCents } from "@/lib/agenda/availability";
-import { formatAgendaDayHeader } from "@/lib/agenda/timeline";
+import { formatDayLong } from "@/lib/agenda/format";
 import { todayDateKeySP } from "@/lib/agenda/timezone";
 import { getFirstName } from "@/lib/profile/display-name";
 
@@ -32,10 +32,7 @@ export default async function BarbeiroHojePage() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <PageHeader
-        title={`Oi, ${getFirstName(user.name)}!`}
-        description={<span className="capitalize">{formatAgendaDayHeader(today)}</span>}
-      />
+      <PageHeader title="Hoje" description={`Oi, ${getFirstName(user.name)}! ${formatDayLong(today)}.`} />
       <PageBody>
         <div className="grid grid-cols-3 gap-3">
           <StatTile label="Agendados" value={String(appointments.length)} />
@@ -43,7 +40,7 @@ export default async function BarbeiroHojePage() {
           <StatTile label="Ganhos" value={formatPriceCents(earnings.totalCommissionCents)} tone="brand" />
         </div>
         {bounds.closedReason && (
-          <p className="rounded-lg bg-warning/12 p-4 text-sm font-semibold text-warning">Barbearia fechada hoje: {bounds.closedReason}.</p>
+          <p className="rounded-lg bg-warning/12 p-4 text-sm font-semibold text-warning-ink">Barbearia fechada hoje: {bounds.closedReason}.</p>
         )}
         <DayList
           dateKey={today}

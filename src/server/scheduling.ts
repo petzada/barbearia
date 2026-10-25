@@ -413,6 +413,7 @@ export type AgendaItem = {
   type: "appointment" | "block";
   barberId: string;
   barberName: string;
+  barberImage: string | null;
   clientId: string | null;
   clientName: string | null;
   clientPhone: string | null;
@@ -433,6 +434,7 @@ const agendaColumns = {
   type: scheduleEntries.type,
   barberId: scheduleEntries.barberId,
   barberName: barberUser.name,
+  barberImage: barberUser.image,
   clientId: scheduleEntries.clientId,
   clientName: clientUser.name,
   clientPhone: clientUser.phoneNumber,

@@ -61,7 +61,7 @@ export function WeekScheduleEditor({
                   aria-label={`Início ${WEEKDAY_LONG[weekday]}`}
                   value={day.startTime}
                   onChange={(e) => update(weekday, { startTime: e.target.value })}
-                  className="h-10 w-28"
+                  className="h-11 w-28"
                 />
                 <span className="text-ink-subtle">–</span>
                 <Input
@@ -70,7 +70,7 @@ export function WeekScheduleEditor({
                   aria-label={`Fim ${WEEKDAY_LONG[weekday]}`}
                   value={day.endTime}
                   onChange={(e) => update(weekday, { endTime: e.target.value })}
-                  className="h-10 w-28"
+                  className="h-11 w-28"
                 />
               </div>
             ) : (

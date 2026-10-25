@@ -53,7 +53,7 @@ export function TemplateEditor({ value, onChange }: { value: string; onChange: (
             key={v.key}
             type="button"
             onClick={() => insert(v.key)}
-            className="h-8 rounded-full bg-teal-soft px-3 text-xs font-bold text-cta transition active:scale-95"
+            className="h-11 rounded-full bg-teal-soft px-4 text-sm font-bold text-cta-ink transition active:scale-95"
           >
             + {v.label}
           </button>
@@ -68,10 +68,10 @@ export function WhatsappBubblePreview({ template, context }: { template: string;
   const text = renderWhatsappTemplate(template, context);
   const now = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }).format(new Date());
   return (
-    <div className="rounded-lg bg-[#e5ddd5] p-4" aria-label="Prévia da mensagem">
-      <div className="ml-auto max-w-[85%] rounded-lg rounded-tr-sm bg-[#dcf8c6] px-3 pb-1.5 pt-2 text-[15px] leading-snug text-[#111] shadow-sm">
+    <div className="rounded-lg bg-wa-wallpaper p-4" aria-label="Prévia da mensagem">
+      <div className="ml-auto max-w-[85%] rounded-lg rounded-tr-sm bg-wa-bubble px-3 pb-1.5 pt-2 text-[15px] leading-snug text-wa-ink shadow-sm">
         <p className="whitespace-pre-wrap" data-testid="bubble-text">{text}</p>
-        <p className="mt-1 text-right text-[11px] text-[#667781]">{now}</p>
+        <p className="mt-1 text-right text-[11px] text-wa-meta">{now}</p>
       </div>
     </div>
   );

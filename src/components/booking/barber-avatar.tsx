@@ -2,7 +2,7 @@
 import { getInitials } from "@/lib/profile/display-name";
 import { cn } from "@/lib/utils";
 
-const sizes = { sm: "size-12 text-sm", md: "size-14 text-base", lg: "size-20 text-xl" } as const;
+const sizes = { xs: "size-9 text-xs", sm: "size-12 text-sm", md: "size-14 text-base", lg: "size-20 text-xl" } as const;
 
 export function BarberAvatar({
   name,
@@ -18,7 +18,7 @@ export function BarberAvatar({
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-teal-soft font-bold text-cta ring-2 ring-white",
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-teal-soft font-bold text-cta-ink ring-2 ring-background",
         sizes[size],
         className,
       )}

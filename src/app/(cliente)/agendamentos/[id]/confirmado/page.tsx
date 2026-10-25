@@ -6,10 +6,10 @@ import { getDb } from "@/server/db";
 import { requireOnboardedUser } from "@/server/auth";
 import { getClientAppointment } from "@/server/scheduling";
 import { BarberAvatar } from "@/components/booking/barber-avatar";
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { paymentLabel } from "@/components/appointments/status";
-import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
+import { PaymentBadge } from "@/components/appointments/status-badge";
+import { formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
+import { formatDayLabel } from "@/lib/agenda/format";
 import { getFirstName } from "@/lib/profile/display-name";
 
 export const metadata: Metadata = { title: "Agendamento confirmado" };
@@ -19,21 +19,20 @@ export default async function ConfirmadoPage({ params }: { params: Promise<{ id:
   const user = await requireOnboardedUser();
   const entry = await getClientAppointment(await getDb(), user.id, id);
   if (!entry) notFound();
-  const payment = paymentLabel(entry.paymentMethod, entry.paymentStatus);
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center gap-6 px-5 pb-8 pt-[calc(3rem+env(safe-area-inset-top))] text-center">
       <span className="flex size-20 items-center justify-center rounded-full bg-success/12">
-        <CheckCircle2 className="size-12 text-success" aria-hidden />
+        <CheckCircle2 className="size-12 text-success-ink" aria-hidden />
       </span>
       <div className="flex flex-col gap-2">
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">Tudo certo, {getFirstName(user.name)}!</h1>
-        <p className="text-[15px] text-ink-subtle">Seu horário está confirmado. Te esperamos!</p>
+        <p className="text-[15px] text-ink-subtle">Seu horário está confirmado. Esperamos você!</p>
       </div>
 
       <div className="flex w-full flex-col gap-4 rounded-lg bg-card p-5 text-left shadow-card">
         <div className="flex items-center gap-3">
-          <BarberAvatar name={entry.barberName} image={null} size="sm" />
+          <BarberAvatar name={entry.barberName} image={entry.barberImage} size="sm" />
           <div className="min-w-0 flex-1">
             <p className="font-bold">{entry.serviceName}</p>
             <p className="text-sm text-ink-subtle">com {entry.barberName}</p>
@@ -41,10 +40,10 @@ export default async function ConfirmadoPage({ params }: { params: Promise<{ id:
           {entry.priceCents != null && <span className="tabular font-extrabold">{formatPriceCents(entry.priceCents)}</span>}
         </div>
         <div className="flex items-center justify-between border-t border-hairline pt-4 text-sm">
-          <span className="font-bold capitalize">
-            {formatSelectableDay(dateKeyFromIsoInSP(entry.startsAt))} · {formatSlotTime(entry.startsAt)}
+          <span className="font-bold">
+            {formatDayLabel(entry.startsAt)} · {formatSlotTime(entry.startsAt)}
           </span>
-          {payment && <Badge variant={payment.variant}>{payment.label}</Badge>}
+          <PaymentBadge method={entry.paymentMethod} status={entry.paymentStatus} />
         </div>
       </div>
 

@@ -1,12 +1,15 @@
 "use client";
 
-import { CalendarX2 } from "lucide-react";
-import { formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
+import Link from "next/link";
+import { CalendarX2, MessageCircle, Users } from "lucide-react";
+import { formatSlotTime } from "@/lib/agenda/availability";
+import { formatDayLong } from "@/lib/agenda/format";
 import { chipClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/page-header";
-import { AvailabilityCalendar } from "./availability-calendar";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { MonthCalendar } from "@/components/kit/month-calendar";
 
 /** Agrupa horários em manhã / tarde / noite (SP). */
 export function groupSlots(slots: number[]) {
@@ -32,8 +35,13 @@ export function ScheduleStep({
   selectedSlot,
   onSelectDay,
   onSelectSlot,
+  onChangeBarber,
+  contactHref,
 }: {
   windowKeys: string[];
+  /** Volta à etapa de barbeiro (omitido quando só há um). */
+  onChangeBarber?: () => void;
+  contactHref: string | null;
   availableDays: ReadonlySet<string> | null;
   day: string | null;
   slots: number[];
@@ -52,20 +60,39 @@ export function ScheduleStep({
         <EmptyState
           icon={CalendarX2}
           title="Agenda cheia por enquanto"
-          description="Não há horários livres nos próximos dias com este barbeiro. Tente outro barbeiro ou fale com a barbearia."
+          description="Não há horários livres nos próximos dias com este barbeiro."
+          action={
+            onChangeBarber ? (
+              <Button onClick={onChangeBarber}>
+                <Users aria-hidden />
+                Escolher outro barbeiro
+              </Button>
+            ) : contactHref ? (
+              <a href={contactHref} target="_blank" rel="noreferrer" className={buttonVariants()}>
+                <MessageCircle aria-hidden />
+                Falar com a barbearia
+              </a>
+            ) : (
+              <Link href="/inicio" className={buttonVariants({ variant: "outline" })}>
+                Voltar ao início
+              </Link>
+            )
+          }
         />
       ) : (
         <>
-          <AvailabilityCalendar
-            key={windowKeys[0]}
-            windowKeys={windowKeys}
-            availableKeys={availableDays}
-            selected={day}
-            onSelect={onSelectDay}
-          />
+          <div className="rounded-lg bg-card p-4 shadow-card">
+            <MonthCalendar
+              key={windowKeys[0]}
+              range={{ from: windowKeys[0], to: windowKeys[windowKeys.length - 1] }}
+              availableKeys={availableDays}
+              selected={day}
+              onSelect={onSelectDay}
+            />
+          </div>
           {day && (
             <div className="flex flex-col gap-4">
-              <p className="text-sm font-bold capitalize text-ink-subtle">{formatSelectableDay(day)}</p>
+              <p className="text-sm font-bold text-ink-subtle">{formatDayLong(day)}</p>
               {loadingSlots ? (
                 <div className="grid grid-cols-4 gap-2" aria-label="Carregando horários">
                   {Array.from({ length: 8 }, (_, i) => (
@@ -73,9 +100,12 @@ export function ScheduleStep({
                   ))}
                 </div>
               ) : slots.length === 0 ? (
-                <p className="rounded-lg bg-card p-5 text-center text-sm text-ink-subtle shadow-card">
-                  Os horários deste dia acabaram de ser preenchidos. Escolha outro dia.
-                </p>
+                <EmptyState
+                  compact
+                  icon={CalendarX2}
+                  title="Dia lotado"
+                  description="Os horários deste dia acabaram de ser preenchidos. Escolha outro dia no calendário."
+                />
               ) : (
                 groups.map((group) => (
                   <div key={group.label} className="flex flex-col gap-2">

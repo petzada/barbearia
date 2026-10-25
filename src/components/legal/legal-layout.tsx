@@ -17,7 +17,7 @@ export function LegalLayout({
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-[calc(3rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pt-12">
       <header className="flex flex-col gap-3">
-        <Link href="/" className="-ml-1 inline-flex h-10 w-fit items-center gap-1 text-sm font-semibold text-cta">
+        <Link href="/" className="-ml-1 inline-flex h-11 w-fit items-center gap-1 text-sm font-semibold text-cta-ink">
           <ChevronLeft className="size-5" aria-hidden />
           Voltar
         </Link>
@@ -31,7 +31,7 @@ export function LegalLayout({
         <ol className="flex flex-col gap-2 text-sm">
           {sections.map((s) => (
             <li key={s.id}>
-              <a href={`#${s.id}`} className="font-semibold text-cta hover:underline">
+              <a href={`#${s.id}`} className="font-semibold text-cta-ink hover:underline">
                 {s.title}
               </a>
             </li>

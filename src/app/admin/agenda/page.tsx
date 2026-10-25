@@ -4,13 +4,14 @@ import { requireAdminUser, toActor } from "@/server/auth";
 import { listAgendaForDay } from "@/server/scheduling";
 import { listBarbers } from "@/server/team";
 import { dayBoundsFor, resolveDateKey, sheetServices } from "@/server/agenda-page";
-import { PageBody, PageHeader } from "@/components/page-header";
-import { EmptyState } from "@/components/page-header";
+import Link from "next/link";
+import { EmptyState, PageBody, PageHeader } from "@/components/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import { AgendaView } from "@/components/agenda/agenda-view";
 import { toTimelineEntries } from "@/components/agenda/to-timeline";
 import { Users } from "lucide-react";
 
-export const metadata: Metadata = { title: "Agenda geral" };
+export const metadata: Metadata = { title: "Agenda" };
 
 export default async function AdminAgendaPage({
   searchParams,
@@ -39,7 +40,16 @@ export default async function AdminAgendaPage({
       <PageHeader title="Agenda" />
       <PageBody>
         {columns.length === 0 ? (
-          <EmptyState icon={Users} title="Nenhum barbeiro na equipe" description="Adicione barbeiros em Gestão › Equipe." />
+          <EmptyState
+            icon={Users}
+            title="Nenhum barbeiro na equipe"
+            description="Adicione barbeiros para montar a agenda."
+            action={
+              <Link href="/admin/gestao/equipe" className={buttonVariants({ size: "lg" })}>
+                Abrir equipe
+              </Link>
+            }
+          />
         ) : (
           <AgendaView
             basePath="/admin/agenda"

@@ -1,6 +1,7 @@
 import { getDb } from "@/server/db";
 import { getCurrentUser, toActor } from "@/server/auth";
-import { listCommissionLines, listReceipts, PAYMENT_METHOD_LABELS } from "@/server/finance";
+import { listCommissionLines, listReceipts } from "@/server/finance";
+import { paymentMethodLabel } from "@/lib/payments";
 import { centsToDecimal, toCsv } from "@/lib/csv";
 import { dateKeyFromIsoInSP, formatSlotTime } from "@/lib/agenda/availability";
 import { resolvePeriod } from "@/lib/periods";
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
             fmtDate(r.paidAt),
             r.clientName,
             r.kind === "subscription" ? "Clube" : "Atendimento",
-            PAYMENT_METHOD_LABELS[r.method] ?? r.method,
+            paymentMethodLabel(r.method),
             centsToDecimal(r.amountCents),
           ]),
         );

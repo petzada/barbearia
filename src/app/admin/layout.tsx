@@ -5,7 +5,7 @@ import { availableModes } from "@/lib/modes";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdminUser();
   return (
-    <AppShell mode="admin" modes={availableModes(user)} userName={user.name}>
+    <AppShell mode="admin" modes={availableModes(user)} userName={user.name} userImage={user.image ?? null}>
       {children}
     </AppShell>
   );

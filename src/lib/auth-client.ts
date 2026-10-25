@@ -22,3 +22,15 @@ export function authErrorMessage(error: { message?: string; code?: string } | nu
   }
   return error?.message || "Não foi possível concluir. Tente novamente.";
 }
+
+const FIELD_ERROR_CODES = ["INVALID_OTP", "OTP_EXPIRED", "TOO_MANY_ATTEMPTS", "INVALID_PHONE_NUMBER", "PHONE_NUMBER_EXIST"];
+
+/**
+ * Regra de feedback do login: erro do que a pessoa digitou (número, código)
+ * aparece inline embaixo do campo; falha de serviço (WhatsApp fora do ar,
+ * rede, limite de envios, Google) aparece em toast.
+ */
+export function isFieldAuthError(error: { code?: string } | null | undefined): boolean {
+  const code = error?.code ?? "";
+  return FIELD_ERROR_CODES.some((c) => code.includes(c));
+}

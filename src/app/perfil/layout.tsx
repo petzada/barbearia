@@ -8,7 +8,7 @@ export default async function PerfilLayout({ children }: { children: React.React
   const user = await requireOnboardedUser();
   const mode = resolveMode(user, (await cookies()).get(MODE_COOKIE)?.value ?? "cliente");
   return (
-    <AppShell mode={mode} modes={availableModes(user)} userName={user.name}>
+    <AppShell mode={mode} modes={availableModes(user)} userName={user.name} userImage={user.image ?? null}>
       {children}
     </AppShell>
   );

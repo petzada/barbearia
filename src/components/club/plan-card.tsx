@@ -18,27 +18,27 @@ export type PlanCardData = {
 export function PlanCard({ plan, footer, header }: { plan: PlanCardData; footer?: ReactNode; header?: ReactNode }) {
   const dark = plan.highlighted;
   return (
-    <article className={cn("flex flex-col gap-4 rounded-lg p-6 shadow-card", dark ? "bg-ink text-white ring-2 ring-cta" : "bg-card")}>
+    <article className={cn("flex w-full flex-col gap-4 rounded-lg p-6 shadow-card", dark ? "bg-surface-dark text-on-dark ring-2 ring-cta" : "bg-card")}>
       {header}
       {plan.highlighted && (
-        <Badge className="w-fit bg-cta text-cta-foreground">
+        <Badge variant="brand">
           <Sparkles aria-hidden />
           Recomendado
         </Badge>
       )}
       <div>
         <h2 className="text-xl font-extrabold">{plan.name || "Nome do plano"}</h2>
-        {plan.description && <p className={cn("text-sm", dark ? "text-white/70" : "text-ink-subtle")}>{plan.description}</p>}
+        {plan.description && <p className={cn("text-sm", dark ? "text-on-dark/70" : "text-ink-subtle")}>{plan.description}</p>}
       </div>
       <p>
-        <span className="tabular text-4xl font-extrabold tracking-tight">{formatPriceCents(plan.priceCents)}</span>
-        <span className={cn("text-sm", dark ? "text-white/60" : "text-ink-subtle")}> /{CYCLE_LABELS[plan.cycle]}</span>
+        <span className="text-display">{formatPriceCents(plan.priceCents)}</span>
+        <span className={cn("text-sm", dark ? "text-on-dark/70" : "text-ink-subtle")}> /{CYCLE_LABELS[plan.cycle]}</span>
       </p>
       {plan.benefits.length > 0 && (
         <ul className="flex flex-col gap-2">
           {plan.benefits.map((b) => (
             <li key={b} className="flex items-start gap-2 text-[15px]">
-              <Check className="mt-0.5 size-4 shrink-0 text-cta" aria-hidden />
+              <Check className={cn("mt-0.5 size-4 shrink-0", dark ? "text-cta-on-dark" : "text-cta-ink")} aria-hidden />
               {b}
             </li>
           ))}

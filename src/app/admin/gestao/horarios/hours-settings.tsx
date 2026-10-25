@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { ChevronRight, Copy, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { addClosureAction, removeClosureAction, saveBusinessHoursAction, saveShopSettingsAction } from "@/app/actions/admin";
-import { rowClass, SettingsGroup } from "@/app/perfil/settings-list";
+import { rowClass, SettingsAction, SettingsGroup } from "@/components/kit/settings-list";
 import { BottomSheet } from "@/components/kit/bottom-sheet";
+import { ConfirmDialog } from "@/components/kit/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { formatMinutesShort, formatSelectableDay } from "@/lib/agenda/availability";
+import { formatMinutesShort } from "@/lib/agenda/availability";
+import { formatDayLabel, formatHoursRange } from "@/lib/agenda/format";
 import { todayDateKeySP } from "@/lib/agenda/timezone";
 import { WEEKDAY_LONG } from "@/lib/agenda/week";
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
@@ -58,6 +60,7 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
   const [closureOpen, setClosureOpen] = useState(false);
   const [closureDate, setClosureDate] = useState(todayDateKeySP());
   const [closureReason, setClosureReason] = useState("");
+  const [ruleValue, setRuleValue] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
 
   const done = (message: string) => {
@@ -90,6 +93,15 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
 
   const monday = days.find((d) => d.weekday === 1);
 
+  async function removeClosure(dateKey: string) {
+    const r = await removeClosureAction(dateKey);
+    if (!r.ok) {
+      toast.error(r.error);
+      return false;
+    }
+    done("Feriado removido.");
+  }
+
   return (
     <>
       <SettingsGroup title="Funcionamento">
@@ -105,62 +117,61 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
               />
               <button type="button" disabled={d.isClosed} onClick={() => setEditingDay(d)} className="flex flex-1 items-center gap-3 text-left disabled:cursor-default">
                 <span className={cn("flex-1 font-semibold", d.isClosed && "text-ink-tertiary")}>{WEEKDAY_LONG[weekday]}</span>
-                <span className="tabular text-sm text-ink-subtle">{d.isClosed ? "Fechado" : `${d.openTime} – ${d.closeTime}`}</span>
+                <span className="tabular text-sm text-ink-subtle">{d.isClosed ? "Fechado" : formatHoursRange(d.openTime, d.closeTime)}</span>
                 {!d.isClosed && <ChevronRight className="size-4 text-ink-tertiary" aria-hidden />}
               </button>
             </div>
           );
         })}
+        {monday && !monday.isClosed && (
+          <SettingsAction
+            icon={Copy}
+            label="Copiar segunda para dias úteis"
+            disabled={pending}
+            onClick={() =>
+              saveWeek(
+                days.map((x) => (x.weekday >= 2 && x.weekday <= 5 ? { ...x, openTime: monday.openTime, closeTime: monday.closeTime, isClosed: false } : x)),
+                "Horário de segunda copiado para os dias úteis.",
+              )
+            }
+          />
+        )}
       </SettingsGroup>
-      {monday && !monday.isClosed && (
-        <Button
-          variant="outline"
-          disabled={pending}
-          onClick={() =>
-            saveWeek(
-              days.map((x) => (x.weekday >= 2 && x.weekday <= 5 ? { ...x, openTime: monday.openTime, closeTime: monday.closeTime, isClosed: false } : x)),
-              "Horário de segunda copiado para os dias úteis.",
-            )
-          }
-        >
-          <Copy aria-hidden />
-          Copiar segunda para dias úteis
-        </Button>
-      )}
 
       <SettingsGroup title="Feriados e fechamentos">
         {closures.map((c) => (
-          <div key={c.dateKey} className={rowClass}>
+          <div key={c.dateKey} className={cn(rowClass, "py-1.5 pr-2")}>
             <span className="flex-1">
-              <span className="block font-semibold capitalize">{formatSelectableDay(c.dateKey)}</span>
+              <span className="block font-semibold">{formatDayLabel(c.dateKey)}</span>
               <span className="text-sm text-ink-subtle">{c.reason}</span>
             </span>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Remover fechamento de ${formatSelectableDay(c.dateKey)}`}
-              disabled={pending}
-              onClick={() =>
-                startTransition(async () => {
-                  const r = await removeClosureAction(c.dateKey);
-                  if (!r.ok) return void toast.error(r.error);
-                  done("Fechamento removido.");
-                })
+            <ConfirmDialog
+              title="Remover este feriado?"
+              description={`Em ${formatDayLabel(c.dateKey)} os clientes voltam a poder agendar.`}
+              confirmLabel="Remover feriado"
+              onConfirm={() => removeClosure(c.dateKey)}
+              trigger={
+                <Button variant="ghost" size="icon-sm" aria-label={`Remover feriado de ${formatDayLabel(c.dateKey)}`} className="text-destructive">
+                  <Trash2 aria-hidden />
+                </Button>
               }
-            >
-              <Trash2 className="text-destructive" aria-hidden />
-            </Button>
+            />
           </div>
         ))}
-        <button type="button" onClick={() => setClosureOpen(true)} className={cn(rowClass, "font-semibold text-cta active:bg-muted")}>
-          <Plus className="size-5" aria-hidden />
-          Adicionar feriado ou fechamento
-        </button>
+        <SettingsAction icon={Plus} label="Adicionar feriado ou fechamento" onClick={() => setClosureOpen(true)} />
       </SettingsGroup>
 
       <SettingsGroup title="Regras de agendamento">
         {RULES.map((r) => (
-          <button key={r.key} type="button" onClick={() => setRule(r)} className={cn(rowClass, "active:bg-muted")}>
+          <button
+            key={r.key}
+            type="button"
+            onClick={() => {
+              setRule(r);
+              setRuleValue(settings[r.key]);
+            }}
+            className={rowClass}
+          >
             <span className="flex-1 font-semibold">{r.label}</span>
             <span className="text-sm text-ink-subtle">{r.format(settings[r.key])}</span>
             <ChevronRight className="size-4 text-ink-tertiary" aria-hidden />
@@ -180,7 +191,7 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
                 setInfo(i);
                 setInfoValue(i.key === "phone" ? maskBrazilPhoneInput(raw ?? "") : raw ?? "");
               }}
-              className={cn(rowClass, "active:bg-muted")}
+              className={rowClass}
             >
               <span className="w-24 shrink-0 font-semibold">{i.label}</span>
               <span className="min-w-0 flex-1 truncate text-right text-sm text-ink-subtle">{value || "—"}</span>
@@ -200,17 +211,31 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
         }}
       />
 
-      <BottomSheet open={rule !== null} onOpenChange={(o) => !o && setRule(null)} title={rule?.label ?? ""} description={rule?.help}>
+      <BottomSheet
+        open={rule !== null}
+        onOpenChange={(o) => !o && setRule(null)}
+        title={rule?.label ?? ""}
+        description={rule?.help}
+        footer={
+          <Button
+            size="lg"
+            className="w-full"
+            disabled={pending || !rule || ruleValue === null || ruleValue === settings[rule.key]}
+            onClick={() => rule && ruleValue !== null && saveSettings({ [rule.key]: ruleValue })}
+          >
+            {pending ? "Salvando…" : "Salvar"}
+          </Button>
+        }
+      >
         {rule && (
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {rule.options.map((v) => (
               <button
                 key={v}
                 type="button"
-                aria-pressed={settings[rule.key] === v}
-                disabled={pending}
-                onClick={() => saveSettings({ [rule.key]: v })}
-                className={cn("flex h-12 items-center px-4", chipClass)}
+                aria-pressed={ruleValue === v}
+                onClick={() => setRuleValue(v)}
+                className={cn("px-4", chipClass)}
               >
                 {rule.format(v)}
               </button>
@@ -219,9 +244,25 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
         )}
       </BottomSheet>
 
-      <BottomSheet open={info !== null} onOpenChange={(o) => !o && setInfo(null)} title={info?.label ?? ""}>
+      <BottomSheet
+        open={info !== null}
+        onOpenChange={(o) => !o && setInfo(null)}
+        title={info?.label ?? ""}
+        footer={
+          <Button
+            type="submit"
+            form="info-form"
+            size="lg"
+            className="w-full"
+            disabled={pending || (info?.key === "shopName" && infoValue.trim().length < 2)}
+          >
+            {pending ? "Salvando…" : "Salvar"}
+          </Button>
+        }
+      >
         {info && (
           <form
+            id="info-form"
             className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
@@ -232,18 +273,39 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
             <Input
               autoFocus
               type={info.key === "phone" ? "tel" : "text"}
+              aria-label={info.label}
               placeholder={info.placeholder}
               value={infoValue}
               onChange={(e) => setInfoValue(info.key === "phone" ? maskBrazilPhoneInput(e.target.value) : e.target.value)}
             />
-            <Button type="submit" size="lg" disabled={pending || (info.key === "shopName" && infoValue.trim().length < 2)}>
-              Salvar
-            </Button>
           </form>
         )}
       </BottomSheet>
 
-      <BottomSheet open={closureOpen} onOpenChange={setClosureOpen} title="Feriado ou fechamento" description="Nesse dia ninguém consegue agendar.">
+      <BottomSheet
+        open={closureOpen}
+        onOpenChange={setClosureOpen}
+        title="Novo feriado"
+        description="Nesse dia ninguém consegue agendar."
+        footer={
+          <Button
+            size="lg"
+            className="w-full"
+            disabled={pending || closureReason.trim().length < 2}
+            onClick={() =>
+              startTransition(async () => {
+                const r = await addClosureAction({ dateKey: closureDate, reason: closureReason });
+                if (!r.ok) return void toast.error(r.error);
+                setClosureOpen(false);
+                setClosureReason("");
+                done("Feriado adicionado.");
+              })
+            }
+          >
+            {pending ? "Adicionando…" : "Adicionar feriado"}
+          </Button>
+        }
+      >
         <div className="flex flex-col gap-2">
           <Label htmlFor="closure-date">Data</Label>
           <Input id="closure-date" type="date" min={todayDateKeySP()} value={closureDate} onChange={(e) => setClosureDate(e.target.value)} />
@@ -252,21 +314,6 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
           <Label htmlFor="closure-reason">Motivo</Label>
           <Input id="closure-reason" placeholder="Ex.: Natal" value={closureReason} onChange={(e) => setClosureReason(e.target.value)} maxLength={60} />
         </div>
-        <Button
-          size="lg"
-          disabled={pending || closureReason.trim().length < 2}
-          onClick={() =>
-            startTransition(async () => {
-              const r = await addClosureAction({ dateKey: closureDate, reason: closureReason });
-              if (!r.ok) return void toast.error(r.error);
-              setClosureOpen(false);
-              setClosureReason("");
-              done("Fechamento adicionado.");
-            })
-          }
-        >
-          Adicionar
-        </Button>
       </BottomSheet>
     </>
   );
@@ -276,7 +323,17 @@ function DaySheet({ day, onClose, onSave }: { day: Day | null; onClose: () => vo
   const [open, setOpen] = useState(day?.openTime ?? "09:00");
   const [close, setClose] = useState(day?.closeTime ?? "19:00");
   return (
-    <BottomSheet open={day !== null} onOpenChange={(o) => !o && onClose()} title={day ? WEEKDAY_LONG[day.weekday] : ""} description="Horário de funcionamento">
+    <BottomSheet
+      open={day !== null}
+      onOpenChange={(o) => !o && onClose()}
+      title={day ? WEEKDAY_LONG[day.weekday] : ""}
+      description="Horário de funcionamento"
+      footer={
+        <Button size="lg" className="w-full" disabled={!day || close <= open} onClick={() => day && onSave({ ...day, openTime: open, closeTime: close, isClosed: false })}>
+          Salvar
+        </Button>
+      }
+    >
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="day-open">Abre</Label>
@@ -287,9 +344,6 @@ function DaySheet({ day, onClose, onSave }: { day: Day | null; onClose: () => vo
           <Input id="day-close" type="time" step={300} value={close} onChange={(e) => setClose(e.target.value)} />
         </div>
       </div>
-      <Button size="lg" disabled={!day || close <= open} onClick={() => day && onSave({ ...day, openTime: open, closeTime: close, isClosed: false })}>
-        Salvar
-      </Button>
     </BottomSheet>
   );
 }

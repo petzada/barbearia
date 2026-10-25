@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
-import { AtSign, Check, Clock, MapPin, MessageCircle } from "lucide-react";
+import { AtSign, Clock, MapPin, MessageCircle } from "lucide-react";
 import { getDb } from "@/server/db";
 import { getCurrentUser } from "@/server/auth";
 import { listServices } from "@/server/catalog";
@@ -9,12 +9,11 @@ import { listPlans } from "@/server/payments/service";
 import { getBusinessHours, getShopSettings } from "@/server/settings";
 import { BrandMark } from "@/components/brand-mark";
 import { StickyCta } from "@/components/landing/sticky-cta";
-import { Badge } from "@/components/ui/badge";
+import { PlanCard } from "@/components/club/plan-card";
 import { buttonVariants } from "@/components/ui/button";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { summarizeWeek } from "@/lib/agenda/week";
 import { getServiceIcon } from "@/lib/services/icons";
-import { CYCLE_LABELS } from "@/lib/plans";
 import { formatBrazilPhone, normalizeBrazilPhone } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +36,7 @@ export default async function LandingPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       {/* Hero — foto em tela cheia */}
-      <section className="relative flex min-h-dvh flex-col overflow-hidden bg-black text-white">
+      <section className="relative flex min-h-dvh flex-col overflow-hidden bg-surface-dark text-on-dark">
         <Image
           src="/images/hero.webp"
           alt="Interior da Barbearia do Moura"
@@ -54,22 +53,22 @@ export default async function LandingPage() {
           <BrandMark inverted />
           <a
             href={user ? "/entrar" : "/login"}
-            className="rounded-md bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/25"
+            className="inline-flex min-h-11 items-center rounded-md bg-on-dark/15 px-4 text-sm font-semibold backdrop-blur transition hover:bg-on-dark/25"
           >
             {user ? "Abrir app" : "Entrar"}
           </a>
         </header>
         <div className="relative z-10 mt-auto flex flex-col items-center gap-3 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] text-center lg:pb-16">
-          <h1 className="text-[40px] font-extrabold leading-[1.05] tracking-tight lg:text-6xl">
+          <h1 className="text-display lg:text-6xl">
             {settings.shopName}
           </h1>
-          <p className="text-lg text-white/80">Estilo, tradição e atitude</p>
+          <p className="text-lg text-on-dark/80">Estilo, tradição e atitude</p>
           <div id="hero-cta" className="mt-4 flex w-full max-w-sm flex-col gap-3">
             <Link href={bookHref} className={buttonVariants({ size: "lg", className: "w-full" })}>
               Agendar horário
             </Link>
             {!user && (
-              <Link href="/login" className="py-2 text-sm font-semibold text-white/80 hover:text-white">
+              <Link href="/login" className="inline-flex min-h-11 items-center justify-center text-sm font-semibold text-on-dark/80 hover:text-on-dark">
                 Já tenho conta
               </Link>
             )}
@@ -81,7 +80,7 @@ export default async function LandingPage() {
         {/* Serviços */}
         <section aria-labelledby="servicos" className="flex flex-col gap-5">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-cta">Serviços</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-cta-ink">Serviços</p>
             <h2 id="servicos" className="text-[28px] font-extrabold tracking-tight">
               O que fazemos
             </h2>
@@ -91,7 +90,7 @@ export default async function LandingPage() {
               const Icon = getServiceIcon(s.name);
               return (
                 <li key={s.id} className="flex items-center gap-4 rounded-lg bg-card p-4 shadow-card">
-                  <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-teal-soft text-cta">
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-teal-soft text-cta-ink">
                     <Icon className="size-5" aria-hidden />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -113,50 +112,29 @@ export default async function LandingPage() {
         {plans.length > 0 && (
           <section aria-labelledby="clube" className="flex flex-col gap-5">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-cta">Clube Moura</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-cta-ink">Clube Moura</p>
               <h2 id="clube" className="text-[28px] font-extrabold tracking-tight">
                 Assine e economize
               </h2>
             </div>
             <ul className="scrollbar-none -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
               {plans.map((plan) => (
-                <li
-                  key={plan.id}
-                  className={cn(
-                    "flex w-[78%] shrink-0 snap-center flex-col gap-4 rounded-lg p-6 shadow-card sm:w-[46%] lg:w-auto",
-                    plan.highlighted ? "bg-ink text-white" : "bg-card",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-lg font-extrabold">{plan.name}</p>
-                    {plan.highlighted && <Badge className="bg-cta text-cta-foreground">Recomendado</Badge>}
-                  </div>
-                  <p>
-                    <span className="tabular text-3xl font-extrabold tracking-tight">{formatPriceCents(plan.priceCents)}</span>
-                    <span className={cn("text-sm", plan.highlighted ? "text-white/60" : "text-ink-subtle")}>
-                      {" "}
-                      /{CYCLE_LABELS[plan.cycle]}
-                    </span>
-                  </p>
-                  {plan.benefits.length > 0 && (
-                    <ul className="flex flex-col gap-2 text-sm">
-                      {plan.benefits.map((b) => (
-                        <li key={b} className="flex items-start gap-2">
-                          <Check className="mt-0.5 size-4 shrink-0 text-cta" aria-hidden />
-                          {b}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <Link
-                    href={user ? "/clube" : "/login"}
-                    className={buttonVariants({
-                      variant: plan.highlighted ? "default" : "outline",
-                      className: "mt-auto w-full",
-                    })}
-                  >
-                    Quero assinar
-                  </Link>
+                <li key={plan.id} className="flex w-[78%] shrink-0 snap-center sm:w-[46%] lg:w-auto">
+                  <PlanCard
+                    plan={plan}
+                    footer={
+                      <Link
+                        href={user ? "/clube" : "/login"}
+                        className={buttonVariants({
+                          size: "lg",
+                          variant: plan.highlighted ? "default" : "outline",
+                          className: "mt-auto w-full",
+                        })}
+                      >
+                        Assinar
+                      </Link>
+                    }
+                  />
                 </li>
               ))}
             </ul>
@@ -166,7 +144,7 @@ export default async function LandingPage() {
         {/* Onde estamos */}
         <section aria-labelledby="onde" className="flex flex-col gap-5">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-cta">Visite</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-cta-ink">Visite</p>
             <h2 id="onde" className="text-[28px] font-extrabold tracking-tight">
               Onde estamos
             </h2>
@@ -180,16 +158,16 @@ export default async function LandingPage() {
                   rel="noreferrer"
                   className="flex items-start gap-3 font-semibold"
                 >
-                  <MapPin className="mt-0.5 size-5 shrink-0 text-cta" aria-hidden />
+                  <MapPin className="mt-0.5 size-5 shrink-0 text-cta-ink" aria-hidden />
                   <span>
                     {settings.address}
-                    <span className="block text-sm font-semibold text-cta">Abrir no mapa</span>
+                    <span className="block text-sm font-semibold text-cta-ink">Abrir no mapa</span>
                   </span>
                 </a>
               )}
               {whatsapp && (
                 <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 font-semibold">
-                  <MessageCircle className="size-5 shrink-0 text-success" aria-hidden />
+                  <MessageCircle className="size-5 shrink-0 text-success-ink" aria-hidden />
                   {formatBrazilPhone(settings.phone)}
                 </a>
               )}
@@ -206,7 +184,7 @@ export default async function LandingPage() {
             </div>
             <div className="rounded-lg bg-card p-5 shadow-card">
               <p className="mb-3 flex items-center gap-2 font-bold">
-                <Clock className="size-5 text-cta" aria-hidden />
+                <Clock className="size-5 text-cta-ink" aria-hidden />
                 Horário de funcionamento
               </p>
               <dl className="flex flex-col gap-2 text-sm">
@@ -230,10 +208,10 @@ export default async function LandingPage() {
             © {new Date().getFullYear()} {settings.shopName} · Mauá/SP
           </p>
           <nav className="flex gap-4 font-semibold">
-            <Link href="/termos" className="hover:text-ink">
+            <Link href="/termos" className="inline-flex min-h-11 items-center hover:text-ink">
               Termos de uso
             </Link>
-            <Link href="/privacidade" className="hover:text-ink">
+            <Link href="/privacidade" className="inline-flex min-h-11 items-center hover:text-ink">
               Privacidade
             </Link>
           </nav>

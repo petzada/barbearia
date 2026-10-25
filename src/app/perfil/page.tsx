@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { cookies } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { FileText, MessageCircle, Shield } from "lucide-react";
@@ -14,7 +13,8 @@ import { BarberAvatar } from "@/components/booking/barber-avatar";
 import { MODE_LABELS } from "@/components/shell/nav-config";
 import { availableModes, MODE_COOKIE, resolveMode } from "@/lib/modes";
 import { formatBrazilPhone, normalizeBrazilPhone } from "@/lib/phone";
-import { cn } from "@/lib/utils";
+import { capitalize } from "@/lib/agenda/format";
+import { SegmentedNav } from "@/components/kit/segmented";
 import {
   AvatarRow,
   DeleteAccountButton,
@@ -23,7 +23,7 @@ import {
   RemindersRow,
   SignOutButton,
 } from "./profile-forms";
-import { SettingsGroup, SettingsLink } from "./settings-list";
+import { SettingsGroup, SettingsLink } from "@/components/kit/settings-list";
 
 export const metadata: Metadata = { title: "Perfil" };
 
@@ -51,26 +51,16 @@ export default async function PerfilPage() {
         </section>
 
         {modes.length > 1 && (
-          <nav
-            aria-label="Modo de uso"
-            className="grid gap-1 rounded-lg bg-muted p-1"
-            style={{ gridTemplateColumns: `repeat(${modes.length}, 1fr)` }}
-          >
-            {modes.map((m) => (
-              <Link
-                key={m}
-                href={`/modo/${m}`}
-                prefetch={false}
-                aria-current={m === current ? "true" : undefined}
-                className={cn(
-                  "flex h-11 items-center justify-center rounded-md text-sm font-bold transition",
-                  m === current ? "bg-card text-ink shadow-card" : "text-ink-subtle",
-                )}
-              >
-                {MODE_LABELS[m].replace("Modo ", "").replace(/^./, (c) => c.toUpperCase())}
-              </Link>
-            ))}
-          </nav>
+          <SegmentedNav
+            label="Modo de uso"
+            items={modes.map((m) => ({
+              href: `/modo/${m}`,
+              // A rota grava o cookie do modo: nunca pré-carregar.
+              prefetch: false,
+              current: m === current,
+              label: capitalize(MODE_LABELS[m].replace("Modo ", "")),
+            }))}
+          />
         )}
 
         <SettingsGroup title="Conta">

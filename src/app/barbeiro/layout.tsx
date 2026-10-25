@@ -5,7 +5,7 @@ import { availableModes } from "@/lib/modes";
 export default async function BarbeiroLayout({ children }: { children: React.ReactNode }) {
   const user = await requireBarberUser();
   return (
-    <AppShell mode="barbeiro" modes={availableModes(user)} userName={user.name}>
+    <AppShell mode="barbeiro" modes={availableModes(user)} userName={user.name} userImage={user.image ?? null}>
       {children}
     </AppShell>
   );

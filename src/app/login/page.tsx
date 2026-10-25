@@ -14,7 +14,7 @@ export default async function LoginPage() {
 
   return (
     <main className="flex min-h-dvh flex-col bg-background lg:flex-row">
-      <div className="relative h-[40dvh] min-h-64 shrink-0 overflow-hidden bg-black lg:h-auto lg:min-h-dvh lg:flex-1">
+      <div className="relative h-[40dvh] min-h-64 shrink-0 overflow-hidden bg-surface-dark lg:h-auto lg:min-h-dvh lg:flex-1">
         <Image
           src="/images/login.webp"
           alt="Interior da Barbearia do Moura"

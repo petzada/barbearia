@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
+import { CalendarOff, ChevronRight, Plus } from "lucide-react";
 import { buildDayRows } from "@/lib/agenda/day-slots";
 import { formatSlotTime } from "@/lib/agenda/availability";
 import { cn } from "@/lib/utils";
-import { ENTRY_STATUS_BADGE } from "@/components/appointments/status";
+import { ENTRY_STATUS_BADGE, STATUS_ACCENT } from "@/components/appointments/status";
+import { StatusBadge } from "@/components/appointments/status-badge";
+import { EmptyState } from "@/components/page-header";
+import { rowClass, rowGroupClass } from "@/lib/ui/classes";
 import type { EntryStatus } from "@/server/db/schema";
 import type { TimelineEntry } from "./agenda-day-timeline";
 import { EntrySheet } from "./entry-sheet";
@@ -44,23 +47,31 @@ export function DayList({
   );
 
   if (rows.length === 0) {
-    return <p className="rounded-lg bg-card p-5 text-center text-sm text-ink-subtle shadow-card">Sem expediente hoje.</p>;
+    return (
+      <EmptyState
+        compact
+        icon={CalendarOff}
+        title="Sem expediente hoje"
+        description="Os horários deste dia estão fechados na sua escala ou no funcionamento da barbearia."
+      />
+    );
   }
 
   return (
     <>
-      <ol className="divide-y divide-hairline overflow-hidden rounded-lg bg-card shadow-card" aria-label="Horários de hoje">
+      <ol className={rowGroupClass} aria-label="Horários de hoje">
         {rows.map((row) =>
           row.kind === "free" ? (
             <li key={`free-${row.startMin}`}>
               <button
                 type="button"
                 onClick={() => setAddAt(row.time)}
-                className="flex min-h-12 w-full items-center gap-4 px-4 text-left text-ink-tertiary active:bg-muted"
+                aria-label={`${row.time}, livre: encaixe ou bloqueio`}
+                className={cn(rowClass, "gap-4 text-ink-subtle")}
               >
                 <span className="tabular w-12 shrink-0 text-sm font-bold">{row.time}</span>
-                <span className="flex-1 text-sm">— livre —</span>
-                <Plus className="size-4 text-cta" aria-label={`Encaixe às ${row.time}`} />
+                <span className="flex-1 text-sm">Livre</span>
+                <Plus className="size-5 text-cta-ink" aria-hidden />
               </button>
             </li>
           ) : (
@@ -71,13 +82,15 @@ export function DayList({
                   setOpenedAt(Date.now());
                   setSelected(row.entry);
                 }}
-                className="flex min-h-16 w-full items-center gap-4 px-4 py-3 text-left active:bg-muted"
+                className={cn(rowClass, "min-h-16 gap-4")}
               >
                 <span className="tabular w-12 shrink-0 text-sm font-extrabold">{formatSlotTime(row.entry.starts_at)}</span>
                 <span
                   className={cn(
                     "h-10 w-1 shrink-0 rounded-full",
-                    row.entry.type === "block" ? "bg-hairline-strong" : row.entry.status === "booked" ? "bg-cta" : "bg-success",
+                    row.entry.type === "block"
+                      ? "bg-hairline-strong"
+                      : STATUS_ACCENT[ENTRY_STATUS_BADGE[row.entry.status as EntryStatus].variant].bar,
                   )}
                   aria-hidden
                 />
@@ -86,11 +99,10 @@ export function DayList({
                     {row.entry.type === "block" ? `Bloqueio${row.entry.note ? ` · ${row.entry.note}` : ""}` : row.entry.clientName}
                   </span>
                   <span className="truncate text-sm text-ink-subtle">
-                    {row.entry.type === "block"
-                      ? `até ${formatSlotTime(row.entry.ends_at)}`
-                      : `${row.entry.serviceName ?? "Serviço"} · ${ENTRY_STATUS_BADGE[row.entry.status as EntryStatus]?.label ?? ""}`}
+                    {row.entry.type === "block" ? `até ${formatSlotTime(row.entry.ends_at)}` : (row.entry.serviceName ?? "Serviço")}
                   </span>
                 </span>
+                {row.entry.type === "appointment" && <StatusBadge status={row.entry.status as EntryStatus} size="sm" />}
                 <ChevronRight className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
               </button>
             </li>

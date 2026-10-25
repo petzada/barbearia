@@ -4,7 +4,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, RefreshCw, Send, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, History, RefreshCw, Send, Unplug, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   whatsappCreateInstanceAction,
@@ -14,7 +14,9 @@ import {
   whatsappSyncAction,
   whatsappTestAction,
 } from "@/app/actions/admin";
-import { SettingsGroup } from "@/app/perfil/settings-list";
+import { ConfirmDialog } from "@/components/kit/confirm-dialog";
+import { SettingsGroup } from "@/components/kit/settings-list";
+import { EmptyState } from "@/components/page-header";
 import { TemplateEditor, WhatsappBubblePreview } from "@/components/kit/template-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,12 +40,12 @@ type Config = {
 type Log = { id: string; kind: string; status: string; toPhone: string; message: string | null; error: string | null; createdAt: number };
 
 const STATUS: Record<Config["status"], { label: string; tone: string }> = {
-  connected: { label: "Conectado", tone: "text-success" },
-  connecting: { label: "Conectando…", tone: "text-warning" },
-  qr_required: { label: "Escaneie o QR Code", tone: "text-warning" },
+  connected: { label: "Conectado", tone: "text-success-ink" },
+  connecting: { label: "Conectando…", tone: "text-warning-ink" },
+  qr_required: { label: "Escaneie o QR Code", tone: "text-warning-ink" },
   disconnected: { label: "Desconectado", tone: "text-destructive" },
   not_configured: { label: "Não configurado", tone: "text-destructive" },
-  unknown: { label: "Status desconhecido", tone: "text-warning" },
+  unknown: { label: "Status desconhecido", tone: "text-warning-ink" },
 };
 
 const KIND_LABELS: Record<string, string> = { otp: "Código", reminder: "Lembrete", test: "Teste", invite: "Convite" };
@@ -98,6 +100,16 @@ export function WhatsappPanel({
     });
   }
 
+  async function disconnect() {
+    const r = await whatsappDeleteInstanceAction();
+    if (!r.ok) {
+      toast.error(r.error);
+      return false;
+    }
+    toast.success("WhatsApp desconectado.");
+    router.refresh();
+  }
+
   const status = STATUS[config.status];
   const dirty =
     enabled !== config.remindersEnabled ||
@@ -109,7 +121,7 @@ export function WhatsappPanel({
       <section className="flex flex-col gap-4 rounded-lg bg-card p-5 shadow-card" aria-label="Conexão">
         <div className="flex items-center gap-3">
           {config.status === "connected" ? (
-            <CheckCircle2 className="size-8 shrink-0 text-success" aria-hidden />
+            <CheckCircle2 className="size-8 shrink-0 text-success-ink" aria-hidden />
           ) : (
             <XCircle className={cn("size-8 shrink-0", status.tone)} aria-hidden />
           )}
@@ -122,7 +134,7 @@ export function WhatsappPanel({
         </div>
 
         {config.status !== "connected" && (
-          <p className="flex items-start gap-2 rounded-md bg-warning/12 p-3 text-sm font-semibold text-warning">
+          <p className="flex items-start gap-2 rounded-md bg-warning/12 p-3 text-sm font-semibold text-warning-ink">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
             Sem conexão, o login por código e os lembretes param. A equipe ainda entra pelo Google.
           </p>
@@ -138,7 +150,7 @@ export function WhatsappPanel({
           <>
             {waiting && config.qrCode && (
               <div className="flex flex-col items-center gap-3">
-                <img src={config.qrCode} alt="QR Code para conectar o WhatsApp" className="size-60 rounded-md bg-white p-2" />
+                <img src={config.qrCode} alt="QR Code para conectar o WhatsApp" className="size-60 rounded-md bg-qr-surface p-2" />
                 <p className="text-center text-sm text-ink-subtle">
                   No celular da barbearia: WhatsApp › Aparelhos conectados › Conectar aparelho. O código se renova sozinho.
                 </p>
@@ -149,21 +161,26 @@ export function WhatsappPanel({
                 <RefreshCw aria-hidden />
                 Sincronizar
               </Button>
-              {config.status === "connected" ? (
-                <Button
-                  variant="outline"
-                  className="text-destructive"
-                  disabled={pending}
-                  onClick={() => window.confirm("Desconectar o WhatsApp? O login por código para até reconectar.") && run(() => whatsappDeleteInstanceAction(), "WhatsApp desconectado.")}
-                >
-                  Desconectar
-                </Button>
-              ) : (
+              {config.status !== "connected" && (
                 <Button disabled={pending} onClick={() => run(() => whatsappRefreshQrAction(), "Novo QR Code gerado.")}>
                   Novo QR Code
                 </Button>
               )}
             </div>
+            {config.status === "connected" && (
+              <ConfirmDialog
+                trigger={
+                  <Button variant="ghost" className="text-destructive" disabled={pending}>
+                    <Unplug aria-hidden />
+                    Desconectar WhatsApp
+                  </Button>
+                }
+                title="Desconectar o WhatsApp?"
+                description="O login por código e os lembretes param até você conectar de novo."
+                confirmLabel="Desconectar"
+                onConfirm={disconnect}
+              />
+            )}
           </>
         )}
       </section>
@@ -180,7 +197,7 @@ export function WhatsappPanel({
           <span className="text-sm font-semibold">Horário do envio</span>
           <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1">
             {HOURS.map((h) => (
-              <button key={h} type="button" aria-pressed={hour === h} onClick={() => setHour(h)} className={cn("tabular h-10 shrink-0 px-3", chipClass)}>
+              <button key={h} type="button" aria-pressed={hour === h} onClick={() => setHour(h)} className={cn("tabular shrink-0 px-3", chipClass)}>
                 {String(h).padStart(2, "0")}h
               </button>
             ))}
@@ -220,7 +237,7 @@ export function WhatsappPanel({
               )
             }
           >
-            Salvar lembretes
+            {pending ? "Salvando…" : "Salvar"}
           </Button>
           <Button variant="outline" disabled={pending} onClick={() => setTemplate(DEFAULT_WHATSAPP_TEMPLATE)}>
             Restaurar padrão
@@ -246,21 +263,21 @@ export function WhatsappPanel({
             <Link
               key={f.label}
               href={f.key ? `/admin/gestao/whatsapp?tipo=${f.key}` : "/admin/gestao/whatsapp"}
-              aria-pressed={kind === f.key}
-              className={cn("flex h-10 shrink-0 items-center px-4", chipClass)}
+              aria-current={kind === f.key ? "true" : undefined}
+              className={cn("shrink-0 px-4", chipClass)}
             >
               {f.label}
             </Link>
           ))}
         </nav>
         {logs.length === 0 ? (
-          <p className="rounded-lg bg-card p-5 text-center text-sm text-ink-subtle shadow-card">Nenhum envio registrado.</p>
+          <EmptyState compact icon={History} title="Nenhum envio registrado" />
         ) : (
           <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
             {logs.map((l) => (
               <li key={l.id} className="flex items-start gap-3 px-4 py-3 text-sm">
                 {l.status === "sent" ? (
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-label="Enviado" />
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-ink" aria-label="Enviado" />
                 ) : l.status === "skipped" ? (
                   <span className="mt-1.5 size-2.5 shrink-0 rounded-full bg-ink-tertiary" aria-label="Ignorado" />
                 ) : (

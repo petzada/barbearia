@@ -94,7 +94,7 @@ export function PixPanel({
       <ol className="flex flex-col gap-2 rounded-lg bg-card p-5 text-[15px] shadow-card">
         {["Abra o app do seu banco", "Escolha Pix › Copia e cola", "Cole o código e confirme"].map((step, i) => (
           <li key={step} className="flex items-center gap-3">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-teal-soft text-sm font-bold text-cta">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-teal-soft text-sm font-bold text-cta-ink">
               {i + 1}
             </span>
             {step}
@@ -112,7 +112,7 @@ export function PixPanel({
           Pagar de outro aparelho (QR Code)
         </summary>
         <div className="flex flex-col items-center gap-3 px-5 pb-5">
-          {qrImage && <img src={qrImage} alt="QR Code do Pix" className="size-52 rounded-md bg-white p-2" />}
+          {qrImage && <img src={qrImage} alt="QR Code do Pix" className="size-52 rounded-md bg-qr-surface p-2" />}
           <textarea
             readOnly
             aria-label="Código Pix copia e cola"
@@ -125,7 +125,7 @@ export function PixPanel({
       </details>
 
       {remaining != null && (
-        <p className="tabular text-center text-sm font-bold text-cta">Expira em {formatRemaining(remaining)}</p>
+        <p className="tabular text-center text-sm font-bold text-cta-ink">Expira em {formatRemaining(remaining)}</p>
       )}
 
       {devMode && (

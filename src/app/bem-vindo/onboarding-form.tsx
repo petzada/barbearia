@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ChevronLeft } from "lucide-react";
-import { authClient, authErrorMessage } from "@/lib/auth-client";
+import { authClient, authErrorMessage, isFieldAuthError } from "@/lib/auth-client";
 import { maskBrazilPhoneInput, toE164BrazilPhone, formatBrazilPhone } from "@/lib/phone";
 import { getFirstName } from "@/lib/profile/display-name";
 import { saveOnboardingNameAction } from "@/app/actions/perfil";
@@ -60,7 +61,8 @@ export function OnboardingFlow({
     const { error: err } = await authClient.phoneNumber.sendOtp({ phoneNumber: target });
     setPending(false);
     if (err) {
-      setError(authErrorMessage(err));
+      if (isFieldAuthError(err)) setError(authErrorMessage(err));
+      else toast.error(authErrorMessage(err));
       return false;
     }
     resend.start();
@@ -89,7 +91,8 @@ export function OnboardingFlow({
     setPending(false);
     if (err) {
       setCode("");
-      return setError(authErrorMessage(err));
+      if (isFieldAuthError(err)) return setError(authErrorMessage(err));
+      return void toast.error(authErrorMessage(err));
     }
     go("done");
   }
@@ -97,7 +100,7 @@ export function OnboardingFlow({
   if (step === "done") {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-5 px-6 pb-[calc(2rem+env(safe-area-inset-bottom))] text-center">
-        <CheckCircle2 className="size-16 text-success" aria-hidden />
+        <CheckCircle2 className="size-16 text-success-ink" aria-hidden />
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">
           Tudo pronto, {getFirstName(name || initialName)}!
         </h1>
@@ -117,7 +120,7 @@ export function OnboardingFlow({
 
   const content = {
     name: {
-      title: "Como podemos te chamar?",
+      title: "Como podemos chamar você?",
       description: "Seu nome aparece para o barbeiro na agenda.",
       body: (
         <Input
@@ -161,7 +164,7 @@ export function OnboardingFlow({
             {resend.seconds > 0 ? (
               <span className="tabular font-semibold">Reenviar em {resend.label}</span>
             ) : (
-              <button type="button" className="font-bold text-cta" onClick={() => phone && sendCode(phone)}>
+              <button type="button" className="font-bold text-cta-ink" onClick={() => phone && sendCode(phone)}>
                 Reenviar código
               </button>
             )}
@@ -176,9 +179,9 @@ export function OnboardingFlow({
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
       <div className="flex items-center gap-3">
         {step === "code" ? (
-          <button type="button" aria-label="Voltar" onClick={() => go("phone")} className="-ml-2 flex size-10 items-center justify-center text-cta">
+          <Button variant="ghost" size="icon-sm" aria-label="Voltar" onClick={() => go("phone")} className="-ml-2 text-cta-ink">
             <ChevronLeft className="size-6" aria-hidden />
-          </button>
+          </Button>
         ) : null}
         <div className="flex flex-1 items-center gap-1.5" aria-hidden>
           {steps.map((s, i) => (

@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Receipt } from "lucide-react";
+import { CalendarDays, Download, Receipt } from "lucide-react";
 import { getDb } from "@/server/db";
 import { requireAdminUser, toActor } from "@/server/auth";
 import { getDashboard } from "@/server/reports";
-import { listReceipts, PAYMENT_METHOD_LABELS } from "@/server/finance";
+import { listReceipts } from "@/server/finance";
 import { getCommissionSummary, listPayouts, PAYOUT_METHOD_LABELS, type PayoutMethod } from "@/server/payouts";
 import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
 import { PeriodFilter } from "@/components/period-filter";
 import { BarberAvatar } from "@/components/booking/barber-avatar";
+import { SegmentedNav } from "@/components/kit/segmented";
 import { buttonVariants } from "@/components/ui/button";
-import { dateKeyFromIsoInSP, formatPriceCents, formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
+import { formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
+import { formatDateRange, formatDayLabel } from "@/lib/agenda/format";
+import { paymentMethodLabel } from "@/lib/payments";
+import { chipClass } from "@/lib/ui/classes";
 import { resolvePeriod } from "@/lib/periods";
 import { cn, countLabel } from "@/lib/utils";
 import { PayoutButton } from "./payout-button";
@@ -50,34 +54,36 @@ export default async function FinanceiroPage({
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
               <Download aria-hidden />
-              CSV
+              Exportar CSV
             </a>
           ) : undefined
         }
       />
       <PageBody>
         <PeriodFilter basePath="/admin/financeiro" current={period.key} query={{ aba: tab }} />
-        <nav className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1" aria-label="Seções do financeiro">
-          {TABS.map((t) => (
-            <Link
-              key={t.key}
-              href={`/admin/financeiro?${new URLSearchParams({ periodo: period.key, aba: t.key }).toString()}`}
-              aria-current={tab === t.key ? "page" : undefined}
-              className={cn(
-                "flex h-10 items-center justify-center rounded-md text-sm font-bold transition",
-                tab === t.key ? "bg-card text-ink shadow-card" : "text-ink-subtle",
-              )}
-            >
-              {t.label}
-            </Link>
-          ))}
-        </nav>
+        <SegmentedNav
+          label="Seções do financeiro"
+          items={TABS.map((t) => ({
+            href: `/admin/financeiro?${new URLSearchParams({ periodo: period.key, aba: t.key }).toString()}`,
+            label: t.label,
+            current: tab === t.key,
+          }))}
+        />
 
         {tab === "resumo" && <Resumo db={db} actor={actor} period={period} />}
         {tab === "recebimentos" && <Recebimentos db={db} actor={actor} period={period} forma={forma} qs={qs} />}
         {tab === "comissoes" && <Comissoes db={db} actor={actor} period={period} />}
       </PageBody>
     </main>
+  );
+}
+
+function AgendaLink() {
+  return (
+    <Link href="/admin/agenda" className={buttonVariants({ size: "lg" })}>
+      <CalendarDays aria-hidden />
+      Abrir agenda
+    </Link>
   );
 }
 
@@ -137,8 +143,8 @@ async function Recebimentos({ db, actor, period, forma, qs }: Ctx & { forma?: "o
           <Link
             key={f.label}
             href={`/admin/financeiro?${qs({ forma: f.key })}`}
-            aria-pressed={forma === f.key}
-            className="flex h-9 items-center rounded-md border border-hairline-strong bg-card px-4 text-sm font-semibold aria-pressed:border-cta aria-pressed:bg-cta aria-pressed:text-cta-foreground"
+            aria-current={forma === f.key ? "true" : undefined}
+            className={cn("px-4", chipClass)}
           >
             {f.label}
           </Link>
@@ -146,16 +152,28 @@ async function Recebimentos({ db, actor, period, forma, qs }: Ctx & { forma?: "o
         <span className="tabular ml-auto text-sm font-bold">{formatPriceCents(total)}</span>
       </div>
       {receipts.length === 0 ? (
-        <EmptyState icon={Receipt} title="Nenhum recebimento no período" />
+        <EmptyState
+          icon={Receipt}
+          title={forma ? "Nenhum recebimento com esse filtro" : "Nenhum recebimento no período"}
+          description={forma ? undefined : "Pagamentos online e os registrados na agenda aparecem aqui."}
+          action={
+            forma ? (
+              <Link href={`/admin/financeiro?${qs({ forma: undefined })}`} className={buttonVariants({ size: "lg" })}>
+                Ver todos
+              </Link>
+            ) : (
+              <AgendaLink />
+            )
+          }
+        />
       ) : (
         <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
           {receipts.map((r) => (
             <li key={r.id} className="flex items-center gap-3 px-5 py-3 text-sm">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{r.clientName ?? "Cliente"} · {r.kind === "subscription" ? "Clube" : "Atendimento"}</p>
-                <p className="text-ink-subtle capitalize">
-                  {r.paidAt ? `${formatSelectableDay(dateKeyFromIsoInSP(r.paidAt))} · ${formatSlotTime(r.paidAt)}` : "—"} ·{" "}
-                  {PAYMENT_METHOD_LABELS[r.method] ?? r.method}
+                <p className="text-ink-subtle">
+                  {r.paidAt ? `${formatDayLabel(r.paidAt)} · ${formatSlotTime(r.paidAt)}` : "—"} · {paymentMethodLabel(r.method)}
                 </p>
               </div>
               <span className="tabular font-bold">{formatPriceCents(r.amountCents)}</span>
@@ -173,7 +191,12 @@ async function Comissoes({ db, actor, period }: Ctx) {
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         {summary.length === 0 ? (
-          <EmptyState icon={Receipt} title="Sem comissões no período" description="Comissões aparecem quando os atendimentos são concluídos." />
+          <EmptyState
+            icon={Receipt}
+            title="Sem comissões no período"
+            description="Comissões aparecem quando os atendimentos são concluídos."
+            action={<AgendaLink />}
+          />
         ) : (
           <ul className="flex flex-col gap-3">
             {summary.map((s) => (
@@ -192,7 +215,7 @@ async function Comissoes({ db, actor, period }: Ctx) {
                   </div>
                   <div>
                     <dt className="text-ink-subtle">Pago</dt>
-                    <dd className="tabular font-bold text-success">{formatPriceCents(s.paidCents)}</dd>
+                    <dd className="tabular font-bold text-success-ink">{formatPriceCents(s.paidCents)}</dd>
                   </div>
                   <div>
                     <dt className="text-ink-subtle">A pagar</dt>
@@ -216,7 +239,7 @@ async function Comissoes({ db, actor, period }: Ctx) {
                 <span>
                   <span className="block font-semibold">{p.barberName}</span>
                   <span className="text-ink-subtle">
-                    {formatSelectableDay(p.periodFrom)} – {formatSelectableDay(p.periodTo)} · {PAYOUT_METHOD_LABELS[p.method as PayoutMethod] ?? p.method}
+                    {formatDateRange(p.periodFrom, p.periodTo)} · {PAYOUT_METHOD_LABELS[p.method as PayoutMethod] ?? p.method}
                   </span>
                 </span>
                 <span className="tabular font-bold">{formatPriceCents(p.amountCents)}</span>
