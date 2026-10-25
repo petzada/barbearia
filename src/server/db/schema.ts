@@ -59,6 +59,10 @@ export const user = sqliteTable("user", {
     .default(true),
   /** % de comissão do barbeiro sobre o preço de tabela (0–100). */
   commissionPercent: integer("commission_percent").notNull().default(0),
+  /** Cliente aceita receber lembretes de horário pelo WhatsApp. */
+  whatsappReminders: integer("whatsapp_reminders", { mode: "boolean" })
+    .notNull()
+    .default(true),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -288,6 +292,8 @@ export const plans = sqliteTable("plans", {
     .notNull()
     .default(sql`'[]'`),
   active: integer("active", { mode: "boolean" }).notNull().default(false),
+  /** Plano recomendado (destacado na vitrine do clube). */
+  highlighted: integer("highlighted", { mode: "boolean" }).notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(0),
   /** Produto correspondente no AbacatePay (criado sob demanda). */
   providerProductId: text("provider_product_id"),

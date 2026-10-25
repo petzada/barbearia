@@ -39,7 +39,6 @@ export default async function BarbeiroHojePage() {
   return (
     <main className="flex flex-1 flex-col">
       <PageHeader
-        variant="brand"
         title={`${greeting(now)}, ${getFirstName(user.name)}!`}
         description={
           upcoming.length > 0

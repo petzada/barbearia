@@ -1,82 +1,100 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { getSelectableDateKeys } from "@/lib/agenda/availability";
-import { bookAppointmentAction, fetchSlotsAction } from "@/app/actions/cliente";
+import { bookAppointmentAction, fetchAvailableDaysAction, fetchSlotsAction } from "@/app/actions/cliente";
 import { BarberAvatar } from "./barber-avatar";
 import { BarberStep } from "./barber-step";
-import { BookingTopbarCarousel, BOOKING_TOPBAR_HEIGHT_CLASS } from "./booking-topbar-carousel";
+import { ConfirmSheet, type PaymentChoice } from "./confirm-sheet";
 import { ScheduleStep } from "./schedule-step";
 import { ServiceStep } from "./service-step";
 import { StepIndicator, type WizardStep } from "./step-indicator";
-import { SummaryStep, type PaymentChoice } from "./summary-step";
 import type { BookingBarber, BookingRules, BookingService } from "./types";
-
-const BACK: Record<WizardStep, WizardStep | null> = {
-  barber: null,
-  service: "barber",
-  schedule: "service",
-  summary: "schedule",
-};
 
 export function BookingWizard({
   services,
   barbers,
   rules,
+  initialBarberId,
+  initialServiceId,
+  initialSchedule,
 }: {
   services: BookingService[];
   barbers: BookingBarber[];
   rules: BookingRules;
+  initialBarberId?: string;
+  initialServiceId?: string;
+  /** Disponibilidade já calculada no servidor para a pré-seleção ("Agendar de novo"). */
+  initialSchedule?: { days: string[]; day: string | null; slots: number[] };
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<WizardStep>(barbers.length === 1 ? "service" : "barber");
-  const [barber, setBarber] = useState<BookingBarber | null>(barbers.length === 1 ? barbers[0] : null);
-  const [service, setService] = useState<BookingService | null>(null);
-  const [day, setDay] = useState<string | null>(null);
-  const [slots, setSlots] = useState<number[]>([]);
+  const singleBarber = barbers.length === 1 ? barbers[0] : null;
+  const presetBarber = barbers.find((b) => b.id === initialBarberId) ?? singleBarber;
+  const presetService = presetBarber ? services.find((s) => s.id === initialServiceId) ?? null : null;
+
+  const [step, setStep] = useState<Exclude<WizardStep, "summary">>(
+    presetService ? "schedule" : presetBarber ? "service" : "barber",
+  );
+  const [barber, setBarber] = useState<BookingBarber | null>(presetBarber);
+  const [service, setService] = useState<BookingService | null>(presetService);
+  const [availableDays, setAvailableDays] = useState<Set<string> | null>(
+    presetService && initialSchedule ? new Set(initialSchedule.days) : null,
+  );
+  const [day, setDay] = useState<string | null>(presetService ? (initialSchedule?.day ?? null) : null);
+  const [slots, setSlots] = useState<number[]>(presetService ? (initialSchedule?.slots ?? []) : []);
   const [slot, setSlot] = useState<number | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [payment, setPayment] = useState<PaymentChoice>(rules.onlinePayment ? "pix" : "local");
-  const [loadingSlots, startLoading] = useTransition();
+  const [loadingSlots, startLoadingSlots] = useTransition();
   const [confirming, startConfirm] = useTransition();
+  const windowKeys = useMemo(() => getSelectableDateKeys(rules.bookingWindowDays), [rules.bookingWindowDays]);
 
   function loadSlots(barberId: string, serviceId: string, dateKey: string) {
-    startLoading(async () => {
+    setSlots([]);
+    startLoadingSlots(async () => {
       const result = await fetchSlotsAction({ barberId, serviceId, dateKey });
-      if (!result.ok) {
-        toast.error(result.error);
-        setSlots([]);
-        return;
-      }
+      if (!result.ok) return void toast.error(result.error);
       setSlots(result.data);
     });
   }
 
-  function selectService(s: BookingService) {
-    setService(s);
-    const today = getSelectableDateKeys(rules.bookingWindowDays)[0];
-    setDay(today);
+  async function loadDays(barberId: string, serviceId: string) {
+    setAvailableDays(null);
+    setDay(null);
     setSlot(null);
-    setSlots([]);
-    if (barber && today) loadSlots(barber.id, s.id, today);
-    setStep("schedule");
+    const result = await fetchAvailableDaysAction({
+      barberId,
+      serviceId,
+      from: windowKeys[0],
+      to: windowKeys[windowKeys.length - 1],
+    });
+    if (!result.ok) {
+      toast.error(result.error);
+      setAvailableDays(new Set());
+      return;
+    }
+    const days = new Set(result.data);
+    setAvailableDays(days);
+    const first = result.data[0];
+    if (first) {
+      setDay(first);
+      loadSlots(barberId, serviceId, first);
+    }
   }
 
-  function selectDay(dateKey: string) {
-    setDay(dateKey);
-    setSlot(null);
-    if (barber && service) loadSlots(barber.id, service.id, dateKey);
+  function selectService(s: BookingService) {
+    setService(s);
+    setStep("schedule");
+    if (barber) void loadDays(barber.id, s.id);
   }
 
   function goBack() {
-    const prev = BACK[step];
-    if (!prev || (prev === "barber" && barbers.length === 1)) {
-      router.push("/inicio");
-      return;
-    }
-    setStep(prev);
+    if (step === "schedule") return setStep("service");
+    if (step === "service" && !singleBarber) return setStep("barber");
+    router.push("/inicio");
   }
 
   function confirm() {
@@ -91,45 +109,38 @@ export function BookingWizard({
       if (!result.ok) {
         toast.error(result.error);
         if (result.code === "conflict" && day) {
-          setStep("schedule");
+          setSheetOpen(false);
+          setSlot(null);
           loadSlots(barber.id, service.id, day);
         }
         return;
       }
-      toast.success("Agendamento confirmado!");
       if (result.data.paymentId) {
         router.push(`/agendamentos/${result.data.entryId}/pix`);
       } else {
         if (payment === "pix") toast.info("Pix indisponível agora — pague na barbearia.");
-        router.push("/agendamentos");
+        router.push(`/agendamentos/${result.data.entryId}/confirmado`);
       }
       router.refresh();
     });
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className={`relative -mx-5 overflow-hidden lg:mx-0 lg:mt-6 lg:rounded-[28px] ${BOOKING_TOPBAR_HEIGHT_CLASS}`}>
-        <BookingTopbarCarousel />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/70" />
+    <div className="flex flex-col gap-5 pt-[calc(1rem+env(safe-area-inset-top))] lg:pt-8">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={goBack}
           aria-label="Voltar"
-          className="absolute left-4 top-[calc(1rem+env(safe-area-inset-top))] z-10 flex size-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur transition hover:bg-black/55"
+          className="-ml-2 flex size-11 items-center justify-center rounded-full text-cta transition hover:bg-muted"
         >
-          <ArrowLeft className="size-5" aria-hidden />
+          <ChevronLeft className="size-6" aria-hidden />
         </button>
-        <div className="absolute inset-x-5 bottom-5 z-10 flex items-end justify-between gap-3 text-white">
-          <div>
-            <p className="text-sm font-semibold text-white/75">Novo agendamento</p>
-            <p className="text-2xl font-extrabold tracking-tight">{barber ? barber.name : "Barbearia do Moura"}</p>
-          </div>
-          {barber && <BarberAvatar name={barber.name} image={barber.image} size="md" />}
-        </div>
+        <h1 className="flex-1 text-xl font-extrabold tracking-tight">Novo agendamento</h1>
+        {barber && step !== "barber" && <BarberAvatar name={barber.name} image={barber.image} size="sm" />}
       </div>
 
-      <StepIndicator current={step} />
+      <StepIndicator current={sheetOpen ? "summary" : step} />
 
       {step === "barber" && (
         <BarberStep
@@ -143,19 +154,28 @@ export function BookingWizard({
       {step === "service" && <ServiceStep services={services} onSelect={selectService} />}
       {step === "schedule" && (
         <ScheduleStep
+          windowKeys={windowKeys}
+          availableDays={availableDays}
           day={day}
           slots={slots}
-          pending={loadingSlots}
-          windowDays={rules.bookingWindowDays}
-          onSelectDay={selectDay}
+          loadingSlots={loadingSlots}
+          selectedSlot={slot}
+          onSelectDay={(d) => {
+            setDay(d);
+            setSlot(null);
+            if (barber && service) loadSlots(barber.id, service.id, d);
+          }}
           onSelectSlot={(s) => {
             setSlot(s);
-            setStep("summary");
+            setSheetOpen(true);
           }}
         />
       )}
-      {step === "summary" && barber && service && slot != null && (
-        <SummaryStep
+
+      {barber && service && (
+        <ConfirmSheet
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
           barber={barber}
           service={service}
           slot={slot}

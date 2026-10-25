@@ -15,6 +15,13 @@
       "when": 1792879513204,
       "tag": "0001_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792885930290,
+      "tag": "0002_reminders_and_highlight",
+      "breakpoints": true
     }
   ]
 }

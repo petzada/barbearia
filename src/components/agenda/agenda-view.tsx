@@ -36,6 +36,7 @@ export function AgendaView({
   const router = useRouter();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selected, setSelected] = useState<TimelineEntry | null>(null);
+  const [openedAt, setOpenedAt] = useState(0);
   const isToday = dateKey === todayDateKeySP();
 
   const href = (day: string, barberId = selectedBarberId) => {
@@ -98,10 +99,18 @@ export function AgendaView({
       />
 
       <div className="rounded-lg bg-card p-3 shadow-card">
-        <AgendaDayTimeline dateKey={dateKey} entries={entries} dayBounds={dayBounds} onSelect={setSelected} />
+        <AgendaDayTimeline
+          dateKey={dateKey}
+          entries={entries}
+          dayBounds={dayBounds}
+          onSelect={(entry) => {
+            setOpenedAt(Date.now());
+            setSelected(entry);
+          }}
+        />
       </div>
 
-      <EntrySheet entry={selected} onClose={() => setSelected(null)} showBarber={Boolean(barbers)} />
+      <EntrySheet entry={selected} onClose={() => setSelected(null)} showBarber={Boolean(barbers)} openedAt={openedAt} />
     </div>
   );
 }

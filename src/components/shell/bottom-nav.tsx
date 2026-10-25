@@ -5,57 +5,63 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isNavItemActive, type NavItem } from "./nav-config";
 
-/** Barra inferior flutuante (mobile/tablet) com ação principal ao centro. */
+/**
+ * Barra inferior fixa estilo iOS (mobile/tablet): fundo branco, linha fina no
+ * topo, ícones cinza, ativo em teal e ação principal teal levemente elevada.
+ */
 export function BottomNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden">
-      <nav
-        aria-label="Navegação principal"
-        className="pointer-events-auto flex w-full max-w-md items-center rounded-2xl bg-cta px-1.5 py-1.5 shadow-float"
-      >
+    <nav
+      aria-label="Navegação principal"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-card/85 lg:hidden"
+    >
+      <ul className="mx-auto flex h-16 max-w-2xl items-stretch px-2">
         {items.map((item) => {
           const active = isNavItemActive(pathname, item);
           const Icon = item.icon;
           if (item.fab) {
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-label={item.label}
-                aria-current={active ? "page" : undefined}
-                className="flex min-w-0 flex-1 items-center justify-center"
-              >
-                <span
-                  className={cn(
-                    "flex size-12 items-center justify-center rounded-full bg-cta-foreground text-cta shadow-md transition-transform active:scale-95",
-                    active && "ring-2 ring-cta-foreground/50 ring-offset-2 ring-offset-cta",
-                  )}
+              <li key={item.href} className="flex flex-1 justify-center">
+                <Link
+                  href={item.href}
+                  aria-label={item.label}
+                  aria-current={active ? "page" : undefined}
+                  className="-mt-5 flex flex-col items-center gap-1"
                 >
-                  <Icon className="size-5" strokeWidth={2.25} aria-hidden />
-                </span>
-              </Link>
+                  <span
+                    className={cn(
+                      "flex size-14 items-center justify-center rounded-full bg-cta text-cta-foreground shadow-float ring-4 ring-card transition-transform active:scale-95",
+                      active && "bg-cta/90",
+                    )}
+                  >
+                    <Icon className="size-6" strokeWidth={2.25} aria-hidden />
+                  </span>
+                  <span className={cn("text-[11px] font-semibold", active ? "text-cta" : "text-ink-tertiary")}>
+                    {item.label}
+                  </span>
+                </Link>
+              </li>
             );
           }
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl transition-colors",
-                active ? "text-cta-foreground" : "text-cta-foreground/60 hover:text-cta-foreground/90",
-              )}
-            >
-              <Icon className="size-5 shrink-0" strokeWidth={active ? 2.25 : 1.75} aria-hidden />
-              <span className="max-w-full truncate text-[11px] font-semibold leading-tight">
-                {item.label}
-              </span>
-            </Link>
+            <li key={item.href} className="flex flex-1">
+              <Link
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex w-full flex-col items-center justify-center gap-1 transition-colors",
+                  active ? "text-cta" : "text-ink-tertiary hover:text-ink-subtle",
+                )}
+              >
+                <Icon className="size-6 shrink-0" strokeWidth={active ? 2.25 : 1.75} aria-hidden />
+                <span className="max-w-full truncate text-[11px] font-semibold leading-none">{item.label}</span>
+              </Link>
+            </li>
           );
         })}
-      </nav>
-    </div>
+      </ul>
+    </nav>
   );
 }

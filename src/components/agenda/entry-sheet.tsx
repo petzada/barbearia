@@ -28,10 +28,13 @@ export function EntrySheet({
   entry,
   onClose,
   showBarber = false,
+  openedAt,
 }: {
   entry: TimelineEntry | null;
   onClose: () => void;
   showBarber?: boolean;
+  /** Instante em que a folha foi aberta (decide se já dá para concluir). */
+  openedAt: number;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -51,7 +54,7 @@ export function EntrySheet({
   const payment = entry
     ? paymentLabel(entry.paymentMethod as EntryPaymentMethod | null, entry.paymentStatus as EntryPaymentStatus | null)
     : null;
-  const started = entry ? Date.parse(entry.starts_at) <= Date.now() : false;
+  const started = entry ? Date.parse(entry.starts_at) <= openedAt : false;
   const booked = entry?.status === "booked";
   const phone = entry?.clientPhone ? normalizeBrazilPhone(entry.clientPhone).normalized : null;
 

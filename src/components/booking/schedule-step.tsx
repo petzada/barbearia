@@ -1,29 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Calendar } from "lucide-react";
-import {
-  BARBER_TIMEZONE,
-  formatSlotTime,
-  getQuickDayKeys,
-  getSelectableDateKeys,
-} from "@/lib/agenda/availability";
+import { CalendarX2 } from "lucide-react";
+import { formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
 import { chipClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
-import { BookingCalendarSheet } from "@/components/agenda/booking-calendar-sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-
-function formatDayChip(dateKey: string) {
-  const [y, m, d] = dateKey.split("-").map(Number);
-  const utc = new Date(Date.UTC(y, m - 1, d, 12));
-  const weekday = new Intl.DateTimeFormat("pt-BR", { timeZone: BARBER_TIMEZONE, weekday: "short" })
-    .format(utc)
-    .replace(".", "");
-  return { weekday, day: d };
-}
+import { EmptyState } from "@/components/page-header";
+import { AvailabilityCalendar } from "./availability-calendar";
 
 /** Agrupa horários em manhã / tarde / noite (SP). */
-function groupSlots(slots: number[]) {
+export function groupSlots(slots: number[]) {
   const groups: { label: string; slots: number[] }[] = [
     { label: "Manhã", slots: [] },
     { label: "Tarde", slots: [] },
@@ -36,97 +22,84 @@ function groupSlots(slots: number[]) {
   return groups.filter((g) => g.slots.length > 0);
 }
 
+/** Etapa 3: calendário mensal sempre aberto + horários agrupados. */
 export function ScheduleStep({
+  windowKeys,
+  availableDays,
   day,
   slots,
-  pending,
-  windowDays,
+  loadingSlots,
+  selectedSlot,
   onSelectDay,
   onSelectSlot,
 }: {
+  windowKeys: string[];
+  availableDays: ReadonlySet<string> | null;
   day: string | null;
   slots: number[];
-  pending: boolean;
-  windowDays: number;
+  loadingSlots: boolean;
+  selectedSlot: number | null;
   onSelectDay: (dateKey: string) => void;
   onSelectSlot: (slot: number) => void;
 }) {
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const quickDays = getQuickDayKeys(day, windowDays);
-  const selectableKeys = useMemo(() => new Set(getSelectableDateKeys(windowDays)), [windowDays]);
   const groups = groupSlots(slots);
+  const noDays = availableDays !== null && availableDays.size === 0;
 
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-xl font-bold tracking-tight">Quando você quer vir?</h2>
-
-      <div className="grid grid-cols-6 gap-2">
-        {quickDays.map((dk) => {
-          const { weekday, day: dayNum } = formatDayChip(dk);
-          return (
-            <button
-              key={dk}
-              type="button"
-              aria-pressed={day === dk}
-              onClick={() => onSelectDay(dk)}
-              className={cn("group flex min-h-16 flex-col items-center justify-center gap-0.5", chipClass)}
-            >
-              <span className="text-[11px] font-semibold capitalize text-ink-subtle group-aria-pressed:text-cta-foreground/80">
-                {weekday}
-              </span>
-              <span className="tabular text-lg font-bold">{dayNum}</span>
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          aria-label="Abrir calendário"
-          aria-expanded={calendarOpen}
-          onClick={() => setCalendarOpen(true)}
-          className={cn("flex min-h-16 items-center justify-center", chipClass)}
-        >
-          <Calendar className="size-5 text-ink-subtle" aria-hidden />
-        </button>
-      </div>
-
-      <BookingCalendarSheet
-        open={calendarOpen}
-        onOpenChange={setCalendarOpen}
-        selected={day}
-        onSelect={onSelectDay}
-        selectableKeys={selectableKeys}
-      />
-
-      {day && pending && (
-        <div className="grid grid-cols-4 gap-2" aria-label="Carregando horários">
-          {Array.from({ length: 8 }, (_, i) => (
-            <Skeleton key={i} className="h-12 rounded-md" />
-          ))}
-        </div>
-      )}
-      {day && !pending && slots.length === 0 && (
-        <p className="rounded-lg bg-card p-5 text-center text-sm text-ink-subtle shadow-card">
-          Nenhum horário livre neste dia. Tente outra data.
-        </p>
-      )}
-      {day && !pending &&
-        groups.map((group) => (
-          <div key={group.label} className="flex flex-col gap-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-ink-subtle">{group.label}</p>
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {group.slots.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => onSelectSlot(s)}
-                  className={cn("tabular h-12", chipClass)}
-                >
-                  {formatSlotTime(s)}
-                </button>
-              ))}
+      {noDays ? (
+        <EmptyState
+          icon={CalendarX2}
+          title="Agenda cheia por enquanto"
+          description="Não há horários livres nos próximos dias com este barbeiro. Tente outro barbeiro ou fale com a barbearia."
+        />
+      ) : (
+        <>
+          <AvailabilityCalendar
+            key={windowKeys[0]}
+            windowKeys={windowKeys}
+            availableKeys={availableDays}
+            selected={day}
+            onSelect={onSelectDay}
+          />
+          {day && (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm font-bold capitalize text-ink-subtle">{formatSelectableDay(day)}</p>
+              {loadingSlots ? (
+                <div className="grid grid-cols-4 gap-2" aria-label="Carregando horários">
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <Skeleton key={i} className="h-12 rounded-md" />
+                  ))}
+                </div>
+              ) : slots.length === 0 ? (
+                <p className="rounded-lg bg-card p-5 text-center text-sm text-ink-subtle shadow-card">
+                  Os horários deste dia acabaram de ser preenchidos. Escolha outro dia.
+                </p>
+              ) : (
+                groups.map((group) => (
+                  <div key={group.label} className="flex flex-col gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-ink-subtle">{group.label}</p>
+                    <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                      {group.slots.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          aria-pressed={selectedSlot === s}
+                          onClick={() => onSelectSlot(s)}
+                          className={cn("tabular h-12", chipClass)}
+                        >
+                          {formatSlotTime(s)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          </div>
-        ))}
+          )}
+        </>
+      )}
     </section>
   );
 }

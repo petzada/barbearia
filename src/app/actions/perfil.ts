@@ -7,6 +7,8 @@ import { actionContext } from "./context";
 import { DomainError, toActionResult } from "@/server/errors";
 import { user } from "@/server/db/schema";
 import { profileSchema, type ProfileInput } from "@/lib/validations/profile";
+import { deleteOwnAccount } from "@/server/account";
+import { createPaymentGateway } from "@/server/payments/service";
 
 /** Salva o nome (e conclui o cadastro de quem entrou pelo telefone). */
 export async function saveProfileAction(input: ProfileInput) {
@@ -52,5 +54,24 @@ export async function uploadAvatarAction(formData: FormData) {
     await db.update(user).set({ image: `/media/${key}` }).where(eq(user.id, targetId));
     revalidatePath("/", "layout");
     return { image: `/media/${key}` };
+  });
+}
+
+/** Liga/desliga os lembretes de horário pelo WhatsApp. */
+export async function setWhatsappRemindersAction(enabled: boolean) {
+  return toActionResult(async () => {
+    const { db, user: current } = await actionContext();
+    await db.update(user).set({ whatsappReminders: enabled }).where(eq(user.id, current.id));
+    revalidatePath("/perfil");
+    return null;
+  });
+}
+
+/** Exclusão da própria conta (LGPD). A sessão é apagada junto. */
+export async function deleteMyAccountAction() {
+  return toActionResult(async () => {
+    const { db, env, actor } = await actionContext();
+    await deleteOwnAccount(db, actor, createPaymentGateway(env));
+    return null;
   });
 }

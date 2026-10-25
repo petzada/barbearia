@@ -10,6 +10,8 @@ export type BookingBarber = {
   id: string;
   name: string;
   image: string | null;
+  ratingAverage: number | null;
+  ratingCount: number;
 };
 
 export type BookingRules = {

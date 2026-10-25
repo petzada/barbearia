@@ -384,6 +384,7 @@ export async function runDailyReminders(
       and(
         eq(scheduleEntries.type, "appointment"),
         eq(scheduleEntries.status, "booked"),
+        eq(client.whatsappReminders, true),
         gte(scheduleEntries.startsAt, now),
         lt(scheduleEntries.startsAt, new Date(end)),
       ),

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { actionContext } from "./context";
 import { toActionResult } from "@/server/errors";
-import { cancelAppointment, createAppointment, getAvailableSlots } from "@/server/scheduling";
+import { cancelAppointment, createAppointment, getAvailableDays, getAvailableSlots } from "@/server/scheduling";
 import { createFeedback } from "@/server/feedback";
 import {
   cancelSubscription,
@@ -26,6 +26,18 @@ export async function fetchSlotsAction(input: { barberId: string; serviceId: str
   return toActionResult(async () => {
     const { db } = await actionContext();
     return getAvailableSlots(db, input);
+  });
+}
+
+export async function fetchAvailableDaysAction(input: {
+  barberId: string;
+  serviceId: string;
+  from: string;
+  to: string;
+}) {
+  return toActionResult(async () => {
+    const { db } = await actionContext();
+    return getAvailableDays(db, input);
   });
 }
 

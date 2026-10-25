@@ -23,6 +23,7 @@ export const planFormSchema = z.object({
     .array(z.string().trim().min(1).max(100))
     .max(8, "No máximo 8 benefícios"),
   active: z.boolean(),
+  highlighted: z.boolean().default(false),
   sortOrder: z.number().int().min(0),
 });
 

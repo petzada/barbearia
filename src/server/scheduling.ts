@@ -18,6 +18,7 @@ import {
   canClientCancel,
   dateKeyFromIsoInSP,
   formatMinutesShort,
+  getSelectableDateKeys,
   isDateInBookingWindow,
 } from "@/lib/agenda/availability";
 import { spDayBounds } from "@/lib/agenda/timezone";
@@ -38,7 +39,13 @@ const SLOT_TAKEN_MSG =
 const occupiesAgenda = ne(scheduleEntries.status, "cancelled");
 
 async function busyRangesForDay(db: Db, barberId: string, dateKey: string) {
-  const { start, end } = spDayBounds(dateKey);
+  return busyRangesBetween(db, barberId, dateKey, dateKey);
+}
+
+/** Ocupação do barbeiro entre dois dias civis (SP), inclusive — uma única consulta. */
+async function busyRangesBetween(db: Db, barberId: string, fromKey: string, toKey: string) {
+  const start = spDayBounds(fromKey).start;
+  const end = spDayBounds(toKey).end;
   const rows = await db
     .select({ startsAt: scheduleEntries.startsAt, endsAt: scheduleEntries.endsAt })
     .from(scheduleEntries)
@@ -76,6 +83,42 @@ export async function getAvailableSlots(
     busy,
     now: now.getTime(),
   });
+}
+
+/**
+ * Dias (YYYY-MM-DD, SP) entre `from` e `to` com pelo menos um horário livre.
+ * Usado para destacar o calendário do agendamento.
+ */
+export async function getAvailableDays(
+  db: Db,
+  input: { barberId: string; serviceId: string; from: string; to: string; now?: Date },
+): Promise<string[]> {
+  const now = input.now ?? new Date();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.from) || !/^\d{4}-\d{2}-\d{2}$/.test(input.to)) {
+    throw new DomainError("invalid", "Período inválido.");
+  }
+  const [settings, week, service, busy] = await Promise.all([
+    getShopSettings(db),
+    getBusinessHours(db),
+    getService(db, input.serviceId),
+    busyRangesBetween(db, input.barberId, input.from, input.to),
+  ]);
+  if (!service?.active) return [];
+  const windowKeys = new Set(getSelectableDateKeys(settings.bookingWindowDays, now));
+  const days: string[] = [];
+  for (const dateKey of windowKeys) {
+    if (dateKey < input.from || dateKey > input.to) continue;
+    const slots = computeAvailableSlots({
+      dateKey,
+      hours: hoursForDate(dateKey, week),
+      durationMinutes: service.durationMinutes,
+      rules: settings,
+      busy,
+      now: now.getTime(),
+    });
+    if (slots.length > 0) days.push(dateKey);
+  }
+  return days.sort();
 }
 
 /**
