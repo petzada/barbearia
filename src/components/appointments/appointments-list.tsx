@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Ban, ChevronRight, QrCode, RotateCcw, Star } from "lucide-react";
+import { Ban, ChevronRight, QrCode, RotateCcw } from "lucide-react";
+import { RatingInput } from "@/components/kit/rating-stars";
 import { toast } from "sonner";
 import { cancelMyAppointmentAction, submitFeedbackAction } from "@/app/actions/cliente";
 import { BottomSheet } from "@/components/kit/bottom-sheet";
@@ -13,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
 import { formatDayLabel, formatDayMonth, formatTimeRange, formatWeekdayShort } from "@/lib/agenda/format";
 import { rowClass, rowGroupClass } from "@/lib/ui/classes";
-import { cn, countLabel } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { EntryPaymentMethod, EntryPaymentStatus, EntryStatus } from "@/server/db/schema";
 import { PaymentBadge, StatusBadge } from "./status-badge";
 
@@ -141,24 +142,7 @@ export function AppointmentSheet({ item, onClose }: { item: AppointmentListItem 
           {item.canReview && (
             <section aria-label="Avaliar atendimento" className="flex flex-col gap-3 rounded-lg bg-card p-5 shadow-card">
               <p className="font-bold">Como foi com {item.barberName}?</p>
-              <div className="flex justify-center gap-1" role="radiogroup" aria-label="Nota de 1 a 5">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    role="radio"
-                    aria-checked={rating === n}
-                    aria-label={countLabel(n, "estrela", "estrelas")}
-                    onClick={() => setRating(n)}
-                    className="flex size-12 items-center justify-center rounded-full transition active:scale-90"
-                  >
-                    <Star
-                      className={cn("size-8", n <= rating ? "fill-warning text-warning" : "text-hairline-strong")}
-                      aria-hidden
-                    />
-                  </button>
-                ))}
-              </div>
+              <RatingInput value={rating} onChange={setRating} />
               <Textarea
                 aria-label="Comentário"
                 placeholder="Quer deixar um comentário? (opcional)"

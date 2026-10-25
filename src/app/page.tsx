@@ -46,7 +46,7 @@ export default async function LandingPage() {
           className="object-cover object-top"
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-black/10 via-35% to-black/90"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-scrim/45 via-scrim/10 via-35% to-scrim/90"
           aria-hidden
         />
         <header className="relative z-10 flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] lg:px-10">

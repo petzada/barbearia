@@ -91,7 +91,7 @@ export function TeamManager({
         actions={
           <Button size="sm" onClick={() => setAdding(true)}>
             <Plus aria-hidden />
-            Adicionar pessoa
+            Novo membro
           </Button>
         }
       />
@@ -296,7 +296,7 @@ function InviteSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
     <BottomSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Adicionar à equipe"
+      title="Novo membro"
       description="Se a pessoa já usa o app, o acesso é liberado na hora. Senão, enviamos um convite pelo WhatsApp."
       footer={
         <Button size="lg" className="w-full" disabled={pending || phone.replace(/\D/g, "").length < 10 || (!isBarber && !isAdmin)} onClick={submit}>

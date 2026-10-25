@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
+import { SegmentedNav } from "@/components/kit/segmented";
 import { BarberAvatar } from "@/components/booking/barber-avatar";
 import { isNavItemActive, MODE_HOME, MODE_LABELS, NAV_BY_MODE, type AppMode } from "./nav-config";
 
@@ -51,22 +52,12 @@ export function Sidebar({
 
       <div className="mt-auto flex flex-col gap-3">
         {modes.length > 1 && (
-          <nav className="flex flex-col gap-1 rounded-lg bg-muted p-1" aria-label="Trocar modo">
-            {modes.map((m) => (
-              <Link
-                key={m}
-                href={`/modo/${m}`}
-                prefetch={false}
-                aria-current={m === mode ? "true" : undefined}
-                className={cn(
-                  "flex min-h-11 items-center rounded-md px-3 text-sm font-semibold transition-colors",
-                  m === mode ? "bg-card text-ink shadow-card" : "text-ink-subtle hover:text-ink",
-                )}
-              >
-                {MODE_LABELS[m]}
-              </Link>
-            ))}
-          </nav>
+          <SegmentedNav
+            label="Trocar modo"
+            orientation="vertical"
+            currentKind="true"
+            items={modes.map((m) => ({ href: `/modo/${m}`, label: MODE_LABELS[m], current: m === mode, prefetch: false }))}
+          />
         )}
         <Link href="/perfil" className="flex min-h-11 items-center gap-3 rounded-md px-2 py-1 hover:bg-muted">
           <BarberAvatar name={userName} image={userImage} size="xs" />

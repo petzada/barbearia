@@ -23,7 +23,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { DEFAULT_WHATSAPP_TEMPLATE } from "@/server/whatsapp/template";
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
-import { chipClass } from "@/lib/ui/classes";
+import { formatDayLabel } from "@/lib/agenda/format";
+import { chipClass, chipRowClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
 
 type Config = {
@@ -214,7 +215,7 @@ export function WhatsappPanel({
             cliente_nome: "João",
             profissional_nome: "Moura",
             servico_nome: "Corte",
-            data_agendamento: "seg., 02/11",
+            data_agendamento: formatDayLabel("2026-11-02"),
             hora_agendamento: "15:00",
             barbearia_nome: shop.name,
             telefone_barbearia: shop.phone ? formatBrazilPhone(shop.phone) : "",
@@ -258,7 +259,7 @@ export function WhatsappPanel({
 
       <section className="flex flex-col gap-3">
         <h2 className="px-1 text-xs font-bold uppercase tracking-wider text-ink-subtle">Histórico</h2>
-        <nav className="scrollbar-none -mx-5 flex gap-2 overflow-x-auto px-5 lg:mx-0 lg:px-0" aria-label="Filtrar histórico">
+        <nav className={chipRowClass} aria-label="Filtrar histórico">
           {[{ key: undefined, label: "Todos" }, ...Object.entries(KIND_LABELS).map(([key, label]) => ({ key, label }))].map((f) => (
             <Link
               key={f.label}

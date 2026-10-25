@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageCircle, Star } from "lucide-react";
+import { RatingStars } from "@/components/kit/rating-stars";
 import { getDb } from "@/server/db";
 import { requireAdminUser, toActor } from "@/server/auth";
 import { getFeedbackStats, listFeedbackHistory } from "@/server/feedback";
@@ -9,22 +10,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { formatDayLabel } from "@/lib/agenda/format";
 import { normalizeBrazilPhone } from "@/lib/phone";
 import { getFirstName } from "@/lib/profile/display-name";
-import { chipClass } from "@/lib/ui/classes";
+import { chipClass, chipRowClass } from "@/lib/ui/classes";
 import { cn, countLabel } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Avaliações" };
 
 const fmt = (n: number) => n.toFixed(1).replace(".", ",");
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="flex gap-0.5" aria-label={`${rating} de 5 estrelas`}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Star key={n} className={cn("size-4", n <= rating ? "fill-warning text-warning" : "text-hairline-strong")} aria-hidden />
-      ))}
-    </span>
-  );
-}
 
 export default async function AvaliacoesPage({
   searchParams,
@@ -70,7 +61,7 @@ export default async function AvaliacoesPage({
             <section className="flex items-center gap-6 rounded-lg bg-card p-5 shadow-card">
               <div className="flex flex-col items-center">
                 <p className="text-display">{fmt(stats.average ?? 0)}</p>
-                <Stars rating={Math.round(stats.average ?? 0)} />
+                <RatingStars rating={stats.average ?? 0} />
                 <p className="mt-1 text-xs text-ink-subtle">{countLabel(stats.total, "avaliação", "avaliações")}</p>
               </div>
               <ul className="flex flex-1 flex-col gap-1.5" aria-label="Distribuição das notas">
@@ -86,7 +77,7 @@ export default async function AvaliacoesPage({
               </ul>
             </section>
 
-            <div className="scrollbar-none -mx-5 flex gap-2 overflow-x-auto px-5 lg:mx-0 lg:px-0">
+            <div className={chipRowClass}>
               <Link
                 href={href({ barbeiro: null })}
                 aria-current={!barberId ? "true" : undefined}
@@ -132,7 +123,7 @@ export default async function AvaliacoesPage({
                   const phone = f.clientPhone ? normalizeBrazilPhone(f.clientPhone).normalized : null;
                   return (
                     <li key={f.id} className="flex flex-col gap-2 rounded-lg bg-card p-4 shadow-card">
-                      <Stars rating={f.rating} />
+                      <RatingStars rating={f.rating} />
                       {f.comment && <p className="text-[15px]">“{f.comment}”</p>}
                       <p className="text-sm text-ink-subtle">
                         {f.clientName} · {f.barberName} · {f.serviceName ?? "Serviço"} ·{" "}

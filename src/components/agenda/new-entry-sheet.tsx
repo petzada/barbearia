@@ -208,7 +208,6 @@ export function NewEntrySheet({
             </div>
           )}
           <OptionGroup label="Serviço">
-            <p className="text-sm font-medium">Serviço</p>
             {services.map((s) => (
               <OptionCard
                 key={s.id}

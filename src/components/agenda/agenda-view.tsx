@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { chipClass } from "@/lib/ui/classes";
+import { CalendarDays, CalendarOff } from "lucide-react";
+import { EmptyState } from "@/components/page-header";
+import { chipClass, chipRowClass } from "@/lib/ui/classes";
 import { cn, countLabel } from "@/lib/utils";
 import { AgendaDayTimeline, type TimelineEntry } from "./agenda-day-timeline";
 import { DayNav } from "./day-nav";
@@ -55,7 +57,7 @@ export function AgendaView({
       <DayNav dateKey={dateKey} hrefFor={hrefFor} onAdd={() => setAdding({ barberId: (single ?? columns[0])?.barber.id ?? "" })} />
 
       {showBarberFilter && columns.length > 1 && (
-        <div className="scrollbar-none -mx-5 flex gap-2 overflow-x-auto px-5 lg:mx-0 lg:px-0">
+        <div className={chipRowClass}>
           <Link
             href={`${basePath}?dia=${dateKey}`}
             aria-current={!selectedBarberId ? "true" : undefined}
@@ -76,13 +78,20 @@ export function AgendaView({
         </div>
       )}
 
-      <p className="text-sm text-ink-subtle">
-        {closedReason
-          ? `Fechado: ${closedReason}.`
-          : appointments.length === 0
-            ? "Nenhum atendimento neste dia."
-            : `${countLabel(appointments.length, "atendimento", "atendimentos")} · toque para ver ações`}
-      </p>
+      {closedReason ? (
+        <EmptyState compact icon={CalendarOff} title="Barbearia fechada" description={closedReason} />
+      ) : appointments.length === 0 ? (
+        <EmptyState
+          compact
+          icon={CalendarDays}
+          title="Nenhum atendimento neste dia"
+          description="Toque em um horário livre ou no + para encaixar um cliente."
+        />
+      ) : (
+        <p className="text-sm text-ink-subtle">
+          {countLabel(appointments.length, "atendimento", "atendimentos")} · toque para ver ações
+        </p>
+      )}
 
       {single ? (
         <div className="rounded-lg bg-card p-3 shadow-card">

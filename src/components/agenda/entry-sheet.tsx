@@ -21,6 +21,7 @@ import { LOCAL_PAYMENT_METHODS } from "@/lib/validations/agendamento";
 import { LOCAL_PAYMENT_SHORT_LABELS, PAYMENT_METHOD_LABELS } from "@/lib/payments";
 import { formatBrazilPhone, normalizeBrazilPhone } from "@/lib/phone";
 import { rowClass, rowGroupClass, rowIconClass } from "@/lib/ui/classes";
+import { FieldLabel } from "@/components/kit/field-label";
 import type { EntryPaymentMethod, EntryPaymentStatus, EntryStatus } from "@/server/db/schema";
 import type { TimelineEntry } from "./agenda-day-timeline";
 
@@ -128,7 +129,7 @@ export function EntrySheet({
 
           {entry.status !== "cancelled" && entry.paymentStatus !== "paid" && entry.paymentMethod !== "subscription" && (
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-bold">Recebeu no balcão?</p>
+              <FieldLabel>Recebeu no balcão?</FieldLabel>
               <div className="grid grid-cols-3 gap-2">
                 {LOCAL_PAYMENT_METHODS.map((m) => (
                   <Button

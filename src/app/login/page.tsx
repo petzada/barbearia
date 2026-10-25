@@ -23,7 +23,7 @@ export default async function LoginPage() {
           sizes="(min-width: 1024px) 50vw, 100vw"
           className="object-cover object-top"
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-scrim/40 via-transparent to-scrim/30" aria-hidden />
         <div className="absolute left-5 top-[calc(1rem+env(safe-area-inset-top))]">
           <BrandMark inverted />
         </div>

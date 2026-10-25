@@ -1,17 +1,11 @@
 /* eslint-disable @next/next/no-img-element -- fotos vêm do R2 (/media). */
 import Link from "next/link";
-import { MessageCircle, Star, Users } from "lucide-react";
+import { MessageCircle, Users } from "lucide-react";
+import { RatingStars } from "@/components/kit/rating-stars";
 import { getInitials } from "@/lib/profile/display-name";
-import { cn, countLabel } from "@/lib/utils";
 import { EmptyState } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import type { BookingBarber } from "./types";
-
-export function formatRating(barber: Pick<BookingBarber, "ratingAverage" | "ratingCount">) {
-  return barber.ratingAverage == null
-    ? null
-    : barber.ratingAverage.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-}
 
 /** Etapa 1: barbeiros em grade de 2 colunas com foto quadrada grande. */
 export function BarberStep({
@@ -47,7 +41,6 @@ export function BarberStep({
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {barbers.map((b) => {
-            const rating = formatRating(b);
             return (
               <li key={b.id}>
                 <button
@@ -66,17 +59,11 @@ export function BarberStep({
                   </span>
                   <span className="flex flex-col gap-0.5 p-3">
                     <span className="truncate text-base font-bold">{b.name}</span>
-                    <span className={cn("inline-flex items-center gap-1 text-sm font-semibold", rating ? "text-ink" : "text-ink-subtle")}>
-                      {rating ? (
-                        <>
-                          <Star className="size-4 fill-warning text-warning" aria-hidden />
-                          {rating}
-                          <span className="sr-only">de 5 ({countLabel(b.ratingCount, "avaliação", "avaliações")})</span>
-                        </>
-                      ) : (
-                        "Novo"
-                      )}
-                    </span>
+                    {b.ratingAverage != null ? (
+                      <RatingStars rating={b.ratingAverage} variant="compact" average count={b.ratingCount} />
+                    ) : (
+                      <span className="text-sm font-semibold text-ink-subtle">Novo</span>
+                    )}
                   </span>
                 </button>
               </li>

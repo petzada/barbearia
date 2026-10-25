@@ -13,6 +13,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OtpInput } from "@/components/auth/otp-input";
 import { useResendCountdown } from "@/components/auth/use-resend-countdown";
+import { ResendCode } from "@/components/auth/resend-code";
 
 type Step = "name" | "phone" | "code" | "done";
 
@@ -159,16 +160,12 @@ export function OnboardingFlow({
       body: (
         <div className="flex flex-col gap-4">
           <OtpInput value={code} onChange={setCode} onComplete={verify} disabled={pending} autoFocus invalid={Boolean(error)} />
-          <p className="text-sm text-ink-subtle">
-            Não chegou?{" "}
-            {resend.seconds > 0 ? (
-              <span className="tabular font-semibold">Reenviar em {resend.label}</span>
-            ) : (
-              <button type="button" className="font-bold text-cta-ink" onClick={() => phone && sendCode(phone)}>
-                Reenviar código
-              </button>
-            )}
-          </p>
+          <ResendCode
+            seconds={resend.seconds}
+            label={resend.label}
+            disabled={pending}
+            onResend={() => phone && sendCode(phone)}
+          />
         </div>
       ),
       action: null,

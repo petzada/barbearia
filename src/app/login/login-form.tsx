@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { OtpInput } from "@/components/auth/otp-input";
 import { GoogleIcon } from "@/components/google-icon";
 import { useResendCountdown } from "@/components/auth/use-resend-countdown";
+import { ResendCode } from "@/components/auth/resend-code";
 
 export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
   const [step, setStepState] = useState<"phone" | "code">("phone");
@@ -106,21 +107,12 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
           </p>
         )}
         {pending && <p className="text-sm text-ink-subtle">Entrando…</p>}
-        <p className="text-sm text-ink-subtle">
-          Não chegou?{" "}
-          {resend.seconds > 0 ? (
-            <span className="tabular font-semibold">Reenviar em {resend.label}</span>
-          ) : (
-            <button
-              type="button"
-              className="inline-flex min-h-11 items-center font-bold text-cta-ink"
-              disabled={pending}
-              onClick={() => phone && sendCode(phone)}
-            >
-              Reenviar código
-            </button>
-          )}
-        </p>
+        <ResendCode
+          seconds={resend.seconds}
+          label={resend.label}
+          disabled={pending}
+          onResend={() => phone && sendCode(phone)}
+        />
       </div>
     );
   }

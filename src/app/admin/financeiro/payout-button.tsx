@@ -60,6 +60,7 @@ export function PayoutButton({
       >
         <p className="text-display">{formatPriceCents(amountCents)}</p>
         <Segmented
+          showLabel
           label="Forma de pagamento"
           value={method}
           onChange={setMethod}

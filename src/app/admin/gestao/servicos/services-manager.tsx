@@ -65,7 +65,7 @@ export function ServicesManager({ services }: { services: ServiceRow[] }) {
             description="Cadastre o primeiro serviço para abrir a agenda."
             action={
               <Button size="lg" onClick={() => setEditing("new")}>
-                Criar serviço
+                Novo serviço
               </Button>
             }
           />

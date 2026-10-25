@@ -87,3 +87,31 @@ ainda: este é o backlog para decisão.
 - **Seleção:** `Segmented` para 2–4 opções exclusivas; `chipClass` para filtros; card com anel só quando a opção tem título e descrição. Chips nunca executam ação.
 - **Estado vazio:** sempre `EmptyState` com botão de próxima ação, com variante `compact`.
 - **Formatação:** fontes únicas `formatTimeRange`, `formatDayMonth`, `formatWeekdayShort`, `formatDateRange`, `PAYMENT_LABELS` e `countLabel`.
+
+## Verificação (2ª passada)
+
+Uma segunda revisão (Fable, esforço baixo) conferiu os 39 itens no código: 31
+confirmados, 8 com resíduo e nenhum sem resolver. Ela também levantou 15 pontos
+novos de polimento. Tudo isso foi corrigido em seguida:
+
+- **Resíduos:**
+  - rótulos de pagamento vêm todos do dicionário (inclusive os filtros do financeiro);
+  - "Reenviar código" virou componente único com alvo de 44px;
+  - regra de verbos: "Novo X" no cabeçalho e no vazio, "Criar X"/"Bloquear horário" na folha;
+  - lembrete e prévia do WhatsApp com `formatDayLabel`;
+  - plural com `countLabel` no servidor;
+  - plano do clube admin em chips;
+  - Pix expirado e agenda vazia com `EmptyState`;
+  - véu de fotos e folhas com o token `--scrim`. O `themeColor` continua literal porque a meta tag não lê variáveis CSS; as cores da marca Google também.
+- **Novos:**
+  - erro do Pix: "Tentar de novo" e "Ver meus agendamentos";
+  - `FieldLabel` único, e `OptionGroup`/`Segmented` com rótulo visível;
+  - `HubRow` substituído por `SettingsLink` com `valueTone`;
+  - bloqueios em grupo de linhas com marcador tracejado;
+  - troca de modo da sidebar com `SegmentedNav` vertical;
+  - botão com variante `on-dark`;
+  - `RatingStars`/`RatingInput` únicos;
+  - ícones nas linhas de Regras e Barbearia;
+  - `staticRowClass` nas listas informativas;
+  - calendário como grupo de botões com a data completa no rótulo;
+  - `chipRowClass` em todas as fileiras de filtros.

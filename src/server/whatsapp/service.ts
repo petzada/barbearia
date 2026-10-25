@@ -19,7 +19,8 @@ import { extractInstanceIdFromPayload, extractProviderMessageId, extractStatusSn
 import { parseConnectionUpdateEvent } from "./connection";
 import { DEFAULT_WHATSAPP_TEMPLATE, OTP_MESSAGE, renderWhatsappTemplate } from "./template";
 import { normalizeBrazilPhone, formatBrazilPhone } from "@/lib/phone";
-import { formatSelectableDay, formatSlotTime } from "@/lib/agenda/availability";
+import { formatSlotTime } from "@/lib/agenda/availability";
+import { formatDayLabel } from "@/lib/agenda/format";
 import { spDayBounds, todayDateKeySP } from "@/lib/agenda/timezone";
 
 export type WhatsappConfig = typeof whatsappConfig.$inferSelect;
@@ -443,7 +444,7 @@ export async function runDailyReminders(
       cliente_nome: row.clientName.split(/\s+/)[0],
       profissional_nome: row.barberName,
       servico_nome: row.serviceName,
-      data_agendamento: formatSelectableDay(dateKey),
+      data_agendamento: formatDayLabel(dateKey),
       hora_agendamento: formatSlotTime(row.startsAt),
       barbearia_nome: settings.shopName,
       telefone_barbearia: settings.phone ? formatBrazilPhone(settings.phone) : "",

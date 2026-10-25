@@ -3,10 +3,11 @@
 /* eslint-disable @next/next/no-img-element -- QR Code chega como data URL do AbacatePay. */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, FlaskConical } from "lucide-react";
+import { Copy, FlaskConical, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { checkPixAction, simulatePixAction } from "@/app/actions/cliente";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/page-header";
 
 const POLL_MS = 4000;
 
@@ -74,11 +75,16 @@ export function PixPanel({
 
   if (status === "expired" || status === "cancelled") {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-lg bg-card p-8 text-center shadow-card">
-        <p className="text-lg font-bold">Este Pix expirou</p>
-        <p className="text-sm text-ink-subtle">Seu horário segue marcado: pague na barbearia ou gere um novo Pix.</p>
-        <Button onClick={() => router.refresh()}>Gerar novo Pix</Button>
-      </div>
+      <EmptyState
+        icon={QrCode}
+        title="Este Pix expirou"
+        description="Seu horário segue marcado: pague na barbearia ou gere um novo Pix."
+        action={
+          <Button size="lg" onClick={() => router.refresh()}>
+            Gerar novo Pix
+          </Button>
+        }
+      />
     );
   }
 

@@ -67,7 +67,7 @@ export function PlansManager({ plans }: { plans: PlanRow[] }) {
             description="Crie os planos do Clube Moura. Eles só aparecem para o cliente quando ativos."
             action={
               <Button size="lg" onClick={() => setEditing("new")}>
-                Criar plano
+                Novo plano
               </Button>
             }
           />
@@ -84,7 +84,7 @@ export function PlansManager({ plans }: { plans: PlanRow[] }) {
                     </div>
                   }
                   footer={
-                    <Button variant="outline" onClick={() => setEditing(p)} className={p.highlighted ? "border-on-dark/20 bg-transparent text-on-dark hover:bg-on-dark/10" : undefined}>
+                    <Button variant={p.highlighted ? "on-dark" : "outline"} onClick={() => setEditing(p)}>
                       <Pencil aria-hidden />
                       Editar
                     </Button>

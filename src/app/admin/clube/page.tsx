@@ -9,7 +9,7 @@ import { EmptyState, PageBody, PageHeader } from "@/components/page-header";
 import { StatTile } from "@/components/period-filter";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { chipClass } from "@/lib/ui/classes";
+import { chipClass, chipRowClass } from "@/lib/ui/classes";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { cn } from "@/lib/utils";
 import { ClubMembers, RegisterButton } from "./club-admin-client";
@@ -68,7 +68,7 @@ export default async function AdminClubePage({
           )}
         </form>
 
-        <nav className="flex gap-2" aria-label="Filtrar assinantes">
+        <nav className={chipRowClass} aria-label="Filtrar assinantes">
           {FILTERS.map((f) => (
             <Link
               key={f.key}

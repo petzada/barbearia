@@ -9,7 +9,7 @@ import { getActiveSubscription, listPlans, listUserPayments } from "@/server/pay
 import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { rowGroupClass } from "@/lib/ui/classes";
+import { rowGroupClass, staticRowClass } from "@/lib/ui/classes";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { formatDayMonth } from "@/lib/agenda/format";
 import { paymentMethodLabel } from "@/lib/payments";
@@ -127,7 +127,7 @@ export default async function ClubePage() {
             <SectionTitle>Pagamentos</SectionTitle>
             <ul className={rowGroupClass}>
               {history.map((p) => (
-                <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-4 text-sm">
+                <li key={p.id} className={staticRowClass}>
                   <div>
                     <p className="font-bold">{p.kind === "subscription" ? "Clube Moura" : "Agendamento"}</p>
                     <p className="text-ink-subtle">

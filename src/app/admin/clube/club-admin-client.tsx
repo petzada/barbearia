@@ -12,7 +12,8 @@ import {
 } from "@/app/actions/admin";
 import { BottomSheet } from "@/components/kit/bottom-sheet";
 import { ConfirmDialog } from "@/components/kit/confirm-dialog";
-import { OptionCard, OptionGroup } from "@/components/kit/option-card";
+import { ChipGroup } from "@/components/kit/option-card";
+import { FieldLabel } from "@/components/kit/field-label";
 import { Segmented } from "@/components/kit/segmented";
 import { EmptyState } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ import { formatDayLabel, formatDayMonth } from "@/lib/agenda/format";
 import { LOCAL_PAYMENT_SHORT_LABELS, paymentMethodLabel, subscriptionPaymentLabel } from "@/lib/payments";
 import { LOCAL_PAYMENT_METHODS, type LocalPaymentMethod } from "@/lib/validations/agendamento";
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
-import { rowClass, rowGroupClass } from "@/lib/ui/classes";
+import { rowClass, rowGroupClass, staticRowClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
 
 type Row = {
@@ -135,13 +136,13 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
             </dl>
 
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-bold">Pagamentos</p>
+              <FieldLabel>Pagamentos</FieldLabel>
               {detail.history.length === 0 ? (
                 <EmptyState compact icon={Receipt} title="Nenhum pagamento registrado" />
               ) : (
                 <ul className={cn(rowGroupClass, "text-sm")}>
                   {detail.history.map((p) => (
-                    <li key={p.id} className="flex justify-between gap-3 px-4 py-3">
+                    <li key={p.id} className={staticRowClass}>
                       <span>
                         {fmtDay(p.paidAt)} · {paymentMethodLabel(p.method)}
                       </span>
@@ -154,8 +155,7 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
 
             {detail.provider === "manual" && (
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-bold">Renovar no balcão</p>
-                <Segmented label="Forma de pagamento" value={method} onChange={setMethod} options={LOCAL_OPTIONS} />
+                <Segmented showLabel label="Renovar no balcão" value={method} onChange={setMethod} options={LOCAL_OPTIONS} />
                 <Button
                   size="lg"
                   disabled={pending}
@@ -190,7 +190,7 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
   );
 }
 
-/** "+ Registrar pagamento" de assinatura feito no balcão (no cabeçalho). */
+/** "+ Novo pagamento" (cabeçalho): assinatura paga no balcão. */
 export function RegisterButton({ plans }: { plans: { id: string; name: string; priceCents: number }[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -214,7 +214,7 @@ export function RegisterButton({ plans }: { plans: { id: string; name: string; p
     <>
       <Button size="sm" onClick={() => setOpen(true)} disabled={plans.length === 0}>
         <Plus aria-hidden />
-        Registrar pagamento
+        Novo pagamento
       </Button>
       <BottomSheet
         open={open}
@@ -231,24 +231,13 @@ export function RegisterButton({ plans }: { plans: { id: string; name: string; p
           <Label htmlFor="club-phone">WhatsApp do cliente</Label>
           <Input id="club-phone" type="tel" inputMode="tel" placeholder="(11) 98765-4321" value={phone} onChange={(e) => setPhone(maskBrazilPhoneInput(e.target.value))} />
         </div>
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold">Plano</p>
-          <OptionGroup label="Plano">
-            {plans.map((p) => (
-              <OptionCard
-                key={p.id}
-                selected={p.id === planId}
-                onSelect={() => setPlanId(p.id)}
-                title={p.name}
-                trailing={<span className="tabular font-bold">{formatPriceCents(p.priceCents)}</span>}
-              />
-            ))}
-          </OptionGroup>
-        </div>
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold">Forma de pagamento</p>
-          <Segmented label="Forma de pagamento" value={method} onChange={setMethod} options={LOCAL_OPTIONS} />
-        </div>
+        <ChipGroup
+          label="Plano"
+          value={planId}
+          onChange={setPlanId}
+          options={plans.map((p) => ({ value: p.id, label: p.name, hint: formatPriceCents(p.priceCents) }))}
+        />
+        <Segmented showLabel label="Forma de pagamento" value={method} onChange={setMethod} options={LOCAL_OPTIONS} />
       </BottomSheet>
     </>
   );

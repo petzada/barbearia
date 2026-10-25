@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Star, Wallet } from "lucide-react";
+import { Wallet } from "lucide-react";
+import { RatingStars } from "@/components/kit/rating-stars";
 import { getDb } from "@/server/db";
 import { requireBarberUser, toActor } from "@/server/auth";
 import { eachDateKey, getBarberEarnings } from "@/server/reports";
@@ -13,6 +14,7 @@ import { dateKeyFromIsoInSP, formatPriceCents, formatSlotTime } from "@/lib/agen
 import { formatDateRange, formatDayLabel } from "@/lib/agenda/format";
 import { buttonVariants } from "@/components/ui/button";
 import { PERIOD_OPTIONS, resolvePeriod } from "@/lib/periods";
+import { staticRowClass } from "@/lib/ui/classes";
 import { countLabel } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Ganhos" };
@@ -101,7 +103,7 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
                 </div>
                 <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
                   {items.map((i) => (
-                    <li key={i.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                    <li key={i.id} className={staticRowClass}>
                       <span className="tabular w-12 shrink-0 text-ink-subtle">{formatSlotTime(i.startsAt)}</span>
                       <span className="min-w-0 flex-1 truncate font-semibold">
                         {i.serviceName ?? "Serviço"} · {i.clientName ?? "Cliente"}
@@ -120,7 +122,7 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
             <SectionTitle>Últimos repasses</SectionTitle>
             <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
               {payouts.map((p) => (
-                <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                <li key={p.id} className={staticRowClass}>
                   <span>
                     <span className="tabular block font-semibold">{formatDateRange(p.periodFrom, p.periodTo)}</span>
                     <span className="text-ink-subtle">
@@ -142,10 +144,7 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
                 <li key={f.id} className="rounded-lg bg-card p-4 shadow-card">
                   <div className="flex items-center justify-between">
                     <p className="font-bold">{f.clientName}</p>
-                    <span className="flex items-center gap-1 text-sm font-bold text-ink" aria-label={`${f.rating} de 5`}>
-                      <Star className="size-4 fill-warning text-warning" aria-hidden />
-                      {f.rating}
-                    </span>
+                    <RatingStars rating={f.rating} variant="compact" />
                   </div>
                   {f.comment && <p className="mt-1 text-sm text-ink-muted">“{f.comment}”</p>}
                 </li>

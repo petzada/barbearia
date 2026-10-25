@@ -56,12 +56,12 @@ export default async function PixPage({ params }: { params: Promise<{ id: string
             description="Seu horário continua marcado. Tente de novo ou pague na barbearia."
             action={
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Link href={`/agendamentos/${id}/pix`} className={buttonVariants()}>
+                <Link href={`/agendamentos/${id}/pix`} className={buttonVariants({ size: "lg" })}>
                   <RotateCcw aria-hidden />
                   Tentar de novo
                 </Link>
-                <Link href="/agendamentos" className={buttonVariants({ variant: "outline" })}>
-                  Pagar na barbearia
+                <Link href="/agendamentos" className={buttonVariants({ variant: "outline", size: "lg" })}>
+                  Ver meus agendamentos
                 </Link>
               </div>
             }

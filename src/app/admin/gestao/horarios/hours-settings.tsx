@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Copy, Plus, Trash2 } from "lucide-react";
+import { AtSign, CalendarRange, CalendarX, ChevronRight, Copy, Grid3x3, MapPin, MessageCircle, Plus, Store, Timer, Trash2, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { addClosureAction, removeClosureAction, saveBusinessHoursAction, saveShopSettingsAction } from "@/app/actions/admin";
-import { rowClass, SettingsAction, SettingsGroup } from "@/components/kit/settings-list";
+import { RowIcon, rowClass, SettingsAction, SettingsGroup } from "@/components/kit/settings-list";
 import { BottomSheet } from "@/components/kit/bottom-sheet";
 import { ConfirmDialog } from "@/components/kit/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -34,18 +34,18 @@ type Settings = {
 type RuleKey = "slotIntervalMinutes" | "minLeadMinutes" | "bookingWindowDays" | "cancelUntilMinutes";
 type InfoKey = "shopName" | "phone" | "address" | "instagram";
 
-const RULES: { key: RuleKey; label: string; options: number[]; format: (v: number) => string; help: string }[] = [
-  { key: "slotIntervalMinutes", label: "Grade de horários", options: [15, 20, 30, 45, 60], format: (v) => `${v} min`, help: "De quanto em quanto tempo o cliente vê horários." },
-  { key: "minLeadMinutes", label: "Antecedência mínima", options: [0, 15, 30, 60, 120, 240], format: (v) => (v === 0 ? "Sem mínimo" : formatMinutesShort(v)), help: "Com quanto tempo de antecedência dá para agendar." },
-  { key: "bookingWindowDays", label: "Agenda aberta", options: [7, 14, 30, 45, 60, 90], format: (v) => `${v} dias`, help: "Até quantos dias à frente o cliente agenda." },
-  { key: "cancelUntilMinutes", label: "Cancelar pelo app até", options: [0, 30, 60, 120, 240, 1440], format: (v) => (v === 0 ? "A qualquer momento" : `${formatMinutesShort(v)} antes`), help: "Depois disso, só falando com a barbearia." },
+const RULES: { key: RuleKey; label: string; icon: LucideIcon; options: number[]; format: (v: number) => string; help: string }[] = [
+  { key: "slotIntervalMinutes", label: "Grade de horários", icon: Grid3x3, options: [15, 20, 30, 45, 60], format: (v) => `${v} min`, help: "De quanto em quanto tempo o cliente vê horários." },
+  { key: "minLeadMinutes", label: "Antecedência mínima", icon: Timer, options: [0, 15, 30, 60, 120, 240], format: (v) => (v === 0 ? "Sem mínimo" : formatMinutesShort(v)), help: "Com quanto tempo de antecedência dá para agendar." },
+  { key: "bookingWindowDays", label: "Agenda aberta", icon: CalendarRange, options: [7, 14, 30, 45, 60, 90], format: (v) => `${v} dias`, help: "Até quantos dias à frente o cliente agenda." },
+  { key: "cancelUntilMinutes", label: "Cancelar pelo app até", icon: CalendarX, options: [0, 30, 60, 120, 240, 1440], format: (v) => (v === 0 ? "A qualquer momento" : `${formatMinutesShort(v)} antes`), help: "Depois disso, só falando com a barbearia." },
 ];
 
-const INFO: { key: InfoKey; label: string; placeholder: string }[] = [
-  { key: "shopName", label: "Nome", placeholder: "Barbearia do Moura" },
-  { key: "phone", label: "WhatsApp", placeholder: "(11) 98765-4321" },
-  { key: "address", label: "Endereço", placeholder: "Rua, número - bairro - cidade" },
-  { key: "instagram", label: "Instagram", placeholder: "@barbearia" },
+const INFO: { key: InfoKey; label: string; icon: LucideIcon; placeholder: string }[] = [
+  { key: "shopName", label: "Nome", icon: Store, placeholder: "Barbearia do Moura" },
+  { key: "phone", label: "WhatsApp", icon: MessageCircle, placeholder: "(11) 98765-4321" },
+  { key: "address", label: "Endereço", icon: MapPin, placeholder: "Rua, número - bairro - cidade" },
+  { key: "instagram", label: "Instagram", icon: AtSign, placeholder: "@barbearia" },
 ];
 
 const ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -158,7 +158,7 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
             />
           </div>
         ))}
-        <SettingsAction icon={Plus} label="Adicionar feriado ou fechamento" onClick={() => setClosureOpen(true)} />
+        <SettingsAction icon={Plus} label="Novo feriado ou fechamento" onClick={() => setClosureOpen(true)} />
       </SettingsGroup>
 
       <SettingsGroup title="Regras de agendamento">
@@ -172,6 +172,7 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
             }}
             className={rowClass}
           >
+            <RowIcon icon={r.icon} />
             <span className="flex-1 font-semibold">{r.label}</span>
             <span className="text-sm text-ink-subtle">{r.format(settings[r.key])}</span>
             <ChevronRight className="size-4 text-ink-tertiary" aria-hidden />
@@ -193,6 +194,7 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
               }}
               className={rowClass}
             >
+              <RowIcon icon={i.icon} />
               <span className="w-24 shrink-0 font-semibold">{i.label}</span>
               <span className="min-w-0 flex-1 truncate text-right text-sm text-ink-subtle">{value || "—"}</span>
               <ChevronRight className="size-4 shrink-0 text-ink-tertiary" aria-hidden />

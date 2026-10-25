@@ -12,6 +12,7 @@ import { effectiveDayHours } from "@/lib/agenda/slots";
 import { parseTimeToMinutes } from "@/lib/agenda/timeline";
 import { spDayBounds, spLocalDateTimeToIso, todayDateKeySP } from "@/lib/agenda/timezone";
 import { normalizeBrazilPhone } from "@/lib/phone";
+import { countLabel } from "@/lib/utils";
 import {
   blockRangeSchema,
   walkInSchema,
@@ -237,7 +238,7 @@ export async function createBlockRange(db: Db, actor: Actor, input: BlockRangeIn
   if (conflicts.length > 0) {
     throw new DomainError(
       "conflict",
-      `Há ${conflicts.length} horário${conflicts.length > 1 ? "s" : ""} marcado${conflicts.length > 1 ? "s" : ""} no período. Cancele ou remarque antes de bloquear.`,
+      `Há ${countLabel(conflicts.length, "horário marcado", "horários marcados")} no período. Cancele ou remarque antes de bloquear.`,
     );
   }
   const ids = planned.map(() => crypto.randomUUID());

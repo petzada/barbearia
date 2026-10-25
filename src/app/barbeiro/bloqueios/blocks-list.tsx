@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { dateKeyFromIsoInSP, formatSlotTime } from "@/lib/agenda/availability";
 import { formatDayLabel, formatTimeRange } from "@/lib/agenda/format";
 import { minutesFromIsoInSP } from "@/lib/agenda/timeline";
+import { rowGroupClass } from "@/lib/ui/classes";
 
 type Block = { id: string; startsAt: number; endsAt: number; note: string | null };
 
@@ -82,7 +83,7 @@ export function BlocksList({
             description="Bloqueie o almoço, uma folga ou as suas férias."
             action={
               <Button size="lg" onClick={() => setOpen(true)}>
-                Bloquear horário
+                Novo bloqueio
               </Button>
             }
           />
@@ -94,13 +95,15 @@ export function BlocksList({
                   {dateKey === today ? "Hoje · " : ""}
                   {formatDayLabel(dateKey)}
                 </h2>
-                <ul className="flex flex-col gap-2">
+                <ul className={rowGroupClass}>
                   {items.map((b) => (
                     <li
                       key={b.id}
                       aria-busy={pendingId === b.id || undefined}
-                      className="flex items-center gap-3 rounded-lg border border-dashed border-hairline-strong bg-card py-2 pl-4 pr-2 aria-busy:opacity-60"
+                      className="flex min-h-14 items-center gap-3 py-2 pl-4 pr-2 aria-busy:opacity-60"
                     >
+                      {/* Marcador tracejado = bloqueio (mesmo código visual da agenda). */}
+                      <span className="h-9 w-0 shrink-0 border-l-2 border-dashed border-ink-tertiary" aria-hidden />
                       <div className="min-w-0 flex-1">
                         <p className="tabular font-bold">{label(b)}</p>
                         {b.note && <p className="truncate text-sm text-ink-subtle">{b.note}</p>}

@@ -13,8 +13,8 @@ import { SegmentedNav } from "@/components/kit/segmented";
 import { buttonVariants } from "@/components/ui/button";
 import { formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
 import { formatDateRange, formatDayLabel } from "@/lib/agenda/format";
-import { paymentMethodLabel } from "@/lib/payments";
-import { chipClass } from "@/lib/ui/classes";
+import { PAYMENT_CHANNEL_LABELS, paymentMethodLabel } from "@/lib/payments";
+import { chipClass, staticRowClass } from "@/lib/ui/classes";
 import { resolvePeriod } from "@/lib/periods";
 import { cn, countLabel } from "@/lib/utils";
 import { PayoutButton } from "./payout-button";
@@ -102,7 +102,7 @@ async function Resumo({ db, actor, period }: Ctx) {
     <section className="flex flex-col gap-3">
       <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
         {rows.map((r) => (
-          <li key={r.label} className="flex items-center justify-between gap-3 px-5 py-4">
+          <li key={r.label} className={cn(staticRowClass, "text-base")}>
             <span>
               <span className="block font-semibold">{r.label}</span>
               <span className="text-xs text-ink-subtle">{r.hint}</span>
@@ -110,11 +110,11 @@ async function Resumo({ db, actor, period }: Ctx) {
             <span className="tabular font-bold">{formatPriceCents(r.value)}</span>
           </li>
         ))}
-        <li className="flex items-center justify-between gap-3 px-5 py-4">
+        <li className={cn(staticRowClass, "text-base")}>
           <span className="font-semibold">(−) Comissões</span>
           <span className="tabular font-bold text-destructive">{formatPriceCents(k.commissionsCents)}</span>
         </li>
-        <li className="flex items-center justify-between gap-3 bg-teal-soft px-5 py-4">
+        <li className={cn(staticRowClass, "bg-teal-soft text-base")}>
           <span>
             <span className="block font-extrabold">Resultado estimado</span>
             <span className="text-xs text-ink-subtle">Serviços + clube − comissões</span>
@@ -137,8 +137,8 @@ async function Recebimentos({ db, actor, period, forma, qs }: Ctx & { forma?: "o
       <div className="flex flex-wrap items-center gap-2">
         {[
           { key: undefined, label: "Todos" },
-          { key: "online", label: "Online" },
-          { key: "balcao", label: "Balcão" },
+          { key: "online", label: PAYMENT_CHANNEL_LABELS.online },
+          { key: "balcao", label: PAYMENT_CHANNEL_LABELS.balcao },
         ].map((f) => (
           <Link
             key={f.label}
@@ -169,7 +169,7 @@ async function Recebimentos({ db, actor, period, forma, qs }: Ctx & { forma?: "o
       ) : (
         <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
           {receipts.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 px-5 py-3 text-sm">
+            <li key={r.id} className={staticRowClass}>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{r.clientName ?? "Cliente"} · {r.kind === "subscription" ? "Clube" : "Atendimento"}</p>
                 <p className="text-ink-subtle">
@@ -235,7 +235,7 @@ async function Comissoes({ db, actor, period }: Ctx) {
           <SectionTitle>Repasses feitos</SectionTitle>
           <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
             {payouts.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+              <li key={p.id} className={staticRowClass}>
                 <span>
                   <span className="block font-semibold">{p.barberName}</span>
                   <span className="text-ink-subtle">

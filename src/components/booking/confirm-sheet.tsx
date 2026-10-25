@@ -86,7 +86,6 @@ export function ConfirmSheet({
           </div>
 
           <OptionGroup label="Como você prefere pagar?">
-            <p className="text-sm font-bold">Como você prefere pagar?</p>
             {options.map((opt) => (
               <OptionCard
                 key={opt.value}
