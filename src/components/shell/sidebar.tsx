@@ -5,21 +5,20 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
 import { getInitials } from "@/lib/profile/display-name";
-import { isNavItemActive, MODE_HOME, MODE_LABELS, type AppMode, type NavItem } from "./nav-config";
+import { isNavItemActive, MODE_HOME, MODE_LABELS, NAV_BY_MODE, type AppMode } from "./nav-config";
 
 /** Navegação lateral para telas grandes (≥ 1024px). */
 export function Sidebar({
-  items,
   mode,
   modes,
   userName,
 }: {
-  items: NavItem[];
   mode: AppMode;
   modes: AppMode[];
   userName: string;
 }) {
   const pathname = usePathname();
+  const items = NAV_BY_MODE[mode];
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-6 border-r border-hairline bg-card px-4 py-6 lg:flex">

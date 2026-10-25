@@ -415,6 +415,7 @@ export type AgendaItem = {
   clientId: string | null;
   clientName: string | null;
   clientPhone: string | null;
+  serviceId: string | null;
   serviceName: string | null;
   startsAt: Date;
   endsAt: Date;
@@ -434,6 +435,7 @@ const agendaColumns = {
   clientId: scheduleEntries.clientId,
   clientName: clientUser.name,
   clientPhone: clientUser.phoneNumber,
+  serviceId: scheduleEntries.serviceId,
   serviceName: services.name,
   startsAt: scheduleEntries.startsAt,
   endsAt: scheduleEntries.endsAt,
@@ -546,4 +548,22 @@ export async function listClientAppointments(
     hasFeedback: withFeedback.has(r.id),
     pendingPixPaymentId: pixByEntry.get(r.id) ?? null,
   }));
+}
+
+/** Um agendamento do próprio cliente com nomes (tela de sucesso e .ics). */
+export async function getClientAppointment(
+  db: Db,
+  clientId: string,
+  entryId: string,
+): Promise<AgendaItem | null> {
+  const [row] = await agendaQuery(db)
+    .where(
+      and(
+        eq(scheduleEntries.id, entryId),
+        eq(scheduleEntries.clientId, clientId),
+        eq(scheduleEntries.type, "appointment"),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
 }

@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { isNavItemActive, type NavItem } from "./nav-config";
+import { isNavItemActive, NAV_BY_MODE, type AppMode } from "./nav-config";
 
 /**
  * Barra inferior fixa estilo iOS (mobile/tablet): fundo branco, linha fina no
  * topo, ícones cinza, ativo em teal e ação principal teal levemente elevada.
  */
-export function BottomNav({ items }: { items: NavItem[] }) {
+export function BottomNav({ mode }: { mode: AppMode }) {
   const pathname = usePathname();
+  // Ícones são componentes: resolvidos no cliente a partir do modo (serializável).
+  const items = NAV_BY_MODE[mode];
 
   return (
     <nav

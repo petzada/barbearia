@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
 import { getDb } from "@/server/db";
 import { getServerEnv } from "@/server/env";
 import { requireOnboardedUser, toActor } from "@/server/auth";
@@ -9,7 +7,6 @@ import { getEntry } from "@/server/scheduling";
 import { DomainError } from "@/server/errors";
 import { createPaymentGateway, startAppointmentPix } from "@/server/payments/service";
 import { PageBody, PageHeader } from "@/components/page-header";
-import { buttonVariants } from "@/components/ui/button";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { PixPanel } from "./pix-panel";
 
@@ -22,22 +19,7 @@ export default async function PixPage({ params }: { params: Promise<{ id: string
   const entry = await getEntry(db, id);
   if (!entry || entry.clientId !== user.id) notFound();
 
-  if (entry.paymentStatus === "paid") {
-    return (
-      <main className="flex flex-1 flex-col">
-        <PageHeader title="Pagamento" backHref="/agendamentos" />
-        <PageBody>
-          <div className="flex flex-col items-center gap-3 rounded-lg bg-card p-8 text-center shadow-card">
-            <CheckCircle2 className="size-12 text-success" aria-hidden />
-            <p className="text-lg font-bold">Pagamento confirmado</p>
-            <Link href="/agendamentos" className={buttonVariants()}>
-              Ver meus agendamentos
-            </Link>
-          </div>
-        </PageBody>
-      </main>
-    );
-  }
+  if (entry.paymentStatus === "paid") redirect(`/agendamentos/${id}/confirmado`);
 
   let payment = null;
   let error: string | null = null;
@@ -51,12 +33,13 @@ export default async function PixPage({ params }: { params: Promise<{ id: string
     <main className="flex flex-1 flex-col">
       <PageHeader
         title="Pagar com Pix"
-        description={payment ? `Total ${formatPriceCents(payment.amountCents)}` : undefined}
+        description={payment ? `${formatPriceCents(payment.amountCents)} · confirmação automática` : undefined}
         backHref="/agendamentos"
       />
       <PageBody>
         {payment ? (
           <PixPanel
+            entryId={id}
             paymentId={payment.id}
             brCode={payment.brCode ?? ""}
             qrImage={payment.brCodeBase64}

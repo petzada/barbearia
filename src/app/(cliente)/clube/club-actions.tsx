@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export function ClubActions(
-  props: { mode: "subscribe"; planId: string } | { mode: "cancel"; subscriptionId: string },
+  props: { mode: "subscribe"; planId: string; highlighted?: boolean } | { mode: "cancel"; subscriptionId: string },
 ) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -27,6 +27,8 @@ export function ClubActions(
     return (
       <Button
         className="w-full"
+        size="lg"
+        variant={props.highlighted ? "default" : "outline"}
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
@@ -43,9 +45,7 @@ export function ClubActions(
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger
-        render={<Button variant="outline" size="sm" className="border-white/20 bg-transparent text-white hover:bg-white/10" />}
-      >
+      <AlertDialogTrigger render={<Button variant="ghost" size="sm" className="text-ink-subtle" />}>
         Cancelar assinatura
       </AlertDialogTrigger>
       <AlertDialogContent>
