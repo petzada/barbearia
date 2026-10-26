@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Folga para envio de arquivos (a foto já é reduzida no navegador).
+      bodySizeLimit: "4mb",
+    },
+  },
   images: {
     // As imagens locais já são .webp otimizadas; evita depender do binding
     // pago de Cloudflare Images.

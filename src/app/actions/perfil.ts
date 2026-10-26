@@ -48,6 +48,7 @@ const AVATAR_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
 };
+// O app reduz a foto para 512 px antes de enviar; o teto só barra abusos.
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 
 /** Foto de perfil no R2. Cada um troca a própria; o admin troca a da equipe. */
@@ -61,8 +62,8 @@ export async function uploadAvatarAction(formData: FormData) {
     const file = formData.get("file");
     if (!(file instanceof File)) throw new DomainError("invalid", "Escolha uma imagem.");
     const ext = AVATAR_TYPES[file.type];
-    if (!ext) throw new DomainError("invalid", "Use uma imagem JPG, PNG ou WEBP.");
-    if (file.size > AVATAR_MAX_BYTES) throw new DomainError("invalid", "A imagem pode ter no máximo 2 MB.");
+    if (!ext) throw new DomainError("invalid", "Formato de imagem não suportado. Use JPG, PNG ou WEBP.");
+    if (file.size > AVATAR_MAX_BYTES) throw new DomainError("invalid", "Imagem muito grande. Tente outra foto.");
 
     const key = `avatars/${targetId}-${Date.now()}.${ext}`;
     const { env } = await getCloudflareContext({ async: true });

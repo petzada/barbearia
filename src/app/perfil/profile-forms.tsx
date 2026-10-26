@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Camera, Check, ChevronRight, LogOut, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
+import { resizeAvatar } from "@/lib/image-resize";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 import {
   deleteMyAccountAction,
@@ -88,16 +89,25 @@ export function AvatarRow({ userId }: { userId?: string }) {
       <input
         ref={input}
         type="file"
-        accept="image/webp,image/jpeg,image/png"
+        accept="image/*"
         className="sr-only"
         aria-label="Escolher foto de perfil"
         onChange={(e) => {
           const file = e.target.files?.[0];
+          e.target.value = ""; // permite escolher a mesma foto de novo
           if (!file) return;
-          const form = new FormData();
-          form.set("file", file);
-          if (userId) form.set("userId", userId);
           startTransition(async () => {
+            let image: Blob;
+            try {
+              // Fotos de celular têm 3–5 MB (HEIC no iPhone): reduz para 512 px antes de enviar.
+              image = await resizeAvatar(file);
+            } catch {
+              toast.error("Não conseguimos ler essa imagem. Tente uma foto JPG ou PNG.");
+              return;
+            }
+            const form = new FormData();
+            form.set("file", image, image.type === "image/webp" ? "avatar.webp" : "avatar.jpg");
+            if (userId) form.set("userId", userId);
             const result = await uploadAvatarAction(form);
             if (!result.ok) return void toast.error(result.error);
             toast.success("Foto atualizada.");
