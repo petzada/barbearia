@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { BackToPrevious } from "./back-to-previous";
 import type { LegalSection } from "@/content/legal";
 
 /** Página legal: título grande, data, índice clicável e seções em texto corrido. */
@@ -17,10 +16,7 @@ export function LegalLayout({
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-5 pb-[calc(3rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pt-12">
       <header className="flex flex-col gap-3">
-        <Link href="/" className="-ml-1 inline-flex h-11 w-fit items-center gap-1 text-sm font-semibold text-cta-ink">
-          <ChevronLeft className="size-5" aria-hidden />
-          Voltar
-        </Link>
+        <BackToPrevious />
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight lg:text-[32px]">{title}</h1>
         <p className="text-[15px] text-ink-subtle">{summary}</p>
         <p className="text-xs font-bold uppercase tracking-wider text-ink-tertiary">Atualizada em {updatedAt}</p>

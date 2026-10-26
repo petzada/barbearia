@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { NavigationTracker } from "@/components/navigation-tracker";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="pt-BR" className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-dvh overflow-x-hidden">
         {children}
+        <NavigationTracker />
         <Toaster richColors position="top-center" containerAriaLabel="Avisos" />
       </body>
     </html>
