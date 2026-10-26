@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "next dev",
+    "setup": "node scripts/setup.mjs",
+    "cf:setup": "node scripts/cf-setup.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
