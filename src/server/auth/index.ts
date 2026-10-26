@@ -8,6 +8,7 @@ import { getServerEnv } from "../env";
 import { createWhatsappGateway } from "../whatsapp/service";
 import type { Actor } from "../actor";
 import { createAuth } from "./config";
+import { hasAcceptedCurrentTerms } from "../terms";
 import { MODE_HOME, resolveMode } from "@/lib/modes";
 
 /** Instância do Better Auth da requisição atual (bindings D1 por request). */
@@ -44,6 +45,7 @@ export async function requireUser(): Promise<CurrentUser> {
 export async function requireOnboardedUser(): Promise<CurrentUser> {
   const current = await requireUser();
   if (!current.profileCompleted || !current.phoneNumberVerified) redirect("/bem-vindo");
+  if (!hasAcceptedCurrentTerms(current)) redirect("/aceite");
   return current;
 }
 

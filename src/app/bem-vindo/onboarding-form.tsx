@@ -8,28 +8,32 @@ import { CheckCircle2, ChevronLeft } from "lucide-react";
 import { authClient, authErrorMessage, isFieldAuthError } from "@/lib/auth-client";
 import { maskBrazilPhoneInput, toE164BrazilPhone, formatBrazilPhone } from "@/lib/phone";
 import { getFirstName } from "@/lib/profile/display-name";
-import { saveOnboardingNameAction } from "@/app/actions/perfil";
+import { acceptTermsAction, saveOnboardingNameAction } from "@/app/actions/perfil";
+import { TermsConsent } from "@/components/legal/terms-consent";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OtpInput } from "@/components/auth/otp-input";
 import { useResendCountdown } from "@/components/auth/use-resend-countdown";
 import { ResendCode } from "@/components/auth/resend-code";
 
-type Step = "name" | "phone" | "code" | "done";
+type Step = "name" | "phone" | "code" | "terms" | "done";
 
 export function OnboardingFlow({
   needsName,
   needsPhone,
+  needsTerms,
   initialName,
 }: {
   needsName: boolean;
   needsPhone: boolean;
+  needsTerms: boolean;
   initialName: string;
 }) {
   const router = useRouter();
   const steps: Exclude<Step, "code" | "done">[] = [
     ...(needsName ? (["name"] as const) : []),
     ...(needsPhone ? (["phone"] as const) : []),
+    ...(needsTerms ? (["terms"] as const) : []),
   ];
   const [step, setStep] = useState<Step>(steps[0]);
   const [name, setName] = useState(initialName);
@@ -38,9 +42,12 @@ export function OnboardingFlow({
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accepted, setAccepted] = useState(false);
+  const [triedTerms, setTriedTerms] = useState(false);
   const resend = useResendCountdown();
 
-  const progressIndex = step === "code" ? steps.indexOf("phone") : steps.indexOf(step as "name" | "phone");
+  const progressIndex = step === "code" ? steps.indexOf("phone") : steps.indexOf(step as "name" | "phone" | "terms");
+  const afterPhone: Step = needsTerms ? "terms" : "done";
 
   function go(next: Step) {
     setError(null);
@@ -53,7 +60,7 @@ export function OnboardingFlow({
     const result = await saveOnboardingNameAction({ fullName: name });
     setPending(false);
     if (!result.ok) return setError(result.error);
-    go(needsPhone ? "phone" : "done");
+    go(needsPhone ? "phone" : afterPhone);
   }
 
   async function sendCode(target: string) {
@@ -95,6 +102,17 @@ export function OnboardingFlow({
       if (isFieldAuthError(err)) return setError(authErrorMessage(err));
       return void toast.error(authErrorMessage(err));
     }
+    go(afterPhone);
+  }
+
+  async function submitTerms() {
+    setTriedTerms(true);
+    if (!accepted) return setError("Marque a caixa para aceitar e concluir.");
+    setPending(true);
+    setError(null);
+    const result = await acceptTermsAction(true);
+    setPending(false);
+    if (!result.ok) return void toast.error(result.error);
     go("done");
   }
 
@@ -170,7 +188,22 @@ export function OnboardingFlow({
       ),
       action: null,
     },
-  }[step];
+    terms: {
+      title: "Termos e privacidade",
+      description: "Para concluir, confirme que leu as regras de uso da barbearia e como cuidamos dos seus dados.",
+      body: (
+        <TermsConsent
+          checked={accepted}
+          onCheckedChange={(v) => {
+            setAccepted(v);
+            if (v) setError(null);
+          }}
+          invalid={triedTerms}
+        />
+      ),
+      action: { label: pending ? "Concluindo…" : "Concluir cadastro", onClick: submitTerms, disabled: pending },
+    },
+  }[step as "name" | "phone" | "code" | "terms"];
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">

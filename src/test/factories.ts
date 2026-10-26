@@ -1,6 +1,7 @@
 import type { Db } from "@/server/db";
 import { user } from "@/server/db/schema";
 import type { Actor } from "@/server/actor";
+import { TERMS_VERSION } from "@/content/legal";
 
 let seq = 0;
 
@@ -19,6 +20,8 @@ export async function createUser(
       phoneNumber: `+55119${String(10000000 + seq).slice(-8)}`,
       phoneNumberVerified: true,
       profileCompleted: true,
+      termsVersion: TERMS_VERSION,
+      termsAcceptedAt: new Date(0),
       ...overrides,
     })
     .returning();

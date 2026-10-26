@@ -12,6 +12,7 @@ import {
 import { assertAdmin, type Actor } from "../actor";
 import { DomainError } from "../errors";
 import type { ServerEnv } from "../env";
+import { assertAcceptedTerms } from "../terms";
 import {
   AbacatePayClient,
   findIdWithPrefix,
@@ -287,6 +288,7 @@ export async function startSubscriptionCheckout(
   now: Date = new Date(),
 ): Promise<{ url: string }> {
   const client = requireGateway(gateway);
+  await assertAcceptedTerms(db, actor.id);
   if (await getActiveSubscription(db, actor.id, now)) {
     throw new DomainError("invalid", "Você já tem uma assinatura ativa.");
   }

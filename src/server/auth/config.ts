@@ -81,6 +81,8 @@ export function createAuth({ db, env, gateway, withNextCookies = true }: AuthDep
         acceptingBookings: { type: "boolean", required: false, defaultValue: true, input: false },
         commissionPercent: { type: "number", required: false, defaultValue: 0, input: false },
         profileCompleted: { type: "boolean", required: false, defaultValue: false, input: false },
+        termsAcceptedAt: { type: "date", required: false, input: false },
+        termsVersion: { type: "string", required: false, input: false },
         whatsappReminders: { type: "boolean", required: false, defaultValue: true, input: false },
       },
     },

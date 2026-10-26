@@ -8,6 +8,7 @@ import { DomainError, toActionResult } from "@/server/errors";
 import { user } from "@/server/db/schema";
 import { profileSchema, type ProfileInput } from "@/lib/validations/profile";
 import { deleteOwnAccount } from "@/server/account";
+import { acceptTerms } from "@/server/terms";
 import { createPaymentGateway } from "@/server/payments/service";
 
 async function saveName(input: ProfileInput) {
@@ -87,6 +88,17 @@ export async function deleteMyAccountAction() {
   return toActionResult(async () => {
     const { db, env, actor } = await actionContext();
     await deleteOwnAccount(db, actor, createPaymentGateway(env));
+    return null;
+  });
+}
+
+/** Aceite dos Termos de Uso e da Política de Privacidade (versão vigente). */
+export async function acceptTermsAction(accepted: boolean) {
+  return toActionResult(async () => {
+    const { db, user: current } = await actionContext({ allowIncompleteProfile: true });
+    await acceptTerms(db, current.id, { accepted });
+    // Sem revalidatePath: re-renderizar /bem-vindo agora redirecionaria antes
+    // da tela "Tudo pronto!". O destino seguinte usa navegação completa.
     return null;
   });
 }
