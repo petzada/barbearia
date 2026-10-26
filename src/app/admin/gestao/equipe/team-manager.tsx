@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -53,7 +54,8 @@ export function TeamManager({
   shopWeek: ShopDay[];
 }) {
   const router = useRouter();
-  const [editing, setEditing] = useState<Member | null>(null);
+  const sheet = useSheetState<Member>();
+  const confirmInvite = useSheetState<string>();
   const [adding, setAdding] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -100,7 +102,7 @@ export function TeamManager({
         <ul className="flex flex-col gap-3">
           {members.map((m) => (
             <li key={m.id} className="rounded-lg bg-card shadow-card">
-              <button type="button" onClick={() => setEditing(m)} className="flex w-full items-center gap-3 p-4 text-left">
+              <button type="button" onClick={() => sheet.show(m)} className="flex w-full items-center gap-3 p-4 text-left">
                 <BarberAvatar name={m.name} image={m.image} size="md" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold">{m.name}</p>
@@ -131,17 +133,15 @@ export function TeamManager({
                     <span className="block font-semibold">{formatBrazilPhone(i.phoneNumber)}</span>
                     <span className="text-ink-subtle">{roles(i)} · vale no primeiro login</span>
                   </span>
-                  <ConfirmDialog
-                    title="Remover este convite?"
-                    description={`${formatBrazilPhone(i.phoneNumber)} não terá acesso de equipe ao entrar no app.`}
-                    confirmLabel="Remover convite"
-                    onConfirm={() => removeInvite(i.phoneNumber)}
-                    trigger={
-                      <Button variant="ghost" size="icon-sm" aria-label="Remover convite" className="text-destructive">
-                        <Trash2 aria-hidden />
-                      </Button>
-                    }
-                  />
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Remover convite"
+                    className="text-destructive"
+                    onClick={() => confirmInvite.show(i.phoneNumber)}
+                  >
+                    <Trash2 aria-hidden />
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -149,15 +149,31 @@ export function TeamManager({
         )}
       </PageBody>
 
-      {editing && (
-        <MemberSheet key={editing.id} member={editing} self={editing.id === currentUserId} shopWeek={shopWeek} onClose={() => setEditing(null)} />
+      {sheet.item && (
+        <MemberSheet
+          key={sheet.key}
+          member={sheet.item}
+          open={sheet.open}
+          self={sheet.item.id === currentUserId}
+          shopWeek={shopWeek}
+          onClose={sheet.hide}
+        />
       )}
       <InviteSheet open={adding} onOpenChange={setAdding} />
+      {/* Fora da lista: o convite some após remover e não pode levar o diálogo junto. */}
+      <ConfirmDialog
+        open={confirmInvite.open}
+        onOpenChange={confirmInvite.onOpenChange}
+        title="Remover este convite?"
+        description={confirmInvite.item ? `${formatBrazilPhone(confirmInvite.item)} não terá acesso de equipe ao entrar no app.` : ""}
+        confirmLabel="Remover convite"
+        onConfirm={() => (confirmInvite.item ? removeInvite(confirmInvite.item) : undefined)}
+      />
     </>
   );
 }
 
-function MemberSheet({ member, self, shopWeek, onClose }: { member: Member; self: boolean; shopWeek: ShopDay[]; onClose: () => void }) {
+function MemberSheet({ member, open, self, shopWeek, onClose }: { member: Member; open: boolean; self: boolean; shopWeek: ShopDay[]; onClose: () => void }) {
   const router = useRouter();
   const [isBarber, setIsBarber] = useState(member.isBarber);
   const [isAdmin, setIsAdmin] = useState(member.isAdmin);
@@ -187,7 +203,7 @@ function MemberSheet({ member, self, shopWeek, onClose }: { member: Member; self
 
   return (
     <BottomSheet
-      open
+      open={open}
       onOpenChange={(o) => !o && onClose()}
       title={member.name}
       description={member.phoneNumber ? formatBrazilPhone(member.phoneNumber) : undefined}

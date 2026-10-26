@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { Ban, ChevronRight, Plus, Receipt } from "lucide-react";
 import { toast } from "sonner";
@@ -47,7 +48,8 @@ type Detail = Extract<Awaited<ReturnType<typeof subscriptionDetailAction>>, { ok
 
 export function ClubMembers({ rows }: { rows: Row[] }) {
   const router = useRouter();
-  const [detail, setDetail] = useState<(Detail & { subscriptionId: string }) | null>(null);
+  const detailSheet = useSheetState<Detail & { subscriptionId: string }>();
+  const detail = detailSheet.item;
   const [method, setMethod] = useState<LocalPaymentMethod>("dinheiro");
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -59,7 +61,7 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
       const result = await subscriptionDetailAction(subscriptionId);
       setOpeningId(null);
       if (!result.ok) return void toast.error(result.error);
-      setDetail({ ...result.data, subscriptionId });
+      detailSheet.show({ ...result.data, subscriptionId });
     });
   }
 
@@ -70,7 +72,7 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
       return false;
     }
     toast.success(message);
-    setDetail(null);
+    detailSheet.hide();
     router.refresh();
     return true;
   }
@@ -116,8 +118,8 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
       </ul>
 
       <BottomSheet
-        open={detail !== null}
-        onOpenChange={(o) => !o && setDetail(null)}
+        open={detailSheet.open}
+        onOpenChange={detailSheet.onOpenChange}
         title={detail?.memberName ?? ""}
         description={detail ? `${detail.planName}${detail.memberPhone ? ` · ${formatBrazilPhone(detail.memberPhone)}` : ""}` : undefined}
         headerRight={detail && <Badge variant={detail.status === "active" ? "success" : "muted"}>{STATUS_LABEL[detail.status] ?? "Vencida"}</Badge>}

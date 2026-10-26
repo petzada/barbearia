@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ban, ChevronRight, QrCode, RotateCcw } from "lucide-react";
@@ -39,15 +40,16 @@ export type AppointmentListItem = {
 
 /** Lista compacta; tocar abre a folha com detalhes e ações. */
 export function AppointmentsList({ items }: { items: AppointmentListItem[] }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = items.find((i) => i.id === selectedId) ?? null;
+  const sheet = useSheetState<AppointmentListItem>();
+  // Versão atualizada do item aberto; o último retrato segue visível ao fechar.
+  const selected = items.find((i) => i.id === sheet.item?.id) ?? sheet.item;
 
   return (
     <>
       <ul className={rowGroupClass}>
         {items.map((item) => (
           <li key={item.id}>
-            <button type="button" onClick={() => setSelectedId(item.id)} className={cn(rowClass, "gap-4")}>
+            <button type="button" onClick={() => sheet.show(item)} className={cn(rowClass, "gap-4")}>
               <span className="flex w-14 shrink-0 flex-col items-center">
                 <span className="text-[11px] font-bold uppercase text-ink-subtle">{formatWeekdayShort(item.startsAt)}</span>
                 <span className="tabular text-base font-extrabold">{formatSlotTime(item.startsAt)}</span>
@@ -64,12 +66,21 @@ export function AppointmentsList({ items }: { items: AppointmentListItem[] }) {
           </li>
         ))}
       </ul>
-      <AppointmentSheet item={selected} onClose={() => setSelectedId(null)} />
+      <AppointmentSheet item={selected} open={sheet.open} onClose={sheet.hide} />
     </>
   );
 }
 
-export function AppointmentSheet({ item, onClose }: { item: AppointmentListItem | null; onClose: () => void }) {
+export function AppointmentSheet({
+  item,
+  open = item !== null,
+  onClose,
+}: {
+  item: AppointmentListItem | null;
+  /** Aberta? O `item` deve continuar preenchido durante a animação de saída. */
+  open?: boolean;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [rating, setRating] = useState(0);
@@ -110,8 +121,8 @@ export function AppointmentSheet({ item, onClose }: { item: AppointmentListItem 
 
   return (
     <BottomSheet
-      open={item !== null}
-      onOpenChange={(open) => !open && close()}
+      open={open}
+      onOpenChange={(next) => !next && close()}
       title={item?.serviceName ?? "Serviço"}
       description={item ? `com ${item.barberName}` : undefined}
       headerRight={

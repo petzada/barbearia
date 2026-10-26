@@ -21,11 +21,20 @@ export function MoneyInput({
     <Input
       id={id}
       inputMode="numeric"
+      enterKeyHint="done"
+      autoComplete="off"
       aria-label={ariaLabel}
       value={format(valueCents)}
       onChange={(e) => {
-        const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
-        onChange(Number(digits || "0"));
+        const cents = Number(e.target.value.replace(/\D/g, "").slice(0, 9) || "0");
+        // Evita re-render quando nada mudou (ex.: apagar o "R$").
+        if (cents !== valueCents) onChange(cents);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
       }}
       className="tabular text-lg font-bold"
     />

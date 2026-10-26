@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { AtSign, CalendarRange, CalendarX, ChevronRight, Copy, Grid3x3, MapPin, MessageCircle, Plus, Store, Timer, Trash2, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -53,7 +54,7 @@ const ORDER = [1, 2, 3, 4, 5, 6, 0];
 export function HoursSettings({ week, closures, settings }: { week: Day[]; closures: { dateKey: string; reason: string }[]; settings: Settings }) {
   const router = useRouter();
   const [days, setDays] = useState(week);
-  const [editingDay, setEditingDay] = useState<Day | null>(null);
+  const daySheet = useSheetState<Day>();
   const [rule, setRule] = useState<(typeof RULES)[number] | null>(null);
   const [info, setInfo] = useState<(typeof INFO)[number] | null>(null);
   const [infoValue, setInfoValue] = useState("");
@@ -62,6 +63,7 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
   const [closureReason, setClosureReason] = useState("");
   const [ruleValue, setRuleValue] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
+  const confirmClosure = useSheetState<string>();
 
   const done = (message: string) => {
     toast.success(message);
@@ -115,7 +117,7 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
                 aria-label={`Abre ${WEEKDAY_LONG[weekday]}`}
                 onCheckedChange={(open) => saveWeek(days.map((x) => (x.weekday === weekday ? { ...x, isClosed: !open } : x)))}
               />
-              <button type="button" disabled={d.isClosed} onClick={() => setEditingDay(d)} className="flex flex-1 items-center gap-3 text-left disabled:cursor-default">
+              <button type="button" disabled={d.isClosed} onClick={() => daySheet.show(d)} className="flex flex-1 items-center gap-3 text-left disabled:cursor-default">
                 <span className={cn("flex-1 font-semibold", d.isClosed && "text-ink-tertiary")}>{WEEKDAY_LONG[weekday]}</span>
                 <span className="tabular text-sm text-ink-subtle">{d.isClosed ? "Fechado" : formatHoursRange(d.openTime, d.closeTime)}</span>
                 {!d.isClosed && <ChevronRight className="size-4 text-ink-tertiary" aria-hidden />}
@@ -145,17 +147,15 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
               <span className="block font-semibold">{formatDayLabel(c.dateKey)}</span>
               <span className="text-sm text-ink-subtle">{c.reason}</span>
             </span>
-            <ConfirmDialog
-              title="Remover este feriado?"
-              description={`Em ${formatDayLabel(c.dateKey)} os clientes voltam a poder agendar.`}
-              confirmLabel="Remover feriado"
-              onConfirm={() => removeClosure(c.dateKey)}
-              trigger={
-                <Button variant="ghost" size="icon-sm" aria-label={`Remover feriado de ${formatDayLabel(c.dateKey)}`} className="text-destructive">
-                  <Trash2 aria-hidden />
-                </Button>
-              }
-            />
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Remover feriado de ${formatDayLabel(c.dateKey)}`}
+              className="text-destructive"
+              onClick={() => confirmClosure.show(c.dateKey)}
+            >
+              <Trash2 aria-hidden />
+            </Button>
           </div>
         ))}
         <SettingsAction icon={Plus} label="Novo feriado ou fechamento" onClick={() => setClosureOpen(true)} />
@@ -203,12 +203,22 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
         })}
       </SettingsGroup>
 
+      {/* Fora da lista: o feriado some após remover e não pode levar o diálogo junto. */}
+      <ConfirmDialog
+        open={confirmClosure.open}
+        onOpenChange={confirmClosure.onOpenChange}
+        title="Remover este feriado?"
+        description={confirmClosure.item ? `Em ${formatDayLabel(confirmClosure.item)} os clientes voltam a poder agendar.` : ""}
+        confirmLabel="Remover feriado"
+        onConfirm={() => (confirmClosure.item ? removeClosure(confirmClosure.item) : undefined)}
+      />
       <DaySheet
-        key={editingDay?.weekday ?? "none"}
-        day={editingDay}
-        onClose={() => setEditingDay(null)}
+        key={daySheet.key}
+        day={daySheet.item}
+        open={daySheet.open}
+        onClose={daySheet.hide}
         onSave={(d) => {
-          setEditingDay(null);
+          daySheet.hide();
           saveWeek(days.map((x) => (x.weekday === d.weekday ? d : x)));
         }}
       />
@@ -321,12 +331,12 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
   );
 }
 
-function DaySheet({ day, onClose, onSave }: { day: Day | null; onClose: () => void; onSave: (d: Day) => void }) {
+function DaySheet({ day, open: sheetOpen, onClose, onSave }: { day: Day | null; open: boolean; onClose: () => void; onSave: (d: Day) => void }) {
   const [open, setOpen] = useState(day?.openTime ?? "09:00");
   const [close, setClose] = useState(day?.closeTime ?? "19:00");
   return (
     <BottomSheet
-      open={day !== null}
+      open={sheetOpen}
       onOpenChange={(o) => !o && onClose()}
       title={day ? WEEKDAY_LONG[day.weekday] : ""}
       description="Horário de funcionamento"

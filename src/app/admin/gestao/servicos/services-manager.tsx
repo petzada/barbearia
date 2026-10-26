@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { Plus, Scissors } from "lucide-react";
 import { toast } from "sonner";
@@ -32,7 +33,7 @@ const DURATIONS = [15, 30, 45, 60, 90];
 
 export function ServicesManager({ services }: { services: ServiceRow[] }) {
   const router = useRouter();
-  const [editing, setEditing] = useState<ServiceRow | "new" | null>(null);
+  const sheet = useSheetState<ServiceRow | "new">();
   const [pending, startTransition] = useTransition();
 
   const run = (fn: () => Promise<{ ok: boolean; error: string | null }>, message?: string) =>
@@ -51,7 +52,7 @@ export function ServicesManager({ services }: { services: ServiceRow[] }) {
         backLabel="Gestão"
         description="Arraste para mudar a ordem em que o cliente vê."
         actions={
-          <Button size="sm" onClick={() => setEditing("new")}>
+          <Button size="sm" onClick={() => sheet.show("new")}>
             <Plus aria-hidden />
             Novo serviço
           </Button>
@@ -64,7 +65,7 @@ export function ServicesManager({ services }: { services: ServiceRow[] }) {
             title="Nenhum serviço cadastrado"
             description="Cadastre o primeiro serviço para abrir a agenda."
             action={
-              <Button size="lg" onClick={() => setEditing("new")}>
+              <Button size="lg" onClick={() => sheet.show("new")}>
                 Novo serviço
               </Button>
             }
@@ -76,7 +77,7 @@ export function ServicesManager({ services }: { services: ServiceRow[] }) {
             onCommit={(ids) => run(() => reorderServicesAction(ids), "Ordem salva.")}
             renderItem={(s) => (
               <div className="flex items-center gap-3 py-2 pr-4">
-                <button type="button" onClick={() => setEditing(s)} className="min-w-0 flex-1 py-1 text-left">
+                <button type="button" onClick={() => sheet.show(s)} className="min-w-0 flex-1 py-1 text-left">
                   <p className={cn("truncate font-bold", !s.active && "text-ink-tertiary")}>{s.name}</p>
                   <p className="tabular text-sm text-ink-subtle">
                     {s.durationMinutes} min · {formatPriceCents(s.priceCents)}
@@ -94,11 +95,11 @@ export function ServicesManager({ services }: { services: ServiceRow[] }) {
         )}
       </PageBody>
       <ServiceSheet
-        key={editing === "new" ? "new" : editing?.id ?? "closed"}
-        service={editing === "new" ? null : editing}
-        open={editing !== null}
+        key={sheet.key}
+        service={sheet.item === "new" ? null : sheet.item}
+        open={sheet.open}
         nextOrder={services.length}
-        onClose={() => setEditing(null)}
+        onClose={sheet.hide}
       />
     </>
   );

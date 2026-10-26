@@ -30,11 +30,14 @@ type ActionResult = { ok: boolean; error: string | null };
 /** Ações sobre um item da agenda: concluir, falta, pagamento no balcão, cancelar. */
 export function EntrySheet({
   entry,
+  open = entry !== null,
   onClose,
   showBarber = false,
   openedAt,
 }: {
   entry: TimelineEntry | null;
+  /** Aberta? O `entry` deve continuar preenchido durante a animação de saída. */
+  open?: boolean;
   onClose: () => void;
   showBarber?: boolean;
   /** Instante em que a folha foi aberta (decide se já dá para concluir). */
@@ -75,7 +78,7 @@ export function EntrySheet({
 
   return (
     <BottomSheet
-      open={entry !== null}
+      open={open}
       onOpenChange={(o) => !o && onClose()}
       title={entry ? (isAppointment ? entry.clientName : "Bloqueio") : ""}
       description={subtitle}

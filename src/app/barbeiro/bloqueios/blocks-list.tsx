@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { CalendarOff, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -39,6 +40,8 @@ export function BlocksList({
     const key = dateKeyFromIsoInSP(b.startsAt);
     groups.set(key, [...(groups.get(key) ?? []), b]);
   }
+
+  const confirmRemove = useSheetState<Block>();
 
   async function remove(id: string) {
     setPendingId(id);
@@ -108,17 +111,16 @@ export function BlocksList({
                         <p className="tabular font-bold">{label(b)}</p>
                         {b.note && <p className="truncate text-sm text-ink-subtle">{b.note}</p>}
                       </div>
-                      <ConfirmDialog
-                        title="Remover este bloqueio?"
-                        description={`O horário de ${label(b).toLowerCase()} volta a ficar livre para agendamentos.`}
-                        confirmLabel="Remover bloqueio"
-                        onConfirm={() => remove(b.id)}
-                        trigger={
-                          <Button variant="ghost" size="icon-sm" aria-label="Remover bloqueio" className="text-destructive" disabled={pendingId === b.id}>
-                            <Trash2 aria-hidden />
-                          </Button>
-                        }
-                      />
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Remover bloqueio"
+                        className="text-destructive"
+                        disabled={pendingId === b.id}
+                        onClick={() => confirmRemove.show(b)}
+                      >
+                        <Trash2 aria-hidden />
+                      </Button>
                     </li>
                   ))}
                 </ul>
@@ -128,6 +130,19 @@ export function BlocksList({
         )}
       </PageBody>
 
+      {/* Fora da lista: o item some após remover e não pode levar o diálogo junto. */}
+      <ConfirmDialog
+        open={confirmRemove.open}
+        onOpenChange={confirmRemove.onOpenChange}
+        title="Remover este bloqueio?"
+        description={
+          confirmRemove.item
+            ? `O horário de ${label(confirmRemove.item).toLowerCase()} volta a ficar livre para agendamentos.`
+            : ""
+        }
+        confirmLabel="Remover bloqueio"
+        onConfirm={() => (confirmRemove.item ? remove(confirmRemove.item.id) : undefined)}
+      />
       <BlockFormSheet open={open} onOpenChange={setOpen} barberId={barberId} today={today} openTime={openTime} closeTime={closeTime} />
     </>
   );

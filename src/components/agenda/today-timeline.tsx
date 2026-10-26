@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import { CalendarCheck2, CalendarOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatTimeRange } from "@/lib/agenda/format";
@@ -36,7 +37,7 @@ export function TodayTimeline({
   initialNow: number;
 }) {
   const [now, setNow] = useState(initialNow);
-  const [selected, setSelected] = useState<TimelineEntry | null>(null);
+  const sheet = useSheetState<TimelineEntry>();
   const [openedAt, setOpenedAt] = useState(0);
   const nowRef = useRef<HTMLDivElement>(null);
 
@@ -111,7 +112,7 @@ export function TodayTimeline({
                   type="button"
                   onClick={() => {
                     setOpenedAt(Date.now());
-                    setSelected(entry);
+                    sheet.show(entry);
                   }}
                   className={cn(
                     "flex size-full flex-col justify-center gap-0.5 overflow-hidden rounded-md border-l-4 bg-teal-soft px-3 text-left transition active:scale-[0.99]",
@@ -156,7 +157,7 @@ export function TodayTimeline({
           </div>
         )}
       </div>
-      <EntrySheet entry={selected} onClose={() => setSelected(null)} openedAt={openedAt} />
+      <EntrySheet entry={sheet.item} open={sheet.open} onClose={sheet.hide} openedAt={openedAt} />
     </>
   );
 }

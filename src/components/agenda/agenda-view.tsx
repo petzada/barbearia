@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import Link from "next/link";
 import { CalendarDays, CalendarOff } from "lucide-react";
 import { EmptyState } from "@/components/page-header";
@@ -32,7 +33,7 @@ export function AgendaView({
   selectedBarberId?: string;
   showBarberFilter?: boolean;
 }) {
-  const [selected, setSelected] = useState<TimelineEntry | null>(null);
+  const sheet = useSheetState<TimelineEntry>();
   const [openedAt, setOpenedAt] = useState(0);
   const [adding, setAdding] = useState<{ barberId: string; time?: string } | null>(null);
 
@@ -49,7 +50,7 @@ export function AgendaView({
 
   const select = (entry: TimelineEntry) => {
     setOpenedAt(Date.now());
-    setSelected(entry);
+    sheet.show(entry);
   };
 
   return (
@@ -101,7 +102,7 @@ export function AgendaView({
         <MultiAgenda dateKey={dateKey} columns={visible} onSelect={select} onAddAt={(barberId, time) => setAdding({ barberId, time })} />
       )}
 
-      <EntrySheet entry={selected} onClose={() => setSelected(null)} showBarber={columns.length > 1} openedAt={openedAt} />
+      <EntrySheet entry={sheet.item} open={sheet.open} onClose={sheet.hide} showBarber={columns.length > 1} openedAt={openedAt} />
       <NewEntrySheet
         open={adding !== null}
         onOpenChange={(o) => !o && setAdding(null)}

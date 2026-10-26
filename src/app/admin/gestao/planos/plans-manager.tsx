@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowDown, ArrowUp, Crown, Minus, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -52,7 +53,7 @@ export const slugify = (name: string) =>
     .slice(0, 40);
 
 export function PlansManager({ plans, services }: { plans: PlanRow[]; services: PlanServiceOption[] }) {
-  const [editing, setEditing] = useState<PlanRow | "new" | null>(null);
+  const sheet = useSheetState<PlanRow | "new">();
   return (
     <>
       <PageHeader
@@ -61,7 +62,7 @@ export function PlansManager({ plans, services }: { plans: PlanRow[]; services: 
         backLabel="Gestão"
         description="Assim o cliente vê cada plano no app."
         actions={
-          <Button size="sm" onClick={() => setEditing("new")}>
+          <Button size="sm" onClick={() => sheet.show("new")}>
             <Plus aria-hidden />
             Novo plano
           </Button>
@@ -74,7 +75,7 @@ export function PlansManager({ plans, services }: { plans: PlanRow[]; services: 
             title="Nenhum plano ainda"
             description="Crie os planos do Clube Moura. Eles só aparecem para o cliente quando ativos."
             action={
-              <Button size="lg" onClick={() => setEditing("new")}>
+              <Button size="lg" onClick={() => sheet.show("new")}>
                 Novo plano
               </Button>
             }
@@ -92,7 +93,7 @@ export function PlansManager({ plans, services }: { plans: PlanRow[]; services: 
                     </div>
                   }
                   footer={
-                    <Button variant={p.highlighted ? "on-dark" : "outline"} onClick={() => setEditing(p)}>
+                    <Button variant={p.highlighted ? "on-dark" : "outline"} onClick={() => sheet.show(p)}>
                       <Pencil aria-hidden />
                       Editar
                     </Button>
@@ -104,12 +105,12 @@ export function PlansManager({ plans, services }: { plans: PlanRow[]; services: 
         )}
       </PageBody>
       <PlanSheet
-        key={editing === "new" ? "new" : editing?.id ?? "closed"}
-        plan={editing === "new" ? null : editing}
-        open={editing !== null}
+        key={sheet.key}
+        plan={sheet.item === "new" ? null : sheet.item}
+        open={sheet.open}
         nextOrder={plans.length}
         services={services}
-        onClose={() => setEditing(null)}
+        onClose={sheet.hide}
       />
     </>
   );
