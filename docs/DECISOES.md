@@ -13,7 +13,9 @@ Registro das decisões humanas tomadas na unificação de `barbeariadomoura`
 | Login | Principal: código no WhatsApp (WhatsMiau). Secundário: Google. Sem e-mail/senha (Better Auth) |
 | Pagamentos | AbacatePay: Pix com QR dinâmico (avulso) e assinatura recorrente (cartão / Pix Automático) via checkout |
 | Pagamento avulso | Cliente escolhe: Pix agora ou pagar na barbearia |
-| Planos do clube | Fixos — o dono define os benefícios exatos depois; estrutura pronta |
+| Planos do clube | Fixos, mensais, 4 atendimentos por ciclo: **Black** R$ 129,90 (só corte, qualquer dia) · **Gold Limitado** R$ 179,90 (corte e barba, só terças e quartas) · **Premium** R$ 199,90 (corte e barba, qualquer dia; recomendado) |
+| Regras do clube | Agendamento coberto (serviço do plano + dia permitido + saldo no ciclo) sai pago pela assinatura, sem Pix; 1 agendamento = 1 atendimento (combo inclusive); não acumula; cancelar devolve, falta consome; fora do plano/dia cobra normal; comissão sobre o preço de tabela |
+| Termos e privacidade | Padrão SaaS (LGPD + CDC): aceite explícito (caixa desmarcada) no fim do cadastro, registrado com data e versão; nova versão exige novo aceite (/aceite); assinar o clube exige aceite |
 | Módulos portados | Conclusão + comissões, avaliações, financeiro + KPIs, painel WhatsApp + lembretes |
 | Comissão | % por barbeiro sobre o preço de tabela, congelado na conclusão |
 | Regras de agenda | Configuráveis pelo admin (grade, antecedência, janela, prazo de cancelamento) |
@@ -61,7 +63,7 @@ Registro das decisões humanas tomadas na unificação de `barbeariadomoura`
 
 | # | Tela | Decisão |
 |---|---|---|
-| 16 | Hoje | **Lista do dia direto**: números do dia no topo; lista cronológica de todos os horários do expediente (inclusive livres), com ação em cada linha |
+| 16 | Hoje | **Só os pendentes** (marcados, inclusive os que começaram e não foram concluídos) numa **linha do tempo que acompanha o dia**: horário de Brasília em 24h ("14h", "14:30"), linha do "agora" que anda a cada 30 s, horas passadas apagadas, rolagem até o agora, destaque "Agora" / "Aguardando conclusão"; contadores Pendentes · Próximo · Ganhos |
 | 17 | Agenda | Linha do tempo do dia (‹ › e calendário, linha do "agora", bloqueios tracejados) + **folha de ações** ao tocar (WhatsApp, Concluir/Faltou, pagamento no balcão, Cancelar). Botão **+** para **encaixe** ou bloqueio |
 | 17b | Encaixe | Barbeiro busca o cliente pelo WhatsApp (vincula se tiver conta) ou informa **só o nome** (atendimento avulso: conta no financeiro e na comissão). Respeita a trava de sobreposição |
 | 18 | Bloqueios | Lista dos **próximos bloqueios** agrupados por data (com remover) + "Novo bloqueio" em folha: atalhos Almoço/Manhã/Tarde/Dia inteiro/**Vários dias (férias)**, datas, horários, motivo; avisa conflitos com agendamentos |

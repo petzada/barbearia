@@ -1,7 +1,17 @@
 import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { parseEnvFile } from "../scripts/lib/env-file.mjs";
 
-const ADMIN_PHONE = "11999999999"; // ADMIN_PHONE_NUMBERS=5511999999999
+/** Primeiro admin de ADMIN_PHONE_NUMBERS (.dev.vars) ou E2E_ADMIN_PHONE, sem o DDI. */
+function adminPhone(): string {
+  const fromFile = existsSync(".dev.vars") ? parseEnvFile(readFileSync(".dev.vars", "utf8")).get("ADMIN_PHONE_NUMBERS") : undefined;
+  const raw = (process.env.E2E_ADMIN_PHONE ?? fromFile ?? "").split(",")[0].replace(/\D/g, "");
+  if (!raw) throw new Error("Defina ADMIN_PHONE_NUMBERS no .dev.vars (npm run setup) ou E2E_ADMIN_PHONE.");
+  return raw.startsWith("55") && raw.length > 11 ? raw.slice(2) : raw;
+}
+
+const ADMIN_PHONE = adminPhone();
 const CLIENT_PHONE = "11988887777";
 const SERVICE = "Degradê E2E";
 // Intl separa "R$" do valor com espaço não separável.
@@ -35,7 +45,7 @@ function d1(sql: string) {
   );
 }
 
-/** Login por código no WhatsApp (AUTH_DEV_OTP) + onboarding do nome. */
+/** Login por código no WhatsApp (AUTH_DEV_OTP) + onboarding (nome e aceite dos termos). */
 async function login(page: Page, phone: string, name: string) {
   await page.goto("/login");
   await page.getByLabel("WhatsApp").fill(phone);
@@ -45,6 +55,10 @@ async function login(page: Page, phone: string, name: string) {
   await page.waitForURL("**/bem-vindo");
   await page.getByLabel("Nome e sobrenome").fill(name);
   await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByRole("heading", { name: "Termos e privacidade" })).toBeVisible();
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Concluir cadastro" }).click();
   await expect(page.getByRole("heading", { name: /Tudo pronto/ })).toBeVisible();
 }
 
@@ -53,6 +67,11 @@ test("landing mostra a barbearia e o caminho para agendar", async ({ page }) => 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Barbearia do Moura");
   await expect(page.getByRole("link", { name: "Agendar horário" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Já tenho conta" })).toBeVisible();
+  // Planos fixos do Clube (seed da migration 0004).
+  for (const plan of ["Black", "Gold Limitado", "Premium"]) {
+    await expect(page.getByRole("heading", { name: plan, level: 2 })).toBeVisible();
+  }
+  await expect(page.getByText(/4 por mês · terças e quartas/i)).toBeVisible();
 });
 
 test("gestão cria serviço, cliente agenda, barbeiro conclui e o faturamento aparece", async ({ browser }) => {

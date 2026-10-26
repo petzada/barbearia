@@ -2,8 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * E2E contra `next dev` com um D1 local descartável (.wrangler/e2e), recriado
- * a cada execução. Requer .dev.vars (copie de .dev.vars.example) com
- * AUTH_DEV_OTP=123456 e ADMIN_PHONE_NUMBERS=5511999999999.
+ * a cada execução. Requer .dev.vars (`npm run setup`) com AUTH_DEV_OTP=123456
+ * e ADMIN_PHONE_NUMBERS (o primeiro número é o admin do teste).
  */
 export default defineConfig({
   testDir: "./e2e",
