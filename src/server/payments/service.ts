@@ -84,7 +84,7 @@ export async function startAppointmentPix(
   const paymentId = crypto.randomUUID();
   const charge = await client.createPixCharge({
     amountCents,
-    description: "Barbearia do Moura — agendamento",
+    description: "Barbearia do Moura - agendamento",
     expiresInSeconds: PIX_EXPIRES_IN_SECONDS,
     externalId: paymentId,
     metadata: { paymentId, entryId },

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { AbacatePayClient, AbacatePayError, findIdWithPrefix, verifyAbacateWebhook } from "./abacatepay";
+import { AbacatePayClient, AbacatePayError, findIdWithPrefix, sanitizeAbacateText, verifyAbacateWebhook } from "./abacatepay";
 
 describe("AbacatePayClient", () => {
   it("envia Bearer + corpo da v2 e desembrulha o envelope", async () => {
@@ -48,5 +48,23 @@ describe("findIdWithPrefix", () => {
     expect(findIdWithPrefix({ subscription: { id: "subs_1", checkoutId: "bill_2" } }, "bill_")).toBe("bill_2");
     expect(findIdWithPrefix({ a: [1, { b: "subs_7" }] }, "subs_")).toBe("subs_7");
     expect(findIdWithPrefix({ a: "x" }, "subs_")).toBeNull();
+  });
+});
+
+describe("sanitizeAbacateText", () => {
+  it("troca caracteres que a API recusa (travessão, aspas curvas, reticências)", () => {
+    expect(sanitizeAbacateText("Barbearia do Moura — agendamento")).toBe("Barbearia do Moura - agendamento");
+    expect(sanitizeAbacateText("Corte “degradê” – 30 min…")).toBe('Corte "degradê" - 30 min...');
+    expect(sanitizeAbacateText("Clube\u00a0Premium")).toBe("Clube Premium");
+  });
+
+  it("é aplicado na descrição enviada ao criar o Pix", async () => {
+    const fetchImpl = vi.fn(async () =>
+      new Response(JSON.stringify({ data: { id: "pix_char_1", status: "PENDING" }, error: null })),
+    );
+    const client = new AbacatePayClient("k", "https://api.test/v2", fetchImpl as unknown as typeof fetch);
+    await client.createPixCharge({ amountCents: 100, description: "A — B", expiresInSeconds: 1800, externalId: "p" });
+    const init = (fetchImpl.mock.calls[0] as unknown as [URL, RequestInit])[1];
+    expect(JSON.parse(String(init.body)).data.description).toBe("A - B");
   });
 });

@@ -80,6 +80,20 @@ export interface PaymentGateway {
   cancelSubscription(id: string): Promise<void>;
 }
 
+/**
+ * A API recusa alguns caracteres tipográficos em textos (ex.: "—" U+2014
+ * retorna "Disallowed character in description"). Normaliza antes de enviar.
+ */
+export function sanitizeAbacateText(value: string): string {
+  return value
+    .replace(/[\u2012-\u2015\u2212]/g, "-")
+    .replace(/[\u2018\u2019\u201A\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/[\u00A0\u2007\u202F]/g, " ")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "");
+}
+
 type Envelope<T> = { data: T | null; success?: boolean; error: string | null };
 
 export class AbacatePayClient implements PaymentGateway {
@@ -124,7 +138,7 @@ export class AbacatePayClient implements PaymentGateway {
         method: "PIX",
         data: {
           amount: input.amountCents,
-          description: input.description.slice(0, 500),
+          description: sanitizeAbacateText(input.description).slice(0, 500),
           expiresIn: input.expiresInSeconds,
           externalId: input.externalId,
           metadata: input.metadata,
@@ -149,10 +163,10 @@ export class AbacatePayClient implements PaymentGateway {
     return this.request<AbacateProduct>("POST", "/products/create", {
       body: {
         externalId: input.externalId,
-        name: input.name,
+        name: sanitizeAbacateText(input.name),
         price: input.priceCents,
         currency: "BRL",
-        description: input.description ?? undefined,
+        description: input.description ? sanitizeAbacateText(input.description) : undefined,
         cycle: input.cycle,
       },
     });
