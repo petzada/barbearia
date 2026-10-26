@@ -14,7 +14,7 @@ export function NavalhaState({
   children: ReactNode;
 }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-5 px-6 py-12 text-center">
+    <main className="mx-auto flex min-h-svh w-full max-w-md flex-col items-center justify-center gap-5 px-6 py-12 text-center">
       <span className="flex size-16 items-center justify-center rounded-full bg-teal-soft text-cta-ink">
         <Scissors className="size-7 -rotate-45" aria-hidden />
       </span>

@@ -34,9 +34,9 @@ export default async function LandingPage() {
     : null;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="flex min-h-svh flex-col bg-background">
       {/* Hero — foto em tela cheia */}
-      <section className="relative flex min-h-dvh flex-col overflow-hidden bg-surface-dark text-on-dark">
+      <section className="relative flex min-h-svh flex-col overflow-hidden bg-surface-dark text-on-dark">
         <Image
           src="/images/hero.webp"
           alt="Interior da Barbearia do Moura"
@@ -117,7 +117,7 @@ export default async function LandingPage() {
                 Assine e economize
               </h2>
             </div>
-            <ul className="scrollbar-none -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
+            <ul className="scrollbar-none -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
               {plans.map((plan) => (
                 <li key={plan.id} className="flex w-[78%] shrink-0 snap-center sm:w-[46%] lg:w-auto">
                   <PlanCard

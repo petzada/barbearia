@@ -65,7 +65,7 @@ export function MultiAgenda({
   const nowTop = isToday ? nowLineTopPx(rows, now) : null;
 
   return (
-    <div className="scrollbar-none overflow-x-auto rounded-lg bg-card shadow-card" data-testid="multi-agenda">
+    <div className="scrollbar-none overflow-x-auto overscroll-x-contain rounded-lg bg-card shadow-card" data-testid="multi-agenda">
       <div className="relative min-w-max">
         <div className="sticky top-0 z-30 flex border-b border-hairline bg-card/95 backdrop-blur" style={{ paddingLeft: TIME_COL }}>
           {columns.map((c) => (

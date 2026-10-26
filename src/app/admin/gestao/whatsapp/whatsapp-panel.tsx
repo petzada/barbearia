@@ -196,7 +196,7 @@ export function WhatsappPanel({
         </label>
         <div className="flex flex-col gap-2 px-4 py-3">
           <span className="text-sm font-semibold">Horário do envio</span>
-          <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1">
+          <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto overscroll-x-contain px-1">
             {HOURS.map((h) => (
               <button key={h} type="button" aria-pressed={hour === h} onClick={() => setHour(h)} className={cn("tabular shrink-0 px-3", chipClass)}>
                 {String(h).padStart(2, "0")}h

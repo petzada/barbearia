@@ -136,12 +136,15 @@ export function AgendaDayTimeline({
     return nowLineTopPx(timelineRows, now);
   }, [isToday, timelineRows, now]);
 
+  // Posiciona a linha do tempo no "agora" só ao abrir o dia (não a cada minuto,
+  // senão a rolagem do usuário é puxada de volta enquanto ele arrasta).
+  const scrolledForRef = useRef<string | null>(null);
   useEffect(() => {
-    if (nowTop == null || !scrollRef.current) return;
     const el = scrollRef.current;
-    const target = Math.max(0, nowTop - el.clientHeight * 0.35);
-    el.scrollTo({ top: target, behavior: "smooth" });
-  }, [nowTop]);
+    if (nowTop == null || !el || scrolledForRef.current === dateKey) return;
+    scrolledForRef.current = dateKey;
+    el.scrollTop = Math.max(0, nowTop - el.clientHeight * 0.35);
+  }, [dateKey, nowTop]);
 
   if (displayBounds.isClosed) {
     return (
@@ -157,7 +160,7 @@ export function AgendaDayTimeline({
   return (
     <div
       ref={scrollRef}
-      className="max-h-[calc(100dvh-12rem)] overflow-y-auto overscroll-contain"
+      className="max-h-[calc(100svh-12rem)] overflow-y-auto overscroll-contain"
     >
       <div
         className="relative isolate pt-3"

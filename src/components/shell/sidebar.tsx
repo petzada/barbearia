@@ -24,7 +24,7 @@ export function Sidebar({
   const items = NAV_BY_MODE[mode];
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-6 border-r border-hairline bg-card px-4 py-6 lg:flex">
+    <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col gap-6 border-r border-hairline bg-card px-4 py-6 lg:flex">
       <Link href={MODE_HOME[mode]} className="px-2">
         <BrandMark />
       </Link>

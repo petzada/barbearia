@@ -58,9 +58,10 @@ export function TodayTimeline({
   const top = (min: number) => ((min - startHour * 60) / 60) * HOUR_PX;
   const showNow = nowMin >= startHour * 60 && nowMin <= endHour * 60;
 
-  // Rola até o "agora" ao abrir a tela.
+  // Rola até o "agora" ao abrir a tela — de uma vez, para não disputar a
+  // rolagem com o dedo do usuário (animação suave continuaria por baixo do toque).
   useEffect(() => {
-    nowRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    nowRef.current?.scrollIntoView({ block: "center", behavior: "instant" });
   }, []);
 
   if (items.length === 0) {

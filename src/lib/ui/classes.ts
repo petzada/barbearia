@@ -34,4 +34,4 @@ export const rowIconClass = "flex size-9 shrink-0 items-center justify-center ro
 export const staticRowClass = "flex items-center justify-between gap-3 px-4 py-3 text-sm";
 
 /** Fileira de chips que rola na horizontal no celular (filtros). */
-export const chipRowClass = "scrollbar-none -mx-5 flex gap-2 overflow-x-auto px-5 lg:mx-0 lg:px-0 [&>*]:shrink-0";
+export const chipRowClass = "scrollbar-none -mx-5 flex gap-2 overflow-x-auto overscroll-x-contain px-5 lg:mx-0 lg:px-0 [&>*]:shrink-0";

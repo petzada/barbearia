@@ -16,7 +16,7 @@ export default async function AceitePage() {
   const firstAccept = !user.termsVersion;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-8 px-6 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(2.5rem+env(safe-area-inset-top))]">
+    <main className="mx-auto flex min-h-svh w-full max-w-md flex-col gap-8 px-6 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(2.5rem+env(safe-area-inset-top))]">
       <BrandMark />
       <div className="flex flex-col gap-2">
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">

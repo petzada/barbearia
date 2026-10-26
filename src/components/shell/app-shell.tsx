@@ -21,7 +21,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-svh">
       <Sidebar mode={mode} modes={modes} userName={userName} userImage={userImage} />
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-10">
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col lg:max-w-5xl lg:px-6">

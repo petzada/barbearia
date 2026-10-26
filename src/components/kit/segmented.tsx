@@ -101,5 +101,5 @@ export function SegmentedNav({
       ))}
     </nav>
   );
-  return scrollable ? <div className="scrollbar-none -mx-5 overflow-x-auto px-5 lg:mx-0 lg:px-0">{nav}</div> : nav;
+  return scrollable ? <div className="scrollbar-none -mx-5 overflow-x-auto overscroll-x-contain px-5 lg:mx-0 lg:px-0">{nav}</div> : nav;
 }

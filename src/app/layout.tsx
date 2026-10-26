@@ -31,9 +31,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={`${manrope.variable} h-full antialiased`}>
-      <body className="min-h-dvh overflow-x-hidden">
-        {children}
+    // Só a viewport rola: nada de `overflow` em <html>/<body> (no iOS Safari, `overflow-x: hidden`
+    // no body transforma o body em contêiner de rolagem e faz os elementos fixos e a página
+    // tremerem ao arrastar). A proteção contra vazamento horizontal fica num wrapper com `clip`,
+    // que corta sem criar contêiner de rolagem. Alturas de tela usam `svh` (não `dvh`): o layout
+    // não pode mudar enquanto a barra de endereço do celular aparece e some no meio do gesto.
+    <html lang="pt-BR" className={`${manrope.variable} antialiased`}>
+      <body>
+        <div className="min-h-svh overflow-x-clip">{children}</div>
         <NavigationTracker />
         <Toaster richColors position="top-center" containerAriaLabel="Avisos" />
       </body>

@@ -60,14 +60,15 @@ export function BottomSheet({
         <Drawer.Portal>
           <Drawer.Backdrop
             data-slot="sheet-overlay"
-            className="fixed inset-0 z-50 min-h-dvh bg-scrim/40 opacity-[calc(1-var(--drawer-swipe-progress,0))] transition-opacity duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-swiping:duration-0 data-starting-style:opacity-0 data-ending-style:opacity-0 motion-reduce:transition-none"
+            className="fixed inset-0 z-50 bg-scrim/40 opacity-[calc(1-var(--drawer-swipe-progress,0))] transition-opacity duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-swiping:duration-0 data-starting-style:opacity-0 data-ending-style:opacity-0 motion-reduce:transition-none"
           />
           <Drawer.Viewport className="fixed inset-0 z-50 flex items-end justify-center">
             <Drawer.Popup
               ref={popupRef}
               data-slot="sheet-content"
               className={cn(
-                "relative flex max-h-[92dvh] w-full flex-col rounded-t-2xl bg-background text-foreground shadow-card outline-none sm:max-w-lg",
+                // 92% do Viewport (fixo, inset-0): acompanha a área visível sem depender de `dvh`.
+                "relative flex max-h-[92%] w-full flex-col rounded-t-2xl bg-background text-foreground shadow-card outline-none sm:max-w-lg",
                 "[transform:translateY(var(--drawer-swipe-movement-y,0px))] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform",
                 "data-swiping:select-none data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)] motion-reduce:transition-none",
                 className,
