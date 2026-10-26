@@ -46,17 +46,19 @@ export async function bookAppointmentAction(input: CreateAppointmentInput) {
     const { db, env, actor } = await actionContext();
     const entry = await createAppointment(db, actor, input);
     refreshClientViews();
+    const covered = entry.paymentMethod === "subscription";
+    if (covered) return { entryId: entry.id, paymentId: null, covered };
     if (input.paymentChoice === "pix") {
       // Tenta gerar o Pix já; se o gateway falhar o agendamento continua válido.
       try {
         const payment = await startAppointmentPix(db, actor, createPaymentGateway(env), entry.id);
-        return { entryId: entry.id, paymentId: payment.id };
+        return { entryId: entry.id, paymentId: payment.id, covered };
       } catch (error) {
         console.warn("[agendar] Pix indisponível, segue para pagamento no local", error);
-        return { entryId: entry.id, paymentId: null };
+        return { entryId: entry.id, paymentId: null, covered };
       }
     }
-    return { entryId: entry.id, paymentId: null };
+    return { entryId: entry.id, paymentId: null, covered };
   });
 }
 

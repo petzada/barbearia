@@ -20,8 +20,8 @@
     {
       "binding": "DB",
       "database_name": "barbearia-do-moura",
-      // Substitua pelo id gerado em `wrangler d1 create barbearia-do-moura`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Banco criado na conta Cloudflare (região ENAM).
+      "database_id": "38d418bb-2ff0-4b51-a493-f1af62094f2f",
       "migrations_dir": "drizzle/migrations"
     }
   ],

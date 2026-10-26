@@ -225,7 +225,7 @@ describe("financeiro e clube na gestão (21, 23)", () => {
     expect((await getClubOverview(t.db, admin, { now: nearEnd, filter: "vencendo" })).list).toHaveLength(1);
     const detail = await getSubscriptionDetail(t.db, admin, sub.id);
     expect(detail.history).toHaveLength(1);
-    expect((await listPlansWithSubscribers(t.db, admin, now))[0].subscribers).toBe(1);
+    expect((await listPlansWithSubscribers(t.db, admin, now)).find((p) => p.id === plan.id)?.subscribers).toBe(1);
   });
 
   it("MRR normaliza ciclos", () => {

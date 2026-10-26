@@ -121,7 +121,12 @@ export default async function LandingPage() {
               {plans.map((plan) => (
                 <li key={plan.id} className="flex w-[78%] shrink-0 snap-center sm:w-[46%] lg:w-auto">
                   <PlanCard
-                    plan={plan}
+                    plan={{
+                      ...plan,
+                      coveredServiceNames: services
+                        .filter((s) => plan.coveredServiceIds.includes(s.id))
+                        .map((s) => s.name),
+                    }}
                     footer={
                       <Link
                         href={user ? "/clube" : "/login"}

@@ -151,7 +151,7 @@ export function BookingWizard({
           }}
         />
       )}
-      {step === "service" && <ServiceStep services={services} onSelect={selectService} />}
+      {step === "service" && <ServiceStep services={services} club={rules.club} onSelect={selectService} />}
       {step === "schedule" && (
         <ScheduleStep
           windowKeys={windowKeys}

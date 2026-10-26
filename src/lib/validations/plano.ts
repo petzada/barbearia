@@ -24,6 +24,13 @@ export const planFormSchema = z.object({
     .max(8, "No máximo 8 benefícios"),
   active: z.boolean(),
   highlighted: z.boolean().default(false),
+  coveredServiceIds: z.array(z.string().min(1)).max(20).default([]),
+  allowedWeekdays: z
+    .array(z.number().int().min(0).max(6))
+    .max(7)
+    .default([])
+    .transform((days) => [...new Set(days)].sort((a, b) => a - b)),
+  visitsPerCycle: z.number().int().min(0, "Mínimo 0").max(31, "Máximo 31").default(0),
   sortOrder: z.number().int().min(0),
 });
 

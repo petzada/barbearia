@@ -8,6 +8,7 @@ import { getShopSettings } from "@/server/settings";
 import { getAvailableDays, getAvailableSlots } from "@/server/scheduling";
 import { getSelectableDateKeys } from "@/lib/agenda/availability";
 import { BookingWizard } from "@/components/booking/booking-wizard";
+import { getClubUsage } from "@/server/club-coverage";
 import { normalizeBrazilPhone } from "@/lib/phone";
 
 export const metadata: Metadata = { title: "Novo agendamento" };
@@ -20,10 +21,11 @@ export default async function AgendarPage({
   const user = await requireOnboardedUser();
   const params = await searchParams;
   const [db, env] = await Promise.all([getDb(), getServerEnv()]);
-  const [services, barbers, settings] = await Promise.all([
+  const [services, barbers, settings, usage] = await Promise.all([
     listServices(db),
     listBookableBarbers(db),
     getShopSettings(db),
+    getClubUsage(db, user.id),
   ]);
 
   // "Agendar de novo": barbeiro + serviço já escolhidos → abre direto nos horários.
@@ -60,6 +62,16 @@ export default async function AgendarPage({
           bookingWindowDays: settings.bookingWindowDays,
           cancelUntilMinutes: settings.cancelUntilMinutes,
           onlinePayment: Boolean(env.abacatePayApiKey),
+          club: usage
+            ? {
+                planName: usage.planName,
+                remaining: usage.remaining,
+                total: usage.total,
+                coveredServiceIds: usage.coveredServiceIds,
+                allowedWeekdays: usage.allowedWeekdays,
+                periodEnd: usage.periodEnd.getTime(),
+              }
+            : null,
         }}
         initialBarberId={params.barbeiro}
         initialServiceId={params.servico}

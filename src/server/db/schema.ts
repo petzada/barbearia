@@ -69,6 +69,9 @@ export const user = sqliteTable("user", {
    * WhatsApp). Mantém o histórico, o financeiro e a comissão consistentes.
    */
   isWalkIn: integer("is_walk_in", { mode: "boolean" }).notNull().default(false),
+  /** Aceite dos Termos de Uso e da Política de Privacidade (versão aceita). */
+  termsAcceptedAt: integer("terms_accepted_at", { mode: "timestamp_ms" }),
+  termsVersion: text("terms_version"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -302,6 +305,18 @@ export const plans = sqliteTable("plans", {
   active: integer("active", { mode: "boolean" }).notNull().default(false),
   /** Plano recomendado (destacado na vitrine do clube). */
   highlighted: integer("highlighted", { mode: "boolean" }).notNull().default(false),
+  /** Serviços incluídos no plano (ids). Vazio = plano sem cobertura de serviços. */
+  coveredServiceIds: text("covered_service_ids", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default(sql`'[]'`),
+  /** Dias da semana cobertos (0 = domingo … 6 = sábado). Vazio = qualquer dia. */
+  allowedWeekdays: text("allowed_weekdays", { mode: "json" })
+    .$type<number[]>()
+    .notNull()
+    .default(sql`'[]'`),
+  /** Atendimentos incluídos por ciclo (não acumulam). */
+  visitsPerCycle: integer("visits_per_cycle").notNull().default(0),
   sortOrder: integer("sort_order").notNull().default(0),
   /** Produto correspondente no AbacatePay (criado sob demanda). */
   providerProductId: text("provider_product_id"),

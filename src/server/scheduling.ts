@@ -14,6 +14,7 @@ import { DomainError } from "./errors";
 import { getShopSettings } from "./settings";
 import { loadScheduleContext } from "./schedule-config";
 import { getService } from "./catalog";
+import { exceedsVisitLimit, getClubSubscription, getCoverage } from "./club-coverage";
 import { computeAvailableSlots } from "@/lib/agenda/slots";
 import {
   canClientCancel,
@@ -195,6 +196,14 @@ export async function createAppointment(
     throw new DomainError("conflict", SLOT_TAKEN_MSG);
   }
 
+  // Clube: se o plano cobre serviço + dia e ainda há atendimentos no ciclo,
+  // o horário sai pago pela assinatura (sem Pix). Comissão segue a tabela.
+  const coverage = await getCoverage(db, actor.id, { serviceId, startsAt });
+  const regular = {
+    paymentMethod: paymentChoice,
+    paymentStatus: paymentChoice === "pix" ? ("pending" as const) : ("unpaid" as const),
+  };
+
   const id = await insertWithoutOverlap(db, {
     barberId,
     type: "appointment",
@@ -204,10 +213,29 @@ export async function createAppointment(
     endsAt: startsAt + service.durationMinutes * 60_000,
     note: null,
     priceCents: service.priceCents,
-    paymentMethod: paymentChoice,
-    paymentStatus: paymentChoice === "pix" ? "pending" : "unpaid",
+    ...(coverage.covered
+      ? { paymentMethod: "subscription" as const, paymentStatus: "paid" as const }
+      : regular),
   });
   if (!id) throw new DomainError("conflict", SLOT_TAKEN_MSG);
+
+  if (coverage.covered) {
+    // Reconfere depois de gravar: em reservas simultâneas, quem passou do
+    // limite do ciclo volta a ser cobrado normalmente.
+    const sub = await getClubSubscription(db, actor.id, new Date(startsAt));
+    if (
+      sub &&
+      (await exceedsVisitLimit(db, {
+        userId: actor.id,
+        entryId: id,
+        windowStart: sub.windowStart,
+        periodEnd: sub.periodEnd,
+        visitsPerCycle: sub.rules.visitsPerCycle,
+      }))
+    ) {
+      await db.update(scheduleEntries).set(regular).where(eq(scheduleEntries.id, id));
+    }
+  }
 
   return (await getEntry(db, id))!;
 }

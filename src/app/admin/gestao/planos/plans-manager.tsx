@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowDown, ArrowUp, Crown, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Crown, Minus, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { savePlanAction } from "@/app/actions/admin";
 import { PlanCard } from "@/components/club/plan-card";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { CYCLE_OPTIONS, type PlanCycle } from "@/lib/plans";
+import { CYCLE_OPTIONS, WEEKDAY_SHORT, type PlanCycle } from "@/lib/plans";
 import { chipClass } from "@/lib/ui/classes";
 import { cn, countLabel } from "@/lib/utils";
 
@@ -32,7 +32,15 @@ export type PlanRow = {
   highlighted: boolean;
   sortOrder: number;
   subscribers: number;
+  coveredServiceIds: string[];
+  allowedWeekdays: number[];
+  visitsPerCycle: number;
 };
+
+export type PlanServiceOption = { id: string; name: string };
+
+const namesFor = (ids: string[], services: PlanServiceOption[]) =>
+  services.filter((s) => ids.includes(s.id)).map((s) => s.name);
 
 export const slugify = (name: string) =>
   name
@@ -43,7 +51,7 @@ export const slugify = (name: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
 
-export function PlansManager({ plans }: { plans: PlanRow[] }) {
+export function PlansManager({ plans, services }: { plans: PlanRow[]; services: PlanServiceOption[] }) {
   const [editing, setEditing] = useState<PlanRow | "new" | null>(null);
   return (
     <>
@@ -76,7 +84,7 @@ export function PlansManager({ plans }: { plans: PlanRow[] }) {
             {plans.map((p) => (
               <li key={p.id}>
                 <PlanCard
-                  plan={p}
+                  plan={{ ...p, coveredServiceNames: namesFor(p.coveredServiceIds, services) }}
                   header={
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant={p.active ? "success" : "muted"}>{p.active ? "Ativo" : "Inativo"}</Badge>
@@ -100,13 +108,26 @@ export function PlansManager({ plans }: { plans: PlanRow[] }) {
         plan={editing === "new" ? null : editing}
         open={editing !== null}
         nextOrder={plans.length}
+        services={services}
         onClose={() => setEditing(null)}
       />
     </>
   );
 }
 
-function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; open: boolean; nextOrder: number; onClose: () => void }) {
+function PlanSheet({
+  plan,
+  open,
+  nextOrder,
+  services,
+  onClose,
+}: {
+  plan: PlanRow | null;
+  open: boolean;
+  nextOrder: number;
+  services: PlanServiceOption[];
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [name, setName] = useState(plan?.name ?? "");
   const [description, setDescription] = useState(plan?.description ?? "");
@@ -116,6 +137,10 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
   const [newBenefit, setNewBenefit] = useState("");
   const [highlighted, setHighlighted] = useState(plan?.highlighted ?? false);
   const [active, setActive] = useState(plan?.active ?? false);
+  const [coveredServiceIds, setCoveredServiceIds] = useState<string[]>(plan?.coveredServiceIds ?? []);
+  const [allowedWeekdays, setAllowedWeekdays] = useState<number[]>(plan?.allowedWeekdays ?? []);
+  const [visitsPerCycle, setVisitsPerCycle] = useState(plan?.visitsPerCycle ?? 4);
+  const toggle = <T,>(list: T[], value: T) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   const [pending, startTransition] = useTransition();
   const productChanged = plan != null && (price !== plan.priceCents || cycle !== plan.cycle);
 
@@ -138,6 +163,9 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
         benefits,
         active,
         highlighted,
+        coveredServiceIds,
+        allowedWeekdays,
+        visitsPerCycle,
         sortOrder: plan?.sortOrder ?? nextOrder,
       });
       if (!result.ok) return void toast.error(result.error);
@@ -186,6 +214,54 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
           Novo preço/ciclo vale só para novas assinaturas. Quem já assina ({countLabel(plan.subscribers, "assinante", "assinantes")}) segue como está.
         </p>
       )}
+      <div className="flex flex-col gap-2">
+        <Label>Serviços incluídos</Label>
+        <div className="flex flex-wrap gap-2">
+          {services.map((svc) => (
+            <button
+              key={svc.id}
+              type="button"
+              aria-pressed={coveredServiceIds.includes(svc.id)}
+              onClick={() => setCoveredServiceIds(toggle(coveredServiceIds, svc.id))}
+              className={cn("px-4", chipClass)}
+            >
+              {svc.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label>Dias cobertos</Label>
+        <div className="grid grid-cols-7 gap-1.5">
+          {WEEKDAY_SHORT.map((label, day) => (
+            <button
+              key={label}
+              type="button"
+              aria-pressed={allowedWeekdays.includes(day)}
+              onClick={() => setAllowedWeekdays(toggle(allowedWeekdays, day))}
+              className={cn("px-0", chipClass)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-ink-subtle">Nenhum dia marcado = vale em qualquer dia da semana.</p>
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label>Atendimentos por ciclo</Label>
+        <div className="flex items-center gap-3">
+          <Button type="button" variant="outline" size="icon" aria-label="Menos atendimentos" disabled={visitsPerCycle <= 0} onClick={() => setVisitsPerCycle(visitsPerCycle - 1)}>
+            <Minus aria-hidden />
+          </Button>
+          <span className="tabular w-10 text-center text-xl font-extrabold" aria-live="polite">
+            {visitsPerCycle}
+          </span>
+          <Button type="button" variant="outline" size="icon" aria-label="Mais atendimentos" disabled={visitsPerCycle >= 31} onClick={() => setVisitsPerCycle(visitsPerCycle + 1)}>
+            <Plus aria-hidden />
+          </Button>
+        </div>
+        <p className="text-xs text-ink-subtle">Cada agendamento coberto consome 1 (Corte + Barba também). Não acumula para o próximo ciclo.</p>
+      </div>
       <div className="flex flex-col gap-2">
         <Label>Benefícios</Label>
         {benefits.length > 0 && (
@@ -248,7 +324,19 @@ function PlanSheet({ plan, open, nextOrder, onClose }: { plan: PlanRow | null; o
       </div>
       <div className="flex flex-col gap-2">
         <p className="text-xs font-bold uppercase tracking-wider text-ink-subtle">Prévia</p>
-        <PlanCard plan={{ name, description: description || null, priceCents: price, cycle, benefits, highlighted }} />
+        <PlanCard
+          plan={{
+            name,
+            description: description || null,
+            priceCents: price,
+            cycle,
+            benefits,
+            highlighted,
+            visitsPerCycle,
+            allowedWeekdays,
+            coveredServiceNames: namesFor(coveredServiceIds, services),
+          }}
+        />
       </div>
     </BottomSheet>
   );

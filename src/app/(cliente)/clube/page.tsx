@@ -6,6 +6,8 @@ import { getDb } from "@/server/db";
 import { getServerEnv } from "@/server/env";
 import { requireOnboardedUser } from "@/server/auth";
 import { getActiveSubscription, listPlans, listUserPayments } from "@/server/payments/service";
+import { getClubUsage } from "@/server/club-coverage";
+import { listServices } from "@/server/catalog";
 import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -13,7 +15,7 @@ import { rowGroupClass, staticRowClass } from "@/lib/ui/classes";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { formatDayMonth } from "@/lib/agenda/format";
 import { paymentMethodLabel } from "@/lib/payments";
-import { CYCLE_LABELS } from "@/lib/plans";
+import { CYCLE_LABELS, planRulesSummary } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { PlanCard } from "@/components/club/plan-card";
 import { ClubActions, SubscriptionReturnToast } from "./club-actions";
@@ -25,11 +27,14 @@ const formatDay = (date: Date | null) => (date ? formatDayMonth(date) : "—");
 export default async function ClubePage() {
   const user = await requireOnboardedUser();
   const [db, env] = await Promise.all([getDb(), getServerEnv()]);
-  const [plans, active, history] = await Promise.all([
+  const [plans, active, history, usage, services] = await Promise.all([
     listPlans(db),
     getActiveSubscription(db, user.id),
     listUserPayments(db, user.id),
+    getClubUsage(db, user.id),
+    listServices(db, { includeInactive: true }),
   ]);
+  const serviceNames = (ids: string[]) => services.filter((s) => ids.includes(s.id)).map((s) => s.name);
   const online = Boolean(env.abacatePayApiKey);
   const ordered = [...plans].sort((a, b) => Number(b.highlighted) - Number(a.highlighted));
 
@@ -74,6 +79,31 @@ export default async function ClubePage() {
               </div>
             </section>
 
+            {usage && usage.total > 0 && (
+              <section aria-label="Uso do ciclo" className="flex flex-col gap-3 rounded-lg bg-card p-5 shadow-card">
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="font-bold">
+                    {usage.used} de {usage.total} atendimentos usados neste ciclo
+                  </p>
+                  <span className="tabular text-sm text-ink-subtle">até {formatDay(usage.periodEnd)}</span>
+                </div>
+                <div
+                  className="h-2 overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={usage.total}
+                  aria-valuenow={usage.used}
+                  aria-label="Atendimentos usados"
+                >
+                  <div className="h-full rounded-full bg-cta" style={{ width: `${Math.min(100, (usage.used / usage.total) * 100)}%` }} />
+                </div>
+                <p className="text-sm text-ink-subtle">
+                  {planRulesSummary({ visitsPerCycle: usage.total, allowedWeekdays: usage.allowedWeekdays, cycle: active.plan.cycle })}
+                  {" · "}Inclui: {serviceNames(usage.coveredServiceIds).join(", ")}. Os atendimentos não acumulam; cancelar devolve o atendimento e falta consome.
+                </p>
+              </section>
+            )}
+
             {active.plan.benefits.length > 0 && (
               <section className="flex flex-col gap-3">
                 <SectionTitle>Seus benefícios</SectionTitle>
@@ -104,7 +134,7 @@ export default async function ClubePage() {
             {ordered.map((plan) => (
               <PlanCard
                 key={plan.id}
-                plan={plan}
+                plan={{ ...plan, coveredServiceNames: serviceNames(plan.coveredServiceIds) }}
                 footer={
                   online ? (
                     <ClubActions mode="subscribe" planId={plan.id} highlighted={plan.highlighted} />

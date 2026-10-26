@@ -1,3 +1,5 @@
+import type { BookingClub } from "@/lib/club";
+
 export type BookingService = {
   id: string;
   name: string;
@@ -19,4 +21,6 @@ export type BookingRules = {
   cancelUntilMinutes: number;
   /** Pix online disponível (AbacatePay configurado). */
   onlinePayment: boolean;
+  /** Assinatura ativa do cliente (Clube Moura), se houver. */
+  club?: BookingClub | null;
 };

@@ -178,7 +178,7 @@ describe("plano em destaque", () => {
   it("salva o destaque do plano", async () => {
     const admin = await createAdmin(t.db);
     const plan = await upsertPlan(t.db, admin, {
-      slug: "premium", name: "Premium", priceCents: 12900, cycle: "MONTHLY", benefits: [], active: true,
+      slug: "vip-teste", name: "VIP", priceCents: 12900, cycle: "MONTHLY", benefits: [], active: true,
       highlighted: true, sortOrder: 0,
     });
     const [row] = await t.db.select().from(plans).where(eq(plans.id, plan.id));

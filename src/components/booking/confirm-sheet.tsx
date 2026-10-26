@@ -1,12 +1,13 @@
 "use client";
 
-import { Banknote, QrCode } from "lucide-react";
+import { Banknote, Crown, QrCode } from "lucide-react";
 import { formatMinutesShort, formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
 import { formatDayLabel } from "@/lib/agenda/format";
 import { PAY_AT_SHOP_LABEL } from "@/lib/payments";
 import { BottomSheet } from "@/components/kit/bottom-sheet";
 import { OptionCard, OptionGroup } from "@/components/kit/option-card";
 import { Button } from "@/components/ui/button";
+import { clubCoversService, clubCoversSlot, clubWeekdayHint } from "@/lib/club";
 import { BarberAvatar } from "./barber-avatar";
 import type { BookingBarber, BookingRules, BookingService } from "./types";
 
@@ -36,6 +37,10 @@ export function ConfirmSheet({
   onPaymentChange: (choice: PaymentChoice) => void;
   onConfirm: () => void;
 }) {
+  const covered = slot != null && clubCoversSlot(rules.club, service.id, slot);
+  // Serviço do plano, mas fora dos dias cobertos (ex.: Gold Limitado numa segunda).
+  const weekdayHint =
+    slot != null && !covered && clubCoversService(rules.club, service.id) ? clubWeekdayHint(rules.club) : null;
   const options = [
     ...(rules.onlinePayment
       ? [{ value: "pix" as const, title: "Pix agora", description: "QR Code na hora, confirmação automática.", icon: QrCode }]
@@ -51,7 +56,7 @@ export function ConfirmSheet({
       description="Confira os detalhes antes de confirmar."
       footer={
         <Button size="lg" className="w-full" onClick={onConfirm} disabled={pending || slot == null}>
-          {pending ? "Confirmando…" : `Confirmar · ${formatPriceCents(service.priceCents)}`}
+          {pending ? "Confirmando…" : covered ? "Confirmar · Incluso no plano" : `Confirmar · ${formatPriceCents(service.priceCents)}`}
         </Button>
       }
     >
@@ -81,10 +86,30 @@ export function ConfirmSheet({
             </dl>
             <div className="flex items-center justify-between border-t border-hairline pt-4">
               <span className="text-sm text-ink-subtle">Total</span>
-              <span className="tabular text-xl font-extrabold">{formatPriceCents(service.priceCents)}</span>
+              {covered ? (
+                <span className="flex items-baseline gap-2">
+                  <span className="tabular text-sm text-ink-subtle line-through">{formatPriceCents(service.priceCents)}</span>
+                  <span className="tabular text-xl font-extrabold">R$ 0,00 hoje</span>
+                </span>
+              ) : (
+                <span className="tabular text-xl font-extrabold">{formatPriceCents(service.priceCents)}</span>
+              )}
             </div>
           </div>
 
+          {covered && rules.club && (
+            <p className="flex items-start gap-2 rounded-md bg-teal-soft px-3 py-2 text-sm font-semibold text-cta-ink">
+              <Crown className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Incluso no seu plano {rules.club.planName} · restam {rules.club.remaining} de {rules.club.total} neste ciclo
+            </p>
+          )}
+          {weekdayHint && (
+            <p className="rounded-md bg-muted px-3 py-2 text-sm text-ink-muted">
+              {weekdayHint}. Neste dia o serviço é cobrado normalmente.
+            </p>
+          )}
+
+          {!covered && (
           <OptionGroup label="Como você prefere pagar?">
             {options.map((opt) => (
               <OptionCard
@@ -97,6 +122,7 @@ export function ConfirmSheet({
               />
             ))}
           </OptionGroup>
+          )}
 
           <p className="text-xs text-ink-subtle">
             Cancele grátis pelo app até {formatMinutesShort(rules.cancelUntilMinutes)} antes do horário.

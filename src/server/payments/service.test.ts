@@ -149,7 +149,7 @@ describe("assinaturas", () => {
     expect(gw.createProduct).toHaveBeenCalledWith(expect.objectContaining({ priceCents: 9900, cycle: "MONTHLY" }));
     const [sub] = await t.db.select().from(subscriptions);
     expect(sub).toMatchObject({ status: "pending", providerCheckoutId: "bill_abc" });
-    const [p] = await t.db.select().from(plans);
+    const [p] = await t.db.select().from(plans).where(eq(plans.id, plan.id));
     expect(p.providerProductId).toBe("prod_1");
   });
 
