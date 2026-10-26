@@ -23,7 +23,7 @@ export function StickyCta({ href, targetId }: { href: string; targetId: string }
     <div
       aria-hidden={!visible}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card/95 px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur transition-transform duration-300 md:hidden",
+        "fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 [backface-visibility:hidden] transition-transform duration-300 md:hidden",
         visible ? "translate-y-0" : "pointer-events-none translate-y-full",
       )}
     >

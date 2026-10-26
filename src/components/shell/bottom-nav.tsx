@@ -17,7 +17,10 @@ export function BottomNav({ mode }: { mode: AppMode }) {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-card/85 lg:hidden"
+      // Fundo sólido + camada própria (translateZ): com backdrop-blur o Safari do
+      // iPhone redesenhava a barra a cada quadro quando a barra do navegador
+      // aparecia/sumia, e ela piscava.
+      className="fixed inset-x-0 bottom-0 z-40 transform-gpu border-t border-hairline bg-card pb-[env(safe-area-inset-bottom)] [backface-visibility:hidden] [contain:layout_paint] lg:hidden"
     >
       <ul className="mx-auto flex h-16 max-w-2xl items-stretch px-2">
         {items.map((item) => {

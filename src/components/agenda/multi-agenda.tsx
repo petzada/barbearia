@@ -67,7 +67,7 @@ export function MultiAgenda({
   return (
     <div className="scrollbar-none overflow-x-auto overscroll-x-contain rounded-lg bg-card shadow-card" data-testid="multi-agenda">
       <div className="relative min-w-max">
-        <div className="sticky top-0 z-30 flex border-b border-hairline bg-card/95 backdrop-blur" style={{ paddingLeft: TIME_COL }}>
+        <div className="sticky top-0 z-30 flex border-b border-hairline bg-card" style={{ paddingLeft: TIME_COL }}>
           {columns.map((c) => (
             <div key={c.barber.id} className="w-40 shrink-0 px-2 py-3 text-center text-sm font-bold sm:w-48">
               <span className="block truncate">{c.barber.name}</span>
