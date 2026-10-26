@@ -50,3 +50,6 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# worktrees temporários de agentes
+/.claude/worktrees/
