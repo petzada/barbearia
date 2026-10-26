@@ -28,7 +28,8 @@ declare global {
       create(options: {
         publicKey: string;
         amount: number;
-        locale?: string;
+        /** Códigos aceitos pelo provedor (Rinne): "pt" | "en" | "es" — "pt-BR" cai no inglês. */
+        locale?: "pt" | "en" | "es";
         theme?: "light" | "dark";
         onCardChange?: (card: { brand?: string; complete?: boolean }) => void;
       }): AbacateCheckout;
@@ -72,7 +73,7 @@ export function CardForm({
   useEffect(() => {
     if (!scriptReady || !window.AbacatePay) return;
     let cancelled = false;
-    const checkout = window.AbacatePay.create({ publicKey, amount: amountCents, locale: "pt-BR", theme: "light" });
+    const checkout = window.AbacatePay.create({ publicKey, amount: amountCents, locale: "pt", theme: "light" });
     checkoutRef.current = checkout;
     checkout
       .mount(`#${containerId}`)

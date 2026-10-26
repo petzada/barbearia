@@ -44,7 +44,7 @@ describe("CardForm (abacatepay.js)", () => {
     }
     const { unmount } = render(<Harness />);
     await waitFor(() => expect(mount).toHaveBeenCalledWith("#abacatepay-card"));
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ publicKey: "pk_test_123", amount: 19990, locale: "pt-BR" }));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ publicKey: "pk_test_123", amount: 19990, locale: "pt" }));
     await waitFor(() => expect(screen.queryByText(/Carregando formulário/)).not.toBeInTheDocument());
 
     const result = await handle!.tokenize({ name: "Ana", email: "a@b.com", taxId: "52998224725", cellphone: "(11) 96000-1234" });
