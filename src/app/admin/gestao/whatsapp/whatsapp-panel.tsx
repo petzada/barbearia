@@ -49,7 +49,7 @@ const STATUS: Record<Config["status"], { label: string; tone: string }> = {
   unknown: { label: "Status desconhecido", tone: "text-warning-ink" },
 };
 
-const KIND_LABELS: Record<string, string> = { otp: "Código", reminder: "Lembrete", test: "Teste", invite: "Convite" };
+const KIND_LABELS: Record<string, string> = { otp: "Código", reminder: "Lembrete", test: "Teste", invite: "Convite", billing: "Cobrança" };
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 6);
 const QR_REFRESH_MS = 20_000;
 const SYNC_MS = 8_000;

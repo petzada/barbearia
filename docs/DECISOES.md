@@ -11,7 +11,8 @@ Registro das decisões humanas tomadas na unificação de `barbeariadomoura`
 | Hospedagem | Tudo na Cloudflare: Workers via OpenNext, banco **D1** (Drizzle), arquivos **R2**, **Cron Triggers** |
 | Banco | Esquema novo e limpo (sem dados a migrar). Nada de Supabase |
 | Login | Principal: código no WhatsApp (WhatsMiau). Secundário: Google. Sem e-mail/senha (Better Auth) |
-| Pagamentos | AbacatePay: Pix com QR dinâmico (avulso) e assinatura recorrente (cartão / Pix Automático) via checkout |
+| Pagamentos | AbacatePay: Pix com QR dinâmico (avulso). Clube: cartão no checkout transparente (abacatepay.js, cartão salvo) ou Pix com QR a cada ciclo; **o nosso servidor gerencia assinaturas e recobranças** (sem produtos/assinaturas no AbacatePay; não há Pix Automático) |
+| Cobrança do clube | Cartão: cobra no vencimento; recusou → pagamento pendente, nova tentativa a cada 24 h (3 no total), aviso no WhatsApp para trocar o cartão, carência de 3 dias. Pix: gerado e enviado no WhatsApp 3 dias antes; pago, estende a partir do fim. Cancelar: sem novas cobranças, acesso até o fim do período pago. Trocar cartão só em atraso ou a até 3 dias da renovação (cobra o próximo ciclo) |
 | Pagamento avulso | Cliente escolhe: Pix agora ou pagar na barbearia |
 | Planos do clube | Fixos, mensais, 4 atendimentos por ciclo: **Black** R$ 129,90 (só corte, qualquer dia) · **Gold Limitado** R$ 179,90 (corte e barba, só terças e quartas) · **Premium** R$ 199,90 (corte e barba, qualquer dia; recomendado) |
 | Regras do clube | Agendamento coberto (serviço do plano + dia permitido + saldo no ciclo) sai pago pela assinatura, sem Pix; 1 agendamento = 1 atendimento (combo inclusive); não acumula; cancelar devolve, falta consome; fora do plano/dia cobra normal; comissão sobre o preço de tabela |

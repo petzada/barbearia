@@ -1,14 +1,16 @@
-import { and, asc, eq, gt, gte, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, lt, sql } from "drizzle-orm";
 import type { Db } from "./db";
 import { plans, scheduleEntries, subscriptions, type PlanCycle } from "./db/schema";
 import { weekdayFromDateKeySP } from "@/lib/agenda/timeline";
 import { dateKeyFromIsoInSP } from "@/lib/agenda/availability";
+import { BILLING_GRACE_MS, graceEndOf } from "@/lib/club-billing";
 
 /**
  * Regras do Clube Moura (planos com atendimentos incluídos).
  *
  * Um agendamento é coberto pela assinatura quando:
- * - o cliente tem assinatura ativa com `currentPeriodEnd` depois do início;
+ * - o cliente tem assinatura ativa com `currentPeriodEnd` depois do início
+ *   (ou com pagamento pendente, dentro da carência — ver `getClubSubscription`);
  * - o serviço está entre os cobertos pelo plano;
  * - o dia da semana (em São Paulo) é permitido pelo plano (vazio = qualquer dia);
  * - ainda há atendimentos no ciclo atual [fim − 1 ciclo, fim).
@@ -93,38 +95,54 @@ export type ClubSubscription = {
   windowStart: Date;
 };
 
-/** Assinatura ativa vigente em `at` (a que vale para o horário pedido). */
+/**
+ * Assinatura que vale para o horário `at`:
+ * - dentro do período pago: ciclo [fim − 1 ciclo, fim);
+ * - pagamento pendente (renovação recusada ou Pix não pago), na carência de
+ *   3 dias: janela [fim, fim + 3 dias), que vira o início do próximo ciclo se
+ *   pagar (os atendimentos usados contam nele) — se não pagar, os horários
+ *   cobertos voltam a "pagar na barbearia" quando a assinatura expira.
+ */
 export async function getClubSubscription(
   db: Db,
   userId: string,
   at: Date,
+  now: Date = new Date(),
 ): Promise<ClubSubscription | null> {
-  const row = await db
+  const rows = await db
     .select({ sub: subscriptions, plan: plans })
     .from(subscriptions)
     .innerJoin(plans, eq(plans.id, subscriptions.planId))
     .where(
       and(
         eq(subscriptions.userId, userId),
-        eq(subscriptions.status, "active"),
-        gt(subscriptions.currentPeriodEnd, at),
+        inArray(subscriptions.status, ["active", "past_due"]),
+        gt(subscriptions.currentPeriodEnd, new Date(at.getTime() - BILLING_GRACE_MS)),
       ),
     )
-    .get();
-  if (!row?.sub.currentPeriodEnd) return null;
-  return {
-    subscriptionId: row.sub.id,
-    planId: row.plan.id,
-    planName: row.plan.name,
-    cycle: row.plan.cycle,
-    rules: {
-      coveredServiceIds: row.plan.coveredServiceIds ?? [],
-      allowedWeekdays: row.plan.allowedWeekdays ?? [],
-      visitsPerCycle: row.plan.visitsPerCycle,
-    },
-    periodEnd: row.sub.currentPeriodEnd,
-    windowStart: cycleStart(row.sub.currentPeriodEnd, row.plan.cycle),
-  };
+    .orderBy(desc(subscriptions.currentPeriodEnd));
+  for (const { sub, plan } of rows) {
+    const end = sub.currentPeriodEnd;
+    if (!end) continue;
+    const base = {
+      subscriptionId: sub.id,
+      planId: plan.id,
+      planName: plan.name,
+      cycle: plan.cycle,
+      rules: {
+        coveredServiceIds: plan.coveredServiceIds ?? [],
+        allowedWeekdays: plan.allowedWeekdays ?? [],
+        visitsPerCycle: plan.visitsPerCycle,
+      },
+    };
+    if (at < end) return { ...base, periodEnd: end, windowStart: cycleStart(end, plan.cycle) };
+    const renewing = (sub.paymentMethod === "CARD" || sub.paymentMethod === "PIX") && !sub.cancelAtPeriodEnd;
+    const inGrace = sub.status === "past_due" || (renewing && now >= end);
+    if (inGrace && renewing && at < graceEndOf(end) && now < graceEndOf(end)) {
+      return { ...base, periodEnd: graceEndOf(end), windowStart: end };
+    }
+  }
+  return null;
 }
 
 /** Atendimentos do clube já consumidos no ciclo. */
@@ -162,9 +180,9 @@ export type Coverage = {
 export async function getCoverage(
   db: Db,
   userId: string,
-  input: { serviceId: string; startsAt: number },
+  input: { serviceId: string; startsAt: number; now?: Date },
 ): Promise<Coverage> {
-  const sub = await getClubSubscription(db, userId, new Date(input.startsAt));
+  const sub = await getClubSubscription(db, userId, new Date(input.startsAt), input.now);
   if (!sub) {
     return { covered: false, reason: "no_subscription", remaining: 0, planName: null, allowedWeekdays: [] };
   }
@@ -194,7 +212,7 @@ export type ClubUsage = {
 
 /** Uso do ciclo atual (cartão de membro e passo de serviço do agendamento). */
 export async function getClubUsage(db: Db, userId: string, now: Date = new Date()): Promise<ClubUsage | null> {
-  const sub = await getClubSubscription(db, userId, now);
+  const sub = await getClubSubscription(db, userId, now, now);
   if (!sub) return null;
   const used = await countUsedVisits(db, userId, sub.windowStart, sub.periodEnd);
   return {

@@ -96,7 +96,11 @@ async function Resumo({ db, actor, period }: Ctx) {
     { label: "Faturamento de serviços", value: k.servicesRevenueCents, hint: countLabel(k.completedCount, "atendimento concluído", "atendimentos concluídos") },
     { label: "Recebido online", value: k.receivedOnlineCents, hint: "Pix e cartão via AbacatePay" },
     { label: "Recebido no balcão", value: k.receivedLocalCents, hint: "Dinheiro, cartão e Pix presencial" },
-    { label: "Assinaturas do clube", value: k.subscriptionRevenueCents, hint: "Pagamentos no período" },
+    {
+      label: "Assinaturas do clube",
+      value: k.subscriptionRevenueCents,
+      hint: `Cartão ${formatPriceCents(k.subscriptionByMethodCents.card)} · Pix ${formatPriceCents(k.subscriptionByMethodCents.pix)} · Balcão ${formatPriceCents(k.subscriptionByMethodCents.manual)}`,
+    },
   ];
   return (
     <section className="flex flex-col gap-3">

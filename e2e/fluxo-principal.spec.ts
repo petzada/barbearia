@@ -103,6 +103,31 @@ test("gestão cria serviço, cliente agenda, barbeiro conclui e o faturamento ap
     await expect(admin.locator("main")).toContainText(PRICE);
   });
 
+  await test.step("clube: gestão registra pagamento no balcão e o cliente vê o cartão de membro", async () => {
+    await client.goto("/clube");
+    await expect(client.getByRole("heading", { name: "Premium", level: 2 })).toBeVisible();
+    // Sem assinatura, a troca de cartão volta para o clube.
+    await client.goto("/clube/cartao");
+    await client.waitForURL("**/clube");
+
+    await admin.goto("/admin/clube");
+    await admin.getByRole("button", { name: "Novo pagamento" }).click();
+    const sheet = admin.getByRole("dialog", { name: "Pagamento no balcão" });
+    await sheet.getByLabel("WhatsApp do cliente").fill(CLIENT_PHONE);
+    await sheet.getByRole("radio", { name: /^Premium/ }).click();
+    await sheet.getByRole("button", { name: "Registrar pagamento" }).click();
+    await expect(sheet).toBeHidden();
+    await expect(admin.getByRole("button", { name: /Carlos Cliente.*Premium · Balcão/ })).toBeVisible();
+
+    await client.reload();
+    const card = client.getByRole("region", { name: "Cartão de membro" });
+    await expect(card).toContainText("Premium");
+    await expect(card).toContainText("Balcão");
+    await expect(card).toContainText("Válida até");
+    // Pago no balcão não renova sozinho: sem botão de cancelar renovação.
+    await expect(client.getByRole("button", { name: "Cancelar assinatura" })).toHaveCount(0);
+  });
+
   await test.step("todas as telas de barbeiro e gestão abrem sem erro", async () => {
     const errors: string[] = [];
     admin.on("pageerror", (error) => errors.push(error.message));

@@ -12,12 +12,14 @@ import { Input } from "@/components/ui/input";
 import { chipClass, chipRowClass } from "@/lib/ui/classes";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { cn } from "@/lib/utils";
+import { nextChargeDate } from "@/lib/club-billing";
 import { ClubMembers, RegisterButton } from "./club-admin-client";
 
 export const metadata: Metadata = { title: "Clube" };
 
 const FILTERS: { key: ClubFilter; label: string }[] = [
   { key: "ativos", label: "Ativos" },
+  { key: "pendentes", label: "Pagamento pendente" },
   { key: "vencendo", label: "Vencendo" },
   { key: "cancelados", label: "Cancelados" },
 ];
@@ -40,9 +42,10 @@ export default async function AdminClubePage({
     <main className="flex flex-1 flex-col">
       <PageHeader title="Clube" actions={<RegisterButton plans={plans.map((p) => ({ id: p.id, name: p.name, priceCents: p.priceCents }))} />} />
       <PageBody>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatTile label="Ativos" value={String(overview.activeCount)} />
           <StatTile label="Recorrente" value={formatPriceCents(overview.mrrCents)} hint="por mês" tone="brand" />
+          <StatTile label="Pendentes" value={String(overview.pastDueCount)} hint="pagamento" />
           <StatTile label="Vencendo" value={String(overview.expiringCount)} hint="em 7 dias" />
         </div>
 
@@ -109,7 +112,13 @@ export default async function AdminClubePage({
             <EmptyState
               compact
               icon={Crown}
-              title={filter === "vencendo" ? "Nenhuma assinatura vencendo" : "Nenhuma assinatura cancelada"}
+              title={
+                filter === "vencendo"
+                  ? "Nenhuma assinatura vencendo"
+                  : filter === "pendentes"
+                    ? "Nenhum pagamento pendente"
+                    : "Nenhuma assinatura cancelada"
+              }
             />
           )
         ) : (
@@ -118,10 +127,12 @@ export default async function AdminClubePage({
               subscriptionId: r.subscriptionId,
               name: r.name,
               planName: r.planName,
-              provider: r.provider,
-              method: r.method,
+              paymentMethod: r.paymentMethod,
+              cardLastFour: r.cardLastFour,
               status: r.status,
+              cancelAtPeriodEnd: r.cancelAtPeriodEnd,
               currentPeriodEnd: r.currentPeriodEnd?.getTime() ?? null,
+              nextChargeAt: nextChargeDate(r)?.getTime() ?? null,
             }))}
           />
         )}

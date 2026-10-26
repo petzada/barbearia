@@ -11,7 +11,7 @@ import { QrCode, RotateCcw } from "lucide-react";
 import { EmptyState, PageBody, PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { formatPriceCents } from "@/lib/agenda/availability";
-import { PixPanel } from "./pix-panel";
+import { PixPanel } from "@/components/pix/pix-panel";
 
 export const metadata: Metadata = { title: "Pagar com Pix" };
 

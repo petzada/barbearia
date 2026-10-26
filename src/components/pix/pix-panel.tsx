@@ -6,16 +6,24 @@ import { useRouter } from "next/navigation";
 import { Copy, FlaskConical, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { checkPixAction, simulatePixAction } from "@/app/actions/cliente";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/page-header";
 
 const POLL_MS = 4000;
 
 function formatRemaining(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h`;
+  if (hours >= 1) return `${hours}h ${String(Math.floor((total % 3600) / 60)).padStart(2, "0")}min`;
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
+/**
+ * Pix com confirmação automática (polling). Agendamento: `entryId`; clube:
+ * `paidHref` (para onde ir ao pagar) e textos de expiração próprios.
+ */
 export function PixPanel({
   entryId,
   paymentId,
@@ -23,13 +31,20 @@ export function PixPanel({
   qrImage,
   expiresAt,
   devMode,
+  paidHref,
+  expiredDescription = "Seu horário segue marcado: pague na barbearia ou gere um novo Pix.",
+  expiredHref,
 }: {
-  entryId: string;
+  entryId?: string;
   paymentId: string;
   brCode: string;
   qrImage: string | null;
   expiresAt: number | null;
   devMode: boolean;
+  paidHref?: string;
+  expiredDescription?: string;
+  /** Clube: o Pix expirado não se regenera aqui — volta para esta página. */
+  expiredHref?: string;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState<string>("pending");
@@ -38,10 +53,10 @@ export function PixPanel({
 
   useEffect(() => {
     if (status === "paid") {
-      router.replace(`/agendamentos/${entryId}/confirmado`);
+      router.replace(paidHref ?? `/agendamentos/${entryId}/confirmado`);
       router.refresh();
     }
-  }, [status, entryId, router]);
+  }, [status, entryId, paidHref, router]);
 
   useEffect(() => {
     if (status !== "pending") return;
@@ -73,16 +88,22 @@ export function PixPanel({
     setStatus(result.data.status);
   }
 
-  if (status === "expired" || status === "cancelled") {
+  if (status === "expired" || status === "cancelled" || status === "failed") {
     return (
       <EmptyState
         icon={QrCode}
         title="Este Pix expirou"
-        description="Seu horário segue marcado: pague na barbearia ou gere um novo Pix."
+        description={expiredDescription}
         action={
-          <Button size="lg" onClick={() => router.refresh()}>
-            Gerar novo Pix
-          </Button>
+          expiredHref ? (
+            <Link href={expiredHref} className={buttonVariants({ size: "lg" })}>
+              Voltar ao clube
+            </Link>
+          ) : (
+            <Button size="lg" onClick={() => router.refresh()}>
+              Gerar novo Pix
+            </Button>
+          )
         }
       />
     );

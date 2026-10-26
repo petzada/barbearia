@@ -72,6 +72,10 @@ export const user = sqliteTable("user", {
   /** Aceite dos Termos de Uso e da Política de Privacidade (versão aceita). */
   termsAcceptedAt: integer("terms_accepted_at", { mode: "timestamp_ms" }),
   termsVersion: text("terms_version"),
+  /** CPF (só dígitos) exigido pelo AbacatePay para cobranças no cartão/Pix do clube. */
+  taxId: text("tax_id"),
+  /** E-mail de cobrança quando o da conta é técnico (cadastro por telefone). */
+  billingEmail: text("billing_email"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -324,12 +328,39 @@ export const plans = sqliteTable("plans", {
   updatedAt: updatedAt(),
 });
 
+/** Cartões salvos (token permanente do AbacatePay) com consentimento do cliente. */
+export const paymentMethods = sqliteTable(
+  "payment_methods",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull().default("abacatepay"),
+    cardToken: text("card_token").notNull(),
+    brand: text("brand"),
+    lastFour: text("last_four"),
+    /** Autorização de cobranças recorrentes neste cartão. */
+    consentAt: integer("consent_at", { mode: "timestamp_ms" }).notNull(),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    devMode: integer("dev_mode", { mode: "boolean" }).notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [index("payment_methods_user_idx").on(t.userId, t.active)],
+);
+
 export const SUBSCRIPTION_STATUSES = [
   "pending",
   "active",
+  /** Ciclo venceu sem pagamento: em carência (3 dias) com novas tentativas. */
+  "past_due",
   "cancelled",
   "expired",
 ] as const;
+
+/** Forma de cobrança da assinatura (gerenciada pelo nosso servidor). */
+export const SUBSCRIPTION_PAYMENT_METHODS = ["CARD", "PIX", "MANUAL"] as const;
+export type SubscriptionPaymentMethod = (typeof SUBSCRIPTION_PAYMENT_METHODS)[number];
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
 export const PAYMENT_PROVIDERS = ["abacatepay", "manual"] as const;
@@ -357,10 +388,28 @@ export const subscriptions = sqliteTable(
     startedAt: integer("started_at", { mode: "timestamp_ms" }),
     currentPeriodEnd: integer("current_period_end", { mode: "timestamp_ms" }),
     cancelledAt: integer("cancelled_at", { mode: "timestamp_ms" }),
+    paymentMethod: text("payment_method", { enum: SUBSCRIPTION_PAYMENT_METHODS }),
+    /** Cartão salvo usado nas renovações (forma CARD). */
+    paymentMethodId: text("payment_method_id").references(() => paymentMethods.id, {
+      onDelete: "set null",
+    }),
+    /** Valor por ciclo fixado na adesão (preço novo do plano vale só para novas assinaturas). */
+    priceCents: integer("price_cents"),
+    currentPeriodStart: integer("current_period_start", { mode: "timestamp_ms" }),
+    /** Cancelado pelo cliente: mantém o acesso até o fim do ciclo pago, sem novas cobranças. */
+    cancelAtPeriodEnd: integer("cancel_at_period_end", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    /** CARD: quando cobrar (vencimento ou nova tentativa). PIX: quando gerar o Pix da renovação. */
+    nextChargeAt: integer("next_charge_at", { mode: "timestamp_ms" }),
+    retryCount: integer("retry_count").notNull().default(0),
+    lastChargeError: text("last_charge_error"),
+    pastDueSince: integer("past_due_since", { mode: "timestamp_ms" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
+    index("subscriptions_next_charge_idx").on(t.status, t.nextChargeAt),
     index("subscriptions_user_idx").on(t.userId, t.status),
     // No máximo uma assinatura ativa por cliente.
     uniqueIndex("subscriptions_one_active_per_user")
@@ -373,9 +422,13 @@ export const PAYMENT_KINDS = ["appointment", "subscription"] as const;
 export const PAYMENT_RECORD_STATUSES = [
   "pending",
   "paid",
+  /** Cobrança recusada (cartão) — não houve débito. */
+  "failed",
   "expired",
   "cancelled",
   "refunded",
+  /** Contestação aberta pelo titular do cartão. */
+  "disputed",
 ] as const;
 export type PaymentKind = (typeof PAYMENT_KINDS)[number];
 export type PaymentRecordStatus = (typeof PAYMENT_RECORD_STATUSES)[number];
@@ -408,6 +461,17 @@ export const payments = sqliteTable(
       onDelete: "set null",
     }),
     devMode: integer("dev_mode", { mode: "boolean" }).notNull().default(false),
+    /**
+     * Assinaturas: uma linha por tentativa, com chave `sub:<id>:<início do ciclo>:<tentativa>`.
+     * A linha é gravada ANTES da cobrança e funciona como trava contra cobrança dupla.
+     */
+    idempotencyKey: text("idempotency_key").unique(),
+    /** Início do ciclo que este pagamento quita (assinaturas). */
+    cycleStart: integer("cycle_start", { mode: "timestamp_ms" }),
+    attempt: integer("attempt"),
+    failureReason: text("failure_reason"),
+    cardBrand: text("card_brand"),
+    cardLastFour: text("card_last_four"),
     createdAt: createdAt(),
   },
   (t) => [
@@ -462,7 +526,7 @@ export const whatsappConfig = sqliteTable("whatsapp_config", {
   updatedAt: updatedAt(),
 });
 
-export const WHATSAPP_LOG_KINDS = ["otp", "reminder", "test", "invite"] as const;
+export const WHATSAPP_LOG_KINDS = ["otp", "reminder", "test", "invite", "billing"] as const;
 export const WHATSAPP_LOG_STATUSES = [
   "pending",
   "sent",
@@ -570,6 +634,7 @@ export const schema = {
   scheduleEntries,
   feedbacks,
   plans,
+  paymentMethods,
   subscriptions,
   payments,
   webhookEvents,

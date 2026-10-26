@@ -15,6 +15,7 @@ interface __BaseEnv_CloudflareEnv {
 	WHATSMIAU_API_KEY: string;
 	WHATSMIAU_WEBHOOK_SECRET: string;
 	ABACATEPAY_API_KEY: string;
+	ABACATEPAY_PUBLIC_KEY: string;
 	ABACATEPAY_WEBHOOK_SECRET: string;
 	CRON_SECRET: string;
 	AUTH_DEV_OTP: string;
@@ -31,7 +32,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_TIMEZONE" | "APP_BASE_URL" | "BETTER_AUTH_SECRET" | "ADMIN_PHONE_NUMBERS" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "WHATSMIAU_BASE_URL" | "WHATSMIAU_API_KEY" | "WHATSMIAU_WEBHOOK_SECRET" | "ABACATEPAY_API_KEY" | "ABACATEPAY_WEBHOOK_SECRET" | "CRON_SECRET" | "AUTH_DEV_OTP">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_TIMEZONE" | "APP_BASE_URL" | "BETTER_AUTH_SECRET" | "ADMIN_PHONE_NUMBERS" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "WHATSMIAU_BASE_URL" | "WHATSMIAU_API_KEY" | "WHATSMIAU_WEBHOOK_SECRET" | "ABACATEPAY_API_KEY" | "ABACATEPAY_PUBLIC_KEY" | "ABACATEPAY_WEBHOOK_SECRET" | "CRON_SECRET" | "AUTH_DEV_OTP">> {}
 }
 declare module "*.txt" {
 	const value: string;

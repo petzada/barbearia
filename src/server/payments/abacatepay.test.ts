@@ -15,6 +15,43 @@ describe("AbacatePayClient", () => {
     expect(JSON.parse(String(init.body))).toMatchObject({ method: "PIX", data: { amount: 4500, expiresIn: 1800, externalId: "p1" } });
   });
 
+  it("cobra o cartão com token OU cardToken, cliente completo e só metadata", async () => {
+    const charge = { id: "card_1", status: "APPROVED", cardToken: "tok_perm", brand: "VISA", lastFour: "4242" };
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: charge, error: null })));
+    const client = new AbacatePayClient("k", "https://api.test/v2", fetchImpl as unknown as typeof fetch);
+    const customer = { name: "Ana — Souza", email: "a@b.com", taxId: "52998224725", cellphone: "(11) 96000-1234" };
+    const res = await client.createCardCharge({ amountCents: 19990, token: "ctok_1", customer, metadata: { paymentId: "p1" } });
+    expect(res.cardToken).toBe("tok_perm");
+    const body = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [URL, RequestInit])[1].body));
+    expect(body).toEqual({
+      method: "CARD",
+      data: {
+        amount: 19990,
+        token: "ctok_1",
+        customer: { ...customer, name: "Ana - Souza" },
+        metadata: { paymentId: "p1" },
+      },
+    });
+    await client.createCardCharge({ amountCents: 19990, cardToken: "tok_perm", customer, metadata: {} });
+    const renewal = JSON.parse(String((fetchImpl.mock.calls[1] as unknown as [URL, RequestInit])[1].body));
+    expect(renewal.data).toMatchObject({ cardToken: "tok_perm" });
+    expect(renewal.data.token).toBeUndefined();
+    expect(() => client.createCardCharge({ amountCents: 1, customer, metadata: {} })).toThrow(/exatamente um/);
+  });
+
+  it("consulta, lista e estorna cobranças do checkout transparente", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: [], error: null })));
+    const client = new AbacatePayClient("k", "https://api.test/v2", fetchImpl as unknown as typeof fetch);
+    await client.getCardCharge("card_1");
+    await client.listCardCharges();
+    await client.refund("card_1", "Estorno — pedido");
+    const calls = fetchImpl.mock.calls as unknown as [URL, RequestInit][];
+    expect(String(calls[0][0])).toBe("https://api.test/v2/transparents/get?id=card_1");
+    expect(String(calls[1][0])).toBe("https://api.test/v2/transparents/list?method=CARD&limit=100");
+    expect(String(calls[2][0])).toBe("https://api.test/v2/transparents/refund");
+    expect(JSON.parse(String(calls[2][1].body))).toEqual({ id: "card_1", reason: "Estorno - pedido" });
+  });
+
   it("converte erro do envelope em AbacatePayError", async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: null, error: "Insufficient permissions" }), { status: 403 }));
     const client = new AbacatePayClient("k", "https://api.test/v2", fetchImpl as unknown as typeof fetch);
@@ -45,9 +82,9 @@ describe("verifyAbacateWebhook", () => {
 describe("findIdWithPrefix", () => {
   it("acha ids em payloads com formatos diferentes", () => {
     expect(findIdWithPrefix({ data: { pixQrCode: { id: "pix_char_9" } } }, "pix_char_")).toBe("pix_char_9");
-    expect(findIdWithPrefix({ subscription: { id: "subs_1", checkoutId: "bill_2" } }, "bill_")).toBe("bill_2");
-    expect(findIdWithPrefix({ a: [1, { b: "subs_7" }] }, "subs_")).toBe("subs_7");
-    expect(findIdWithPrefix({ a: "x" }, "subs_")).toBeNull();
+    expect(findIdWithPrefix({ data: { transparent: { id: "card_2", customer: { id: "cust_1" } } } }, "card_")).toBe("card_2");
+    expect(findIdWithPrefix({ a: [1, { b: "card_7" }] }, "card_")).toBe("card_7");
+    expect(findIdWithPrefix({ a: "x" }, "card_")).toBeNull();
   });
 });
 

@@ -36,6 +36,13 @@
       "when": 1793046829638,
       "tag": "0004_plan_rules_and_terms",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1793051426850,
+      "tag": "0005_club_billing",
+      "breakpoints": true
     }
   ]
 }
