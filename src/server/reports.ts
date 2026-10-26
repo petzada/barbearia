@@ -2,6 +2,7 @@ import { and, eq, gte, inArray, lt } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import type { Db } from "./db";
 import { feedbacks, payments, scheduleEntries, services, subscriptions, user } from "./db/schema";
+import { isSubscriptionCurrent } from "./payments/subscriptions";
 import { assertAdmin, assertCanManageBarberAgenda, type Actor } from "./actor";
 import { DomainError } from "./errors";
 import { dateKeyFromIsoInSP } from "@/lib/agenda/availability";
@@ -43,6 +44,8 @@ export type DashboardData = {
     receivedOnlineCents: number;
     receivedLocalCents: number;
     subscriptionRevenueCents: number;
+    /** Assinaturas pagas no período por forma: cartão, Pix (online) e balcão. */
+    subscriptionByMethodCents: { card: number; pix: number; manual: number };
     commissionsCents: number;
     activeSubscribers: number;
     noShowCount: number;
@@ -96,6 +99,7 @@ export async function getDashboard(
       .select({
         kind: payments.kind,
         provider: payments.provider,
+        method: payments.method,
         amountCents: payments.amountCents,
         paidAt: payments.paidAt,
       })
@@ -106,9 +110,9 @@ export async function getDashboard(
       .from(feedbacks)
       .where(and(gte(feedbacks.createdAt, start), lt(feedbacks.createdAt, end))),
     db
-      .select({ id: subscriptions.id, currentPeriodEnd: subscriptions.currentPeriodEnd })
+      .select()
       .from(subscriptions)
-      .where(inArray(subscriptions.status, ["active"])),
+      .where(inArray(subscriptions.status, ["active", "past_due"])),
   ]);
 
   const completed = entries.filter((e) => e.status === "completed");
@@ -158,8 +162,13 @@ export async function getDashboard(
       receivedOnlineCents: sum(paid, (p) => p.provider === "abacatepay"),
       receivedLocalCents: sum(paid, (p) => p.provider === "manual"),
       subscriptionRevenueCents: sum(paid, (p) => p.kind === "subscription"),
+      subscriptionByMethodCents: {
+        card: sum(paid, (p) => p.kind === "subscription" && p.provider === "abacatepay" && p.method === "CARD"),
+        pix: sum(paid, (p) => p.kind === "subscription" && p.provider === "abacatepay" && p.method === "PIX"),
+        manual: sum(paid, (p) => p.kind === "subscription" && p.provider === "manual"),
+      },
       commissionsCents: completed.reduce((s, e) => s + (e.commissionCents ?? 0), 0),
-      activeSubscribers: activeSubs.filter((s) => s.currentPeriodEnd && s.currentPeriodEnd > now).length,
+      activeSubscribers: activeSubs.filter((s) => isSubscriptionCurrent(s, now)).length,
       noShowCount: entries.filter((e) => e.status === "no_show").length,
       cancelledCount: entries.filter((e) => e.status === "cancelled").length,
       averageRating: ratingRows.length

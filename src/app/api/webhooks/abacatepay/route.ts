@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/server/db";
 import { getServerEnv } from "@/server/env";
 import { verifyAbacateWebhook, type AbacateWebhookEvent } from "@/server/payments/abacatepay";
-import { createPaymentGateway, handleAbacateWebhook } from "@/server/payments/service";
+import { createBillingDeps, handleAbacateWebhook } from "@/server/payments/service";
 
 /**
  * Webhook do AbacatePay. Cadastre a URL com `?webhookSecret=<ABACATEPAY_WEBHOOK_SECRET>`.
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await handleAbacateWebhook(await getDb(), createPaymentGateway(env), event);
+    const result = await handleAbacateWebhook(await getDb(), createBillingDeps(env), event);
     return NextResponse.json({ ok: true, result });
   } catch (error) {
     console.error("[webhook:abacatepay] falha ao processar", event.event, error);

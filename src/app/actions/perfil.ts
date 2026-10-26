@@ -9,7 +9,6 @@ import { user } from "@/server/db/schema";
 import { profileSchema, type ProfileInput } from "@/lib/validations/profile";
 import { deleteOwnAccount } from "@/server/account";
 import { acceptTerms } from "@/server/terms";
-import { createPaymentGateway } from "@/server/payments/service";
 
 async function saveName(input: ProfileInput) {
   const { db, user: current } = await actionContext({ allowIncompleteProfile: true });
@@ -87,8 +86,8 @@ export async function setWhatsappRemindersAction(enabled: boolean) {
 /** Exclusão da própria conta (LGPD). A sessão é apagada junto. */
 export async function deleteMyAccountAction() {
   return toActionResult(async () => {
-    const { db, env, actor } = await actionContext();
-    await deleteOwnAccount(db, actor, createPaymentGateway(env));
+    const { db, actor } = await actionContext();
+    await deleteOwnAccount(db, actor);
     return null;
   });
 }

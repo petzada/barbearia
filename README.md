@@ -7,9 +7,11 @@ tela estão em [`docs/DECISOES.md`](docs/DECISOES.md).
 ## Stack
 
 - Next.js 16 (App Router, Server Actions) + React 19 + Tailwind 4 + shadcn (Base UI)
-- Cloudflare: Workers via OpenNext, **D1** (Drizzle ORM), **R2** (fotos), Cron Trigger (lembretes)
+- Cloudflare: Workers via OpenNext, **D1** (Drizzle ORM), **R2** (fotos), Cron Trigger (lembretes e cobranças do clube)
 - Login: código no WhatsApp (WhatsMiau) e Google, com Better Auth
-- Pagamentos: AbacatePay (Pix avulso e assinaturas do clube)
+- Pagamentos: AbacatePay — Pix avulso e Clube Moura com cartão (checkout
+  transparente, `abacatepay.js`) ou Pix. As assinaturas e recobranças são
+  gerenciadas pelo nosso servidor (sem produtos/assinaturas no AbacatePay)
 
 ## Rodando localmente
 
@@ -44,6 +46,30 @@ npm run db:migrate:remote            # aplica as migrações no D1 de produção
 wrangler secret put BETTER_AUTH_SECRET   # e os demais segredos do .dev.vars.example
 npm run deploy                       # build OpenNext + deploy do Worker
 ```
+
+Segredos do AbacatePay: `ABACATEPAY_API_KEY`, `ABACATEPAY_PUBLIC_KEY` (a `pk_…`
+do formulário de cartão — **mesmo modo**, teste ou produção, da chave da API) e
+`ABACATEPAY_WEBHOOK_SECRET`. Cadastre o webhook
+`<APP_BASE_URL>/api/webhooks/abacatepay?webhookSecret=<segredo>` com os eventos
+`transparent.completed`, `transparent.refunded`, `transparent.disputed` e
+`transparent.lost`. `npm run setup` pergunta e grava tudo isso.
+
+## Clube: cobranças
+
+O Cron Trigger (de hora em hora) chama `/api/cron/lembretes` e
+`/api/cron/assinaturas`. As regras ficam em `src/lib/club-billing.ts` e
+`src/server/payments/subscriptions.ts`:
+
+- **Cartão**: cobrado no fim do ciclo com o cartão salvo. Recusou → "pagamento
+  pendente", nova tentativa a cada 24 h (3 no total), aviso no WhatsApp com o
+  link para trocar o cartão e acesso mantido por 3 dias de carência.
+- **Pix**: o Pix da renovação é gerado e enviado no WhatsApp 3 dias antes do fim;
+  pago, estende a partir do fim do período; sem pagamento, encerra 3 dias depois.
+- **Cancelar** (cliente): sem novas cobranças, acesso até o fim do período pago.
+  A gestão pode encerrar na hora, cobrar agora e estornar o último pagamento.
+- Cada tentativa grava antes uma linha em `payments` com chave de idempotência;
+  resposta perdida (timeout) é conciliada pela listagem de cobranças, nunca
+  recobrada às cegas.
 
 Migrações novas: altere `src/server/db/schema.ts` e rode `npm run db:generate`
 (nunca edite migrações já aplicadas).

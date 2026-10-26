@@ -9,7 +9,15 @@ import { closePayout, type PayoutMethod } from "@/server/payouts";
 import { getSubscriptionDetail } from "@/server/club-admin";
 import { saveBusinessHours, updateShopSettings } from "@/server/settings";
 import { cancelInvite, findUserByPhone, inviteTeamMember, updateTeamMember } from "@/server/team";
-import { cancelSubscription, createPaymentGateway, grantManualSubscription, upsertPlan } from "@/server/payments/service";
+import {
+  cancelSubscription,
+  chargeSubscriptionNow,
+  createBillingDeps,
+  createPaymentGateway,
+  grantManualSubscription,
+  refundLastSubscriptionPayment,
+  upsertPlan,
+} from "@/server/payments/service";
 import {
   createInstance,
   createWhatsappGateway,
@@ -25,6 +33,7 @@ import type { ServiceFormInput } from "@/lib/validations/servico";
 import type { BusinessHoursFormInput, ShopSettingsInput } from "@/lib/validations/settings";
 import type { TeamMemberInput } from "@/lib/validations/profile";
 import type { PlanFormInput } from "@/lib/validations/plano";
+import { nextChargeDate } from "@/lib/club-billing";
 import type { BarberWeekInput, ClosureInput } from "@/lib/validations/escala";
 
 function revalidate(...paths: string[]) {
@@ -87,13 +96,34 @@ export async function grantManualSubscriptionAction(input: { phone: string; plan
   });
 }
 
+/** Gestão encerra na hora (sem novas cobranças). */
 export async function adminCancelSubscriptionAction(subscriptionId: string) {
   return toActionResult(async () => {
-    const { db, env, actor } = await actionContext();
+    const { db, actor } = await actionContext();
     assertAdmin(actor);
-    await cancelSubscription(db, actor, createPaymentGateway(env), subscriptionId);
-    revalidate("/admin/clube");
+    await cancelSubscription(db, actor, subscriptionId, { immediate: true });
+    revalidate("/admin/clube", "/admin");
     return null;
+  });
+}
+
+/** "Cobrar agora": cartão salvo (próximo ciclo) ou Pix da renovação no WhatsApp. */
+export async function adminChargeSubscriptionAction(subscriptionId: string) {
+  return toActionResult(async () => {
+    const { db, env, actor } = await actionContext();
+    const result = await chargeSubscriptionNow(db, actor, createBillingDeps(env), subscriptionId);
+    revalidate("/admin/clube", "/admin/financeiro", "/admin");
+    return result;
+  });
+}
+
+/** Estorna o último pagamento online e encerra a assinatura. */
+export async function adminRefundSubscriptionAction(subscriptionId: string) {
+  return toActionResult(async () => {
+    const { db, env, actor } = await actionContext();
+    const payment = await refundLastSubscriptionPayment(db, actor, createPaymentGateway(env), subscriptionId);
+    revalidate("/admin/clube", "/admin/financeiro", "/admin");
+    return { amountCents: payment.amountCents };
   });
 }
 
@@ -269,14 +299,20 @@ export async function subscriptionDetailAction(subscriptionId: string) {
       memberName: detail.member.name,
       memberPhone: detail.member.phoneNumber,
       status: detail.subscription.status,
-      provider: detail.subscription.provider,
-      method: detail.subscription.method,
+      paymentMethod: detail.subscription.paymentMethod,
+      card: detail.card,
+      cancelAtPeriodEnd: detail.subscription.cancelAtPeriodEnd,
       currentPeriodEnd: detail.subscription.currentPeriodEnd?.getTime() ?? null,
+      nextChargeAt: nextChargeDate(detail.subscription)?.getTime() ?? null,
+      lastChargeError: detail.subscription.lastChargeError,
+      canRefund: detail.history.some((p) => p.status === "paid" && p.provider === "abacatepay" && p.providerId),
       history: detail.history.map((p) => ({
         id: p.id,
-        paidAt: p.paidAt?.getTime() ?? null,
+        at: (p.paidAt ?? p.createdAt).getTime(),
         amountCents: p.amountCents,
         method: p.method,
+        status: p.status,
+        cardLastFour: p.cardLastFour,
       })),
     };
   });

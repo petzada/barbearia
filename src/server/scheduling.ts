@@ -198,7 +198,7 @@ export async function createAppointment(
 
   // Clube: se o plano cobre serviço + dia e ainda há atendimentos no ciclo,
   // o horário sai pago pela assinatura (sem Pix). Comissão segue a tabela.
-  const coverage = await getCoverage(db, actor.id, { serviceId, startsAt });
+  const coverage = await getCoverage(db, actor.id, { serviceId, startsAt, now });
   const regular = {
     paymentMethod: paymentChoice,
     paymentStatus: paymentChoice === "pix" ? ("pending" as const) : ("unpaid" as const),
@@ -222,7 +222,7 @@ export async function createAppointment(
   if (coverage.covered) {
     // Reconfere depois de gravar: em reservas simultâneas, quem passou do
     // limite do ciclo volta a ser cobrado normalmente.
-    const sub = await getClubSubscription(db, actor.id, new Date(startsAt));
+    const sub = await getClubSubscription(db, actor.id, new Date(startsAt), now);
     if (
       sub &&
       (await exceedsVisitLimit(db, {

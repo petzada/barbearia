@@ -9,8 +9,8 @@ export type LegalSection = {
  * Versão dos Termos de Uso e da Política de Privacidade. Ao mudar, quem já
  * aceitou uma versão anterior precisa aceitar de novo (tela /aceite).
  */
-export const TERMS_VERSION = "2026-10-26";
-export const LEGAL_UPDATED_AT = "26/10/2026";
+export const TERMS_VERSION = "2026-10-27";
+export const LEGAL_UPDATED_AT = "27/10/2026";
 
 /** Dados do controlador. */
 const CONTROLLER = {
@@ -63,7 +63,7 @@ export const TERMS: LegalSection[] = [
     id: "pagamentos",
     title: "4. Pagamentos avulsos",
     paragraphs: [
-      "No agendamento você escolhe pagar na Barbearia (dinheiro, cartão ou Pix no balcão) ou pagar na hora pelo app com Pix (QR Code dinâmico). Os pagamentos online são processados pelo AbacatePay, intermediador de pagamentos; a Barbearia não recebe nem armazena dados de cartão.",
+      "No agendamento você escolhe pagar na Barbearia (dinheiro, cartão ou Pix no balcão) ou pagar na hora pelo app com Pix (QR Code dinâmico). Os pagamentos online são processados pelo AbacatePay, intermediador de pagamentos; a Barbearia não recebe nem armazena número, validade ou código de segurança de cartões.",
       "O Pix gerado pelo app tem validade limitada. Se expirar sem pagamento, o horário continua marcado e pode ser pago na Barbearia.",
       "Cancelamentos feitos dentro do prazo dão direito ao reembolso integral do valor pago online, pelo mesmo meio de pagamento.",
     ],
@@ -89,10 +89,13 @@ export const TERMS: LegalSection[] = [
     id: "cobranca",
     title: "6. Cobrança, renovação e cancelamento da assinatura",
     paragraphs: [
-      "A assinatura é cobrada antecipadamente a cada ciclo, no cartão de crédito ou pelo Pix Automático, por meio do checkout do AbacatePay, e renova automaticamente até ser cancelada. Assinaturas também podem ser pagas no balcão, com validade de um ciclo.",
-      "Você pode cancelar a qualquer momento em Clube > Cancelar assinatura. O cancelamento interrompe as próximas cobranças imediatamente, nos termos do processamento do AbacatePay; valores de ciclos já pagos não são reembolsados proporcionalmente, salvo no direito de arrependimento abaixo.",
-      "Se uma cobrança recorrente falhar, o AbacatePay fará novas tentativas; persistindo a falha, a assinatura é cancelada e os benefícios deixam de valer.",
-      "Reajustes de preço serão comunicados com pelo menos 30 dias de antecedência e valerão a partir do ciclo seguinte; você pode cancelar antes do reajuste sem custo.",
+      "A assinatura é paga antecipadamente a cada ciclo, no cartão de crédito ou por Pix, e renova automaticamente até ser cancelada. As cobranças são feitas pela própria Barbearia por meio do AbacatePay (checkout transparente). Assinaturas também podem ser pagas no balcão, com validade de um ciclo e sem renovação automática.",
+      "Cartão: ao assinar (ou trocar o cartão) você autoriza expressamente que a Barbearia cobre automaticamente o valor do plano no mesmo cartão a cada renovação, até o cancelamento. O cartão fica salvo no AbacatePay; a Barbearia guarda apenas um identificador (token), a bandeira, os 4 últimos dígitos e a data da autorização.",
+      "Se a cobrança no cartão for recusada, a assinatura fica com pagamento pendente: fazemos novas tentativas a cada 24 horas (até 3 tentativas no total), avisamos pelo WhatsApp com um link para atualizar o cartão e os benefícios continuam por 3 dias de carência a partir do vencimento. Sem pagamento ao fim da carência, a assinatura é encerrada e os horários futuros que seriam cobertos pelo Clube passam a ser cobrados normalmente.",
+      "Pix: 3 dias antes do vencimento, enviamos pelo WhatsApp o Pix da renovação. Pago dentro do prazo (até o vencimento ou nos 3 dias de carência), o novo ciclo começa na data de vencimento do anterior; sem pagamento, a assinatura é encerrada ao fim da carência.",
+      "A troca de cartão fica disponível com pagamento pendente ou a partir de 3 dias antes da renovação e cobra a próxima mensalidade no cartão novo, adiantando a renovação sem alterar a data do ciclo.",
+      "Você pode cancelar a qualquer momento em Clube > Cancelar assinatura. O cancelamento interrompe as próximas cobranças, e os benefícios continuam até o fim do período já pago; valores de ciclos já pagos não são reembolsados proporcionalmente, salvo no direito de arrependimento abaixo. Com pagamento pendente, o cancelamento vale na hora.",
+      "Reajustes de preço serão comunicados com pelo menos 30 dias de antecedência e valerão a partir do ciclo seguinte; você pode cancelar antes do reajuste sem custo. O valor contratado na adesão vale para as renovações até lá.",
     ],
   },
   {
@@ -114,7 +117,7 @@ export const TERMS: LegalSection[] = [
     id: "comunicacoes",
     title: "9. Comunicações pelo WhatsApp",
     paragraphs: [
-      "A Barbearia usa o WhatsApp para enviar códigos de acesso, confirmações e lembretes dos seus horários. Os lembretes podem ser desligados a qualquer momento em Perfil > Lembretes no WhatsApp; os códigos de acesso são enviados sempre que você pede para entrar.",
+      "A Barbearia usa o WhatsApp para enviar códigos de acesso, confirmações, lembretes dos seus horários e avisos de cobrança do Clube (Pix da renovação e cartão recusado). Os lembretes podem ser desligados a qualquer momento em Perfil > Lembretes no WhatsApp; códigos de acesso e avisos de cobrança são enviados sempre que necessários para o serviço.",
     ],
   },
   {
@@ -174,7 +177,8 @@ export const PRIVACY: LegalSection[] = [
     bullets: [
       "Cadastro: nome, número de WhatsApp e, se entrar com o Google, nome, e-mail e foto da conta Google.",
       "Uso do serviço: agendamentos, serviços realizados, barbeiro escolhido, faltas, avaliações e comentários que você escrever.",
-      "Pagamentos e assinatura: plano contratado, status, datas de cobrança e valores. Dados de cartão são tratados exclusivamente pelo AbacatePay e não chegam aos nossos servidores.",
+      "Pagamentos e assinatura: plano contratado, status, datas de cobrança, tentativas e valores. Número, validade e código do cartão são digitados em formulário do AbacatePay e não chegam aos nossos servidores; guardamos apenas o identificador (token) do cartão salvo, bandeira, 4 últimos dígitos e a data da sua autorização de cobrança recorrente.",
+      "CPF e e-mail de cobrança: exigidos pelo AbacatePay para identificar o pagador nas cobranças no cartão.",
       "Técnicos: data e hora de acesso, endereço IP e navegador, para manter a sessão, prevenir abusos e diagnosticar falhas.",
       "Equipe (barbeiros e gestão): foto de perfil, escala de trabalho e comissões.",
     ],
@@ -186,6 +190,8 @@ export const PRIVACY: LegalSection[] = [
     bullets: [
       "Criar e proteger sua conta, agendar, prestar os serviços e gerir sua assinatura — execução de contrato (art. 7º, V).",
       "Processar pagamentos, emitir comprovantes e cumprir obrigações fiscais e contábeis — cumprimento de obrigação legal (art. 7º, II) e execução de contrato.",
+      "CPF e e-mail de cobrança, para identificar o pagador junto ao AbacatePay e prevenir fraudes nas cobranças no cartão — execução de contrato (art. 7º, V) e cumprimento de obrigação legal/regulatória do arranjo de pagamentos (art. 7º, II).",
+      "Cobranças automáticas da assinatura no cartão salvo, novas tentativas e avisos de cobrança (Pix da renovação, cartão recusado) pelo WhatsApp — execução de contrato, com base na sua autorização expressa ao assinar; você pode cancelar a assinatura a qualquer momento.",
       "Lembretes de horário pelo WhatsApp — execução de contrato, com opção de desligar a qualquer momento.",
       "Prevenção a fraudes, segurança da conta e registros de acesso — legítimo interesse (art. 7º, IX) e Marco Civil da Internet.",
       "Avaliações para melhorar o atendimento e calcular indicadores da equipe — legítimo interesse.",
@@ -201,7 +207,7 @@ export const PRIVACY: LegalSection[] = [
     bullets: [
       "Cloudflare, Inc. — hospedagem da plataforma, banco de dados (D1) e armazenamento de imagens (R2).",
       "WhatsMiau — envio de mensagens pelo WhatsApp da Barbearia (códigos de acesso e lembretes).",
-      "AbacatePay — processamento de pagamentos via Pix e cartão e das assinaturas recorrentes.",
+      "AbacatePay — operador de pagamentos: processa Pix e cartão, guarda o cartão salvo (tokenizado) e recebe nome, e-mail, CPF e celular do pagador nas cobranças no cartão. As renovações são agendadas e disparadas pela Barbearia.",
       "Google LLC — autenticação, somente se você escolher entrar com a conta Google.",
       "Autoridades públicas — quando houver obrigação legal ou ordem judicial.",
     ],
@@ -219,6 +225,7 @@ export const PRIVACY: LegalSection[] = [
     bullets: [
       "Dados da conta: enquanto a conta estiver ativa.",
       "Registros de pagamentos e documentos fiscais: pelo prazo legal (em geral, 5 anos).",
+      "Cartão salvo (token): até o cancelamento da assinatura ou a exclusão da conta; CPF: enquanto a conta existir e pelo prazo legal dos registros de pagamento.",
       "Registros de acesso: 6 meses, conforme o Marco Civil da Internet (Lei nº 12.965/2014).",
       "Códigos de acesso: expiram em 5 minutos e nunca são gravados no histórico de mensagens.",
       "Após a exclusão da conta, os dados pessoais são apagados ou anonimizados, mantendo apenas o necessário para obrigações legais.",
@@ -235,7 +242,7 @@ export const PRIVACY: LegalSection[] = [
       "Pedir anonimização, bloqueio ou eliminação de dados desnecessários ou tratados em desconformidade.",
       "Pedir a portabilidade dos dados e informações sobre compartilhamento.",
       "Revogar consentimentos, como o login com Google, e desligar os lembretes no WhatsApp.",
-      "Excluir sua conta em Perfil > Excluir minha conta: horários futuros e assinatura são cancelados e seus dados pessoais são apagados ou anonimizados.",
+      "Excluir sua conta em Perfil > Excluir minha conta: horários futuros e assinatura são cancelados, o cartão salvo é apagado e seus dados pessoais são apagados ou anonimizados.",
       "Apresentar reclamação à Autoridade Nacional de Proteção de Dados (ANPD).",
     ],
   },

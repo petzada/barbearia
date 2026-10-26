@@ -353,6 +353,31 @@ export async function sendTeamInvite(
   }
 }
 
+/**
+ * Aviso de cobrança do clube (Pix da renovação, cartão recusado). `dedupeKey`
+ * garante um envio por evento mesmo com o cron rodando de novo. Não lança:
+ * falha no WhatsApp não pode travar a cobrança.
+ */
+export async function sendBillingNotice(
+  db: Db,
+  gateway: WhatsappGateway | null,
+  input: { to: string | null; text: string; dedupeKey: string },
+): Promise<{ sent: boolean; error: string | null }> {
+  if (!input.to) return { sent: false, error: "Cliente sem WhatsApp." };
+  try {
+    const result = await sendWithLog(db, gateway, {
+      kind: "billing",
+      to: input.to,
+      text: input.text,
+      logText: input.text,
+      dedupeKey: input.dedupeKey,
+    });
+    return { sent: result.sent, error: result.error };
+  } catch (error) {
+    return { sent: false, error: errorMessage(error) };
+  }
+}
+
 /** Hora atual (0–23) em America/Sao_Paulo. */
 export function currentHourSP(now: Date): number {
   return Number(

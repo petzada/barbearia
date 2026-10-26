@@ -5,6 +5,7 @@ import { createAdmin, createBarber, createUser, sp } from "@/test/factories";
 import {
   account,
   feedbacks,
+  paymentMethods,
   payments,
   plans,
   scheduleEntries,
@@ -18,7 +19,6 @@ import { listBookableBarbers } from "./team";
 import { deleteOwnAccount, DELETED_ACCOUNT_NAME } from "./account";
 import { runDailyReminders, type WhatsappGateway } from "./whatsapp/service";
 import { upsertPlan } from "./payments/service";
-import type { PaymentGateway } from "./payments/abacatepay";
 
 let t: TestDb;
 beforeAll(async () => {
@@ -108,19 +108,22 @@ describe("excluir minha conta (LGPD)", () => {
     const plan = await upsertPlan(t.db, admin, {
       slug: "mensal", name: "Mensal", priceCents: 9900, cycle: "MONTHLY", benefits: [], active: true, sortOrder: 0,
     });
+    const [card] = await t.db.insert(paymentMethods).values({
+      userId: client.id, cardToken: "card_tok_1", brand: "VISA", lastFour: "4242", consentAt: NOW,
+    }).returning();
     await t.db.insert(subscriptions).values({
-      userId: client.id, planId: plan.id, status: "active", provider: "abacatepay",
-      providerSubscriptionId: "subs_1", currentPeriodEnd: new Date(NOW.getTime() + 20 * 86_400_000),
+      userId: client.id, planId: plan.id, status: "active", provider: "abacatepay", paymentMethod: "CARD",
+      paymentMethodId: card.id, currentPeriodEnd: new Date(NOW.getTime() + 20 * 86_400_000),
+      nextChargeAt: new Date(NOW.getTime() + 20 * 86_400_000),
     });
     return { barber, client, admin, future };
   }
 
-  it("cancela horários, assinatura e Pix, apaga login e anonimiza mantendo o financeiro", async () => {
+  it("cancela horários, assinatura e Pix, apaga cartão e login e anonimiza mantendo o financeiro", async () => {
     const { client, future } = await scenario();
-    const gateway = { cancelSubscription: vi.fn(async () => {}) } as unknown as PaymentGateway;
-    await deleteOwnAccount(t.db, client, gateway, NOW);
+    await deleteOwnAccount(t.db, client, NOW);
 
-    expect(gateway.cancelSubscription).toHaveBeenCalledWith("subs_1");
+    expect(await t.db.select().from(paymentMethods)).toHaveLength(0);
     const [row] = await t.db.select().from(user).where(eq(user.id, client.id));
     expect(row).toMatchObject({ name: DELETED_ACCOUNT_NAME, phoneNumber: null, image: null, whatsappReminders: false });
     expect(row.email).toContain("excluida-");
@@ -131,23 +134,13 @@ describe("excluir minha conta (LGPD)", () => {
     const statuses = (await t.db.select().from(payments)).map((p) => p.status).sort();
     expect(statuses).toEqual(["cancelled", "paid"]);
     const [sub] = await t.db.select().from(subscriptions);
-    expect(sub.status).toBe("cancelled");
-  });
-
-  it("segue mesmo se o AbacatePay falhar", async () => {
-    const { client } = await scenario();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const gateway = { cancelSubscription: vi.fn(async () => { throw new Error("offline"); }) } as unknown as PaymentGateway;
-    await deleteOwnAccount(t.db, client, gateway, NOW);
-    const [sub] = await t.db.select().from(subscriptions);
-    expect(sub.status).toBe("cancelled");
-    warn.mockRestore();
+    expect(sub).toMatchObject({ status: "cancelled", nextChargeAt: null, paymentMethodId: null });
   });
 
   it("bloqueia gestão e barbeiros", async () => {
     const { barber, admin } = await scenario();
-    await expect(deleteOwnAccount(t.db, admin, null, NOW)).rejects.toThrow(/gestão/);
-    await expect(deleteOwnAccount(t.db, barber, null, NOW)).rejects.toThrow(/barbeiro/);
+    await expect(deleteOwnAccount(t.db, admin, NOW)).rejects.toThrow(/gestão/);
+    await expect(deleteOwnAccount(t.db, barber, NOW)).rejects.toThrow(/barbeiro/);
   });
 });
 

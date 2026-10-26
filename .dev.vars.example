@@ -14,11 +14,13 @@ WHATSMIAU_BASE_URL=https://api.whatsmiau.dev
 WHATSMIAU_API_KEY=
 WHATSMIAU_WEBHOOK_SECRET=
 
-# AbacatePay (Pix dinâmico + assinaturas). Chave dev = modo de teste.
+# AbacatePay (Pix dinâmico + cartão do clube no checkout transparente). Chave dev = modo de teste.
+# A chave pública (pk_…) do abacatepay.js precisa ser do MESMO modo da chave da API.
 ABACATEPAY_API_KEY=
+ABACATEPAY_PUBLIC_KEY=
 ABACATEPAY_WEBHOOK_SECRET=
 
-# Protege /api/cron/lembretes (o Cron Trigger do worker envia esse segredo).
+# Protege /api/cron/lembretes e /api/cron/assinaturas (o Cron Trigger do worker envia esse segredo).
 CRON_SECRET=
 
 # SOMENTE DESENVOLVIMENTO: quando definido e fora de produção, o código de

@@ -36,20 +36,31 @@ export type PixCharge = {
   expiresAt: string;
 };
 
-export type AbacateCycle = "WEEKLY" | "MONTHLY" | "QUARTERLY" | "SEMIANNUALLY" | "ANNUALLY";
+export type CardStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "PAID"
+  | "FAILED"
+  | "REFUNDED"
+  | "UNDER_DISPUTE"
+  | "EXPIRED"
+  | "CANCELLED"
+  | "REDEEMED";
 
-export type AbacateProduct = { id: string; externalId: string; name: string; price: number };
-
-export type SubscriptionCheckout = { id: string; url: string; status: string; devMode: boolean };
-
-export type AbacateSubscription = {
+/** Cobrança no cartão (checkout transparente). */
+export type CardCharge = {
   id: string;
-  checkoutId: string | null;
-  status: "PENDING" | "ACTIVE" | "CANCELLED";
-  method: "PIX" | "CARD" | null;
   amount: number;
+  status: CardStatus;
   devMode: boolean;
+  /** Token permanente do cartão (renovações sem o cliente digitar de novo). */
+  cardToken: string | null;
+  brand: string | null;
+  lastFour: string | null;
+  metadata?: Record<string, string> | null;
 };
+
+export type CardCustomer = { name: string; email: string; taxId: string; cellphone: string };
 
 /** Interface usada pelo domínio — permite fake nos testes. */
 export interface PaymentGateway {
@@ -62,22 +73,21 @@ export interface PaymentGateway {
   }): Promise<PixCharge>;
   checkPixCharge(id: string): Promise<{ id: string; status: PixStatus; expiresAt: string | null }>;
   simulatePixPayment(id: string): Promise<void>;
-  createProduct(input: {
-    externalId: string;
-    name: string;
-    priceCents: number;
-    description?: string | null;
-    cycle: AbacateCycle;
-  }): Promise<AbacateProduct>;
-  createSubscriptionCheckout(input: {
-    productId: string;
-    externalId: string;
-    returnUrl: string;
-    completionUrl: string;
-    metadata?: Record<string, string>;
-  }): Promise<SubscriptionCheckout>;
-  getSubscription(id: string): Promise<AbacateSubscription>;
-  cancelSubscription(id: string): Promise<void>;
+  /**
+   * Cobra o cartão: `token` (ctok_, do abacatepay.js, uso único) ou `cardToken`
+   * (cartão salvo). Recusa vem como AbacatePayError (4xx).
+   */
+  createCardCharge(input: {
+    amountCents: number;
+    token?: string;
+    cardToken?: string;
+    customer: CardCustomer;
+    metadata: Record<string, string>;
+  }): Promise<CardCharge>;
+  getCardCharge(id: string): Promise<CardCharge>;
+  /** Últimas cobranças no cartão (conciliação de tentativas sem resposta). */
+  listCardCharges(): Promise<CardCharge[]>;
+  refund(id: string, reason?: string): Promise<void>;
 }
 
 /**
@@ -118,6 +128,8 @@ export class AbacatePayClient implements PaymentGateway {
         ...(options.body !== undefined ? { "Content-Type": "application/json" } : {}),
       },
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      // Sem resposta em 25s = resultado DESCONHECIDO (não é recusa): quem chama concilia.
+      signal: AbortSignal.timeout(25_000),
     });
     let payload: Envelope<T> | null = null;
     try {
@@ -159,38 +171,41 @@ export class AbacatePayClient implements PaymentGateway {
     await this.request<unknown>("POST", "/transparents/simulate-payment", { query: { id } });
   }
 
-  createProduct(input: Parameters<PaymentGateway["createProduct"]>[0]) {
-    return this.request<AbacateProduct>("POST", "/products/create", {
+  createCardCharge(input: Parameters<PaymentGateway["createCardCharge"]>[0]) {
+    if (Boolean(input.token) === Boolean(input.cardToken)) {
+      throw new Error("Informe token ou cardToken (exatamente um).");
+    }
+    // Para CARD a API ignora/recusa description e externalId: só metadata (strings).
+    return this.request<CardCharge>("POST", "/transparents/create", {
       body: {
-        externalId: input.externalId,
-        name: sanitizeAbacateText(input.name),
-        price: input.priceCents,
-        currency: "BRL",
-        description: input.description ? sanitizeAbacateText(input.description) : undefined,
-        cycle: input.cycle,
+        method: "CARD",
+        data: {
+          amount: input.amountCents,
+          ...(input.token ? { token: input.token } : { cardToken: input.cardToken }),
+          customer: {
+            name: sanitizeAbacateText(input.customer.name).slice(0, 150),
+            email: input.customer.email,
+            taxId: input.customer.taxId,
+            cellphone: input.customer.cellphone,
+          },
+          metadata: input.metadata,
+        },
       },
     });
   }
 
-  createSubscriptionCheckout(input: Parameters<PaymentGateway["createSubscriptionCheckout"]>[0]) {
-    return this.request<SubscriptionCheckout>("POST", "/subscriptions/create", {
-      body: {
-        items: [{ id: input.productId, quantity: 1 }],
-        methods: ["CARD", "PIX"],
-        externalId: input.externalId,
-        returnUrl: input.returnUrl,
-        completionUrl: input.completionUrl,
-        metadata: input.metadata,
-      },
+  getCardCharge(id: string) {
+    return this.request<CardCharge>("GET", "/transparents/get", { query: { id } });
+  }
+
+  listCardCharges() {
+    return this.request<CardCharge[]>("GET", "/transparents/list", { query: { method: "CARD", limit: "100" } });
+  }
+
+  async refund(id: string, reason?: string) {
+    await this.request<unknown>("POST", "/transparents/refund", {
+      body: { id, ...(reason ? { reason: sanitizeAbacateText(reason).slice(0, 500) } : {}) },
     });
-  }
-
-  getSubscription(id: string) {
-    return this.request<AbacateSubscription>("GET", "/subscriptions/get", { query: { id } });
-  }
-
-  async cancelSubscription(id: string) {
-    await this.request<unknown>("POST", "/subscriptions/cancel", { body: { id } });
   }
 }
 
@@ -251,7 +266,7 @@ export async function verifyAbacateWebhook(input: {
   return true;
 }
 
-/** Procura recursivamente o primeiro id com o prefixo dado (`pix_char_`, `subs_`, `bill_`). */
+/** Procura recursivamente o primeiro id com o prefixo dado (`pix_char_`, `card_`). */
 export function findIdWithPrefix(value: unknown, prefix: string, depth = 0): string | null {
   if (depth > 5 || value == null) return null;
   if (typeof value === "string") return value.startsWith(prefix) ? value : null;

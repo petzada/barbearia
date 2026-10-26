@@ -4,7 +4,7 @@ import { createTestDb, type TestDb } from "@/test/d1";
 import { createUser, sp } from "@/test/factories";
 import { plans, user } from "./db/schema";
 import { acceptTerms, assertAcceptedTerms, hasAcceptedCurrentTerms } from "./terms";
-import { startSubscriptionCheckout } from "./payments/service";
+import { subscribeWithPix } from "./payments/service";
 import type { PaymentGateway } from "./payments/abacatepay";
 import { TERMS_VERSION } from "@/content/legal";
 
@@ -35,10 +35,8 @@ describe("aceite dos termos", () => {
     const u = await createUser(t.db, { termsVersion: "2026-01-01" });
     await expect(assertAcceptedTerms(t.db, u.id)).rejects.toMatchObject({ code: "forbidden" });
     const plan = (await t.db.query.plans.findFirst({ where: eq(plans.slug, "premium") }))!;
-    const gw = { createProduct: vi.fn(), createSubscriptionCheckout: vi.fn() } as unknown as PaymentGateway;
-    await expect(
-      startSubscriptionCheckout(t.db, u, gw, { appBaseUrl: "https://app" }, plan.id),
-    ).rejects.toThrow(/Termos de Uso/);
-    expect(gw.createSubscriptionCheckout).not.toHaveBeenCalled();
+    const gw = { createPixCharge: vi.fn(), createCardCharge: vi.fn() } as unknown as PaymentGateway;
+    await expect(subscribeWithPix(t.db, u, { gateway: gw }, { planId: plan.id })).rejects.toThrow(/Termos de Uso/);
+    expect(gw.createPixCharge).not.toHaveBeenCalled();
   });
 });

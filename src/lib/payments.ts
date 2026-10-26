@@ -33,12 +33,6 @@ export const PAYMENT_CHANNEL_LABELS = {
 /** Como o cliente escolheu pagar o agendamento. */
 export const PAY_AT_SHOP_LABEL = "Pagar na barbearia";
 
-/** Origem da assinatura do clube. */
-export function subscriptionPaymentLabel(provider: "abacatepay" | "manual", method: string | null): string {
-  if (provider === "manual") return "Pago no balcão";
-  return method === "PIX" ? "Pix automático" : "Cartão automático";
-}
-
 export type PaymentBadge = { label: string; variant: "soft" | "success" | "warning" | "muted" };
 
 /** Situação do pagamento de um agendamento. */

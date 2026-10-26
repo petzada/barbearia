@@ -114,11 +114,13 @@ async function sectionWhatsmiau(env) {
 }
 
 async function sectionAbacatePay(env) {
-  console.log(`\n${c.bold("AbacatePay")} ${c.dim("(Pix e assinaturas)")}`);
+  console.log(`\n${c.bold("AbacatePay")} ${c.dim("(Pix e cartão do clube — checkout transparente)")}`);
   const mode = (await ask("Modo da chave: teste ou produção (t/p)", "t")).toLowerCase().startsWith("p") ? "produção" : "teste";
-  console.log(c.dim(`  Use a chave do modo ${mode} criada em Integração no painel do AbacatePay.`));
+  console.log(c.dim(`  Use as chaves do modo ${mode} criadas em Integração no painel do AbacatePay.`));
+  console.log(c.dim("  A chave pública (pk_…) e a chave da API precisam ser do MESMO modo."));
   const updates = {
     ABACATEPAY_API_KEY: await askSecret("Chave da API", env.get("ABACATEPAY_API_KEY")),
+    ABACATEPAY_PUBLIC_KEY: await ask("Chave pública do cartão (pk_…)", env.get("ABACATEPAY_PUBLIC_KEY") || ""),
     ABACATEPAY_WEBHOOK_SECRET: env.get("ABACATEPAY_WEBHOOK_SECRET") || generateSecret(24),
   };
   if (await askYesNo("Configurar chave HMAC opcional da assinatura do webhook?", false)) {
@@ -164,13 +166,13 @@ function printChecklist(env) {
   const local = webhookUrls(env.get("APP_BASE_URL"), env);
   const prod = webhookUrls(prodBase, env);
   console.log(`\n${c.bold("Checklist")}`);
-  for (const key of ["WHATSMIAU_API_KEY", "ABACATEPAY_API_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ADMIN_PHONE_NUMBERS"]) {
+  for (const key of ["WHATSMIAU_API_KEY", "ABACATEPAY_API_KEY", "ABACATEPAY_PUBLIC_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ADMIN_PHONE_NUMBERS"]) {
     const value = env.get(key);
     console.log(`  ${value ? c.ok("✓") : c.warn("•")} ${key} ${c.dim(value ? (key === "ADMIN_PHONE_NUMBERS" ? "definido" : maskSecret(value)) : "pendente")}`);
   }
   console.log(`\n${c.bold("Cole nos painéis externos")} ${c.dim("(contêm segredos — não compartilhe)")}`);
   if (prod.whatsmiau) console.log(`  WhatsMiau → webhook connection.update:\n    ${c.teal(prod.whatsmiau)}`);
-  if (prod.abacatepay) console.log(`  AbacatePay → Webhooks (eventos de checkout, transparent e subscription):\n    ${c.teal(prod.abacatepay)}`);
+  if (prod.abacatepay) console.log(`  AbacatePay → Webhooks (eventos transparent.completed, .refunded, .disputed e .lost):\n    ${c.teal(prod.abacatepay)}`);
   console.log(`  Google Cloud → URIs de redirecionamento autorizados:\n    ${c.teal(local.googleRedirect)}\n    ${c.teal(prod.googleRedirect)}`);
 }
 

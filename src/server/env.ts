@@ -12,6 +12,8 @@ export type ServerEnv = {
   whatsmiauApiKey: string | undefined;
   whatsmiauWebhookSecret: string | undefined;
   abacatePayApiKey: string | undefined;
+  /** Chave pública (`pk_…`) do abacatepay.js — mesmo ambiente (dev/produção) da API key. */
+  abacatePayPublicKey: string | undefined;
   abacatePayWebhookSecret: string | undefined;
   /** Opcional: chave HMAC para conferir `X-Webhook-Signature`. */
   abacatePayWebhookHmacKey: string | undefined;
@@ -45,6 +47,7 @@ export function parseServerEnv(raw: RawEnv): ServerEnv {
     whatsmiauApiKey: str(raw, "WHATSMIAU_API_KEY"),
     whatsmiauWebhookSecret: str(raw, "WHATSMIAU_WEBHOOK_SECRET"),
     abacatePayApiKey: str(raw, "ABACATEPAY_API_KEY"),
+    abacatePayPublicKey: str(raw, "ABACATEPAY_PUBLIC_KEY"),
     abacatePayWebhookSecret: str(raw, "ABACATEPAY_WEBHOOK_SECRET"),
     abacatePayWebhookHmacKey: str(raw, "ABACATEPAY_WEBHOOK_HMAC_KEY"),
     cronSecret: str(raw, "CRON_SECRET"),
