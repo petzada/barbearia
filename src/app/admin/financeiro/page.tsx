@@ -17,7 +17,7 @@ import { PAYMENT_CHANNEL_LABELS, paymentMethodLabel } from "@/lib/payments";
 import { chipClass, staticRowClass } from "@/lib/ui/classes";
 import { resolvePeriod } from "@/lib/periods";
 import { cn, countLabel } from "@/lib/utils";
-import { RevenueLineChart } from "@/components/charts/revenue-line-chart";
+import { DailyBarChart } from "@/components/charts/daily-bar-chart";
 import { PayoutButton } from "./payout-button";
 
 export const metadata: Metadata = { title: "Financeiro" };
@@ -77,11 +77,21 @@ export default async function FinanceiroPage({
         {tab === "comissoes" && <Comissoes db={db} actor={actor} period={period} />}
 
         <section className="flex flex-col gap-3">
-          <SectionTitle>Faturamento e comissões por dia</SectionTitle>
-          <RevenueLineChart
-            data={dash.revenueByDay}
-            label="Linhas por dia: assinaturas, avulsos online e pagamentos na barbearia, e comissões"
-          />
+          <SectionTitle>Recebido por dia</SectionTitle>
+          <div className="rounded-lg bg-card p-4 shadow-card">
+            <DailyBarChart
+              label="Total recebido por dia: assinaturas, avulsos online e pagamentos na barbearia"
+              data={dash.revenueByDay.map((d) => ({
+                dateKey: d.dateKey,
+                valueCents: d.subscriptionsCents + d.onlineCents + d.balcaoCents,
+                parts: [
+                  { label: "Assinaturas", valueCents: d.subscriptionsCents },
+                  { label: "Avulsos online", valueCents: d.onlineCents },
+                  { label: "Na barbearia", valueCents: d.balcaoCents },
+                ],
+              }))}
+            />
+          </div>
         </section>
       </PageBody>
     </main>

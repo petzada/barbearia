@@ -3,7 +3,12 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatPriceCents } from "@/lib/agenda/availability";
 
-export type DailyPoint = { dateKey: string; valueCents: number };
+export type DailyPoint = {
+  dateKey: string;
+  valueCents: number;
+  /** Divisão opcional do total, listada no tooltip (ex.: origem do dinheiro). */
+  parts?: { label: string; valueCents: number }[];
+};
 
 const dayLabel = (key: string) => `${key.slice(8, 10)}/${key.slice(5, 7)}`;
 const compactBRL = (cents: number) => {
@@ -49,6 +54,16 @@ export function DailyBarChart({ data, label }: { data: DailyPoint[]; label: stri
                   <div className="rounded-md bg-ink px-3 py-2 text-on-dark shadow-card">
                     <p className="tabular text-sm font-extrabold">{formatPriceCents(p.valueCents)}</p>
                     <p className="text-xs text-on-dark/70">{dayLabel(p.dateKey)}</p>
+                    {p.parts && (
+                      <ul className="mt-1.5 flex flex-col gap-0.5 border-t border-on-dark/15 pt-1.5">
+                        {p.parts.map((part) => (
+                          <li key={part.label} className="flex justify-between gap-4 text-xs">
+                            <span className="text-on-dark/70">{part.label}</span>
+                            <span className="tabular font-bold">{formatPriceCents(part.valueCents)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 );
               }}
