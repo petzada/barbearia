@@ -3,9 +3,10 @@ import Link from "next/link";
 import { Crown, Search, X } from "lucide-react";
 import { getDb } from "@/server/db";
 import { requireAdminUser, toActor } from "@/server/auth";
-import { getClubOverview, type ClubFilter } from "@/server/club-admin";
+import { getActiveSubscribersByMonth, getClubOverview, type ClubFilter } from "@/server/club-admin";
 import { listPlans } from "@/server/payments/service";
-import { EmptyState, PageBody, PageHeader } from "@/components/page-header";
+import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
+import { MonthlyCountChart } from "@/components/charts/daily-bar-chart";
 import { StatTile } from "@/components/period-filter";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +34,11 @@ export default async function AdminClubePage({
   const filter = FILTERS.some((f) => f.key === params.filtro) ? (params.filtro as ClubFilter) : "ativos";
   const user = await requireAdminUser();
   const db = await getDb();
-  const [overview, plans] = await Promise.all([
-    getClubOverview(db, toActor(user), { filter, search: params.q }),
+  const actor = toActor(user);
+  const [overview, plans, byMonth] = await Promise.all([
+    getClubOverview(db, actor, { filter, search: params.q }),
     listPlans(db, { includeInactive: true }),
+    getActiveSubscribersByMonth(db, actor),
   ]);
 
   return (
@@ -48,6 +51,13 @@ export default async function AdminClubePage({
           <StatTile label="Pendentes" value={String(overview.pastDueCount)} hint="pagamento" />
           <StatTile label="Vencendo" value={String(overview.expiringCount)} hint="em 7 dias" />
         </div>
+
+        <section className="flex flex-col gap-3">
+          <SectionTitle>Assinantes ativos</SectionTitle>
+          <div className="rounded-lg bg-card p-4 shadow-card">
+            <MonthlyCountChart data={byMonth} label="Assinantes ativos no fim de cada mês, últimos 6 meses (mês atual: hoje)" />
+          </div>
+        </section>
 
         <form className="relative" role="search">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-subtle" aria-hidden />

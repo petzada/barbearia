@@ -13,6 +13,8 @@ import {
 import { assertAdmin, type Actor } from "./actor";
 import { DomainError } from "./errors";
 import { isSubscriptionCurrent } from "./payments/subscriptions";
+import { graceEndOf } from "@/lib/club-billing";
+import { spDayBounds, todayDateKeySP } from "@/lib/agenda/timezone";
 
 /** Valor mensal equivalente de um plano (para a receita recorrente). */
 export function monthlyEquivalentCents(priceCents: number, cycle: PlanCycle): number {
@@ -157,4 +159,70 @@ export async function listPlansWithSubscribers(db: Db, actor: Actor, now: Date =
     ...p,
     subscribers: active.filter((a) => a.planId === p.id && isSubscriptionCurrent(a, now)).length,
   }));
+}
+
+type HistorySnapshot = Pick<
+  typeof subscriptions.$inferSelect,
+  "status" | "startedAt" | "currentPeriodStart" | "currentPeriodEnd" | "paymentMethod" | "cancelAtPeriodEnd" | "updatedAt"
+>;
+
+/**
+ * Dava acesso no instante `at`? Começa no 1º pagamento (`startedAt`).
+ * Vigentes (ativa/pendente) seguem a mesma regra da tela (`isSubscriptionCurrent`,
+ * com carência): `currentPeriodEnd` é o fim do último ciclo pago, então cobre
+ * todo o passado desde o início. Encerradas (cancelada/expirada) valeram até o
+ * fim do período + carência, limitadas a quando foram encerradas — `updatedAt`
+ * (cancelamento imediato/estorno, troca por nova assinatura); `cancelledAt` não
+ * serve aqui porque no "cancelar no fim do ciclo" ele marca o pedido, não o fim.
+ */
+export function wasSubscriptionActiveAt(sub: HistorySnapshot, at: Date): boolean {
+  const start = sub.startedAt ?? sub.currentPeriodStart;
+  if (!start || at < start || !sub.currentPeriodEnd) return false;
+  if (sub.status === "active" || sub.status === "past_due") return isSubscriptionCurrent(sub, at);
+  if (sub.status === "cancelled" || sub.status === "expired") {
+    return at < sub.updatedAt && at < graceEndOf(sub.currentPeriodEnd);
+  }
+  return false;
+}
+
+const addMonths = (year: number, month: number, delta: number) => {
+  const total = year * 12 + (month - 1) + delta;
+  return { year: Math.floor(total / 12), month: (total % 12) + 1 };
+};
+const monthKeyOf = (m: { year: number; month: number }) => `${m.year}-${String(m.month).padStart(2, "0")}`;
+
+/**
+ * Assinantes ativos no fim de cada mês (fuso de SP), dos últimos `months`
+ * meses; o mês atual é contado agora. Clientes distintos.
+ */
+export async function getActiveSubscribersByMonth(
+  db: Db,
+  actor: Actor,
+  opts: { months?: number; now?: Date } = {},
+): Promise<{ monthKey: string; count: number }[]> {
+  assertAdmin(actor);
+  const now = opts.now ?? new Date();
+  const months = opts.months ?? 6;
+  const [year, month] = todayDateKeySP(now).split("-").map(Number);
+  const rows = await db
+    .select({
+      userId: subscriptions.userId,
+      status: subscriptions.status,
+      startedAt: subscriptions.startedAt,
+      currentPeriodStart: subscriptions.currentPeriodStart,
+      currentPeriodEnd: subscriptions.currentPeriodEnd,
+      paymentMethod: subscriptions.paymentMethod,
+      cancelAtPeriodEnd: subscriptions.cancelAtPeriodEnd,
+      updatedAt: subscriptions.updatedAt,
+    })
+    .from(subscriptions)
+    .where(inArray(subscriptions.status, ["active", "past_due", "cancelled", "expired"]));
+
+  return Array.from({ length: months }, (_, i) => {
+    const m = addMonths(year, month, i - (months - 1));
+    const at =
+      i === months - 1 ? now : new Date(new Date(spDayBounds(`${monthKeyOf(addMonths(m.year, m.month, 1))}-01`).start).getTime() - 1);
+    const users = new Set(rows.filter((r) => wasSubscriptionActiveAt(r, at)).map((r) => r.userId));
+    return { monthKey: monthKeyOf(m), count: users.size };
+  });
 }
