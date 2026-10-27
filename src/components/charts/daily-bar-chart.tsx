@@ -24,7 +24,7 @@ const compactBRL = (cents: number) => {
 export function DailyBarChart({ data, label }: { data: DailyPoint[]; label: string }) {
   return (
     <figure className="flex flex-col gap-2" aria-label={label}>
-      <div className="h-44 w-full">
+      <div className="h-44 w-full [&_.recharts-surface]:outline-none [&_.recharts-wrapper]:outline-none">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -12 }} barCategoryGap="20%">
             <CartesianGrid vertical={false} stroke="var(--hairline)" strokeWidth={1} />
