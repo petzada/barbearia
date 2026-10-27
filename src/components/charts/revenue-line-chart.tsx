@@ -101,7 +101,7 @@ export function RevenueLineChart({ data, label }: { data: RevenueLinePoint[]; la
             {SERIES.map((s) => (
               <Line
                 key={s.key}
-                type="monotone"
+                type="linear"
                 dataKey={s.key}
                 name={s.label}
                 stroke={s.color}
