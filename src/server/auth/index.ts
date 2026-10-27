@@ -21,8 +21,11 @@ export type CurrentUser = typeof user.$inferSelect;
 
 /** Usuário logado lido do banco (flags de papel sempre atualizadas). */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  // headers() antes de tocar no D1: no `next build` a rota vira dinâmica aqui, sem subir um
+  // Miniflare por worker de pré-renderização (eles disputavam o SQLite local: SQLITE_BUSY).
+  const requestHeaders = await headers();
   const auth = await getAuth();
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await auth.api.getSession({ headers: requestHeaders });
   if (!session) return null;
   const db = await getDb();
   return (await db.query.user.findFirst({ where: eq(user.id, session.user.id) })) ?? null;
