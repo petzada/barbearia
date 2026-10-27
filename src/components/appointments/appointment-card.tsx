@@ -36,18 +36,21 @@ export function AppointmentCard({
           <span className="tabular text-lg font-extrabold leading-tight">{formatSlotTime(entry.startsAt)}</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className={cn("font-bold", featured ? "text-lg" : "text-base")}>{entry.serviceName ?? "Serviço"}</p>
+          <p className={cn("line-clamp-2 font-bold", featured ? "text-lg" : "text-base")}>{entry.serviceName ?? "Serviço"}</p>
           <p className="text-sm text-ink-subtle">
             {entry.barberName} · {formatDayLabel(entry.startsAt)}
           </p>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            <StatusBadge status={entry.status} />
-            {showPayment && <PaymentBadge method={entry.paymentMethod} status={entry.paymentStatus} />}
+          <div className="mt-1 flex flex-wrap items-end justify-between gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
+              <StatusBadge status={entry.status} />
+              {showPayment && <PaymentBadge method={entry.paymentMethod} status={entry.paymentStatus} />}
+            </div>
+            {/* Preço embaixo dos badges: nomes longos de serviço ficam com a largura inteira. */}
+            {entry.priceCents != null && (
+              <span className="tabular ml-auto shrink-0 text-base font-bold">{formatPriceCents(entry.priceCents)}</span>
+            )}
           </div>
         </div>
-        {entry.priceCents != null && (
-          <span className="tabular shrink-0 text-base font-bold">{formatPriceCents(entry.priceCents)}</span>
-        )}
       </div>
       {footer}
     </article>

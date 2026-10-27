@@ -13,7 +13,8 @@ import type { TimelineEntry } from "./agenda-day-timeline";
 import { EntrySheet } from "./entry-sheet";
 
 const HOUR_PX = 96;
-const MIN_CARD_PX = 60;
+/** Três linhas (horário, cliente, serviço) cabem mesmo num encaixe de 15 min. */
+const MIN_CARD_PX = 72;
 const TICK_MS = 30_000;
 
 /**
@@ -121,9 +122,11 @@ export function TodayTimeline({
                   )}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="tabular text-sm font-extrabold">{formatTimeRange(entry.starts_at, entry.ends_at)}</span>
+                    <span className="tabular shrink-0 whitespace-nowrap text-sm font-extrabold">
+                      {formatTimeRange(entry.starts_at, entry.ends_at)}
+                    </span>
                     {late ? (
-                      <span className="text-xs font-bold text-warning-ink">Aguardando conclusão</span>
+                      <span className="truncate text-xs font-bold text-warning-ink">Aguardando conclusão</span>
                     ) : started ? (
                       <span className="text-xs font-bold text-cta-ink">Agora</span>
                     ) : null}

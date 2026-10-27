@@ -78,7 +78,7 @@ export function BottomSheet({
                 <div className="mx-auto h-1.5 w-10 rounded-full bg-hairline-strong" aria-hidden />
                 <div className="mt-3 flex items-start gap-3">
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <Drawer.Title className="text-xl font-extrabold tracking-tight">{title}</Drawer.Title>
+                    <Drawer.Title className="line-clamp-3 text-xl font-extrabold tracking-tight">{title}</Drawer.Title>
                     {description != null && (
                       <Drawer.Description className="text-sm text-ink-subtle">{description}</Drawer.Description>
                     )}

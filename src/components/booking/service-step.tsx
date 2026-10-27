@@ -43,7 +43,7 @@ export function ServiceStep({
                   <Icon className="size-5" aria-hidden />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-base font-bold">{s.name}</span>
+                  <span className="line-clamp-2 text-base font-bold">{s.name}</span>
                   {s.description && <span className="line-clamp-1 text-sm text-ink-subtle">{s.description}</span>}
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink-subtle">
                     <Clock className="size-3.5" aria-hidden />

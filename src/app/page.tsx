@@ -94,7 +94,7 @@ export default async function LandingPage() {
                     <Icon className="size-5" aria-hidden />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold">{s.name}</p>
+                    <p className="line-clamp-2 font-bold">{s.name}</p>
                     {s.description && <p className="line-clamp-1 text-sm text-ink-subtle">{s.description}</p>}
                     <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-ink-subtle">
                       <Clock className="size-3.5" aria-hidden />

@@ -71,9 +71,9 @@ export function AgendaView({
               key={c.barber.id}
               href={hrefFor(dateKey, c.barber.id)}
               aria-current={selectedBarberId === c.barber.id ? "true" : undefined}
-              className={cn("shrink-0 px-4", chipClass)}
+              className={cn("max-w-[60vw] shrink-0 px-4", chipClass)}
             >
-              {c.barber.name}
+              <span className="truncate">{c.barber.name}</span>
             </Link>
           ))}
         </div>
