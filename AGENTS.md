@@ -20,8 +20,10 @@ Produção é o Worker `barbearia-do-moura`. A `main` é o que está em produç�
   (vitest nos testes ligados ao diff). Não aumente o pre-push. Nada de banco local, Docker local ou `wrangler dev` com dados reais.
 - **CI (GitHub Actions, `.github/workflows/ci.yml`):** lint, typecheck, testes e build completos,
   em todo PR e em push na `main`. Repositório público: minutos sem custo.
-- **Deploy:** `npm run deploy` (OpenNext → Workers) só pelo responsável, nunca por agente. Migrations
-  do D1 (`npm run db:migrate:remote`) também são ação do responsável.
+- **Deploy:** automático pelo Workers Builds da Cloudflare a cada push na `main` (ou seja, a cada
+  merge, que é do responsável). `npm run deploy` (OpenNext → Workers) manual só pelo responsável,
+  nunca por agente. Migrations do D1 (`npm run db:migrate:remote`) também são ação do responsável
+  e devem ir antes do merge que depende delas.
 
 ## Fluxo de git — obrigatório
 

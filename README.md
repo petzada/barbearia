@@ -110,7 +110,9 @@ npm run dev          # http://localhost:3000
 
 ## Publicação
 
-O deploy é feito pelo responsável pelo projeto, nunca por automação de agentes:
+O Worker é publicado pelo Workers Builds da Cloudflare a cada push na `main` (build
+`npx opennextjs-cloudflare build`, deploy `npx opennextjs-cloudflare deploy`). Migrations,
+segredos e o deploy manual, quando preciso, ficam com o responsável pelo projeto:
 
 ```bash
 npm run db:migrate:remote                # aplica as migrations no D1 de produção
