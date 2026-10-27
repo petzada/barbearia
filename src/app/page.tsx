@@ -178,18 +178,18 @@ export default async function LandingPage() {
 
       <footer
         id="landing-footer"
-        className="relative z-10 border-t border-hairline bg-card px-5 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]"
+        className="relative z-10 bg-black px-5 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))] text-white"
       >
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 text-center text-sm text-ink-subtle">
-          <BrandMark className="h-12" />
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-3 text-center text-sm">
+          <BrandMark inverted className="h-12 drop-shadow-none" />
           <p>
             © {new Date().getFullYear()} {settings.shopName}
           </p>
           <nav className="flex justify-center gap-4 font-semibold">
-            <Link href="/termos" className="inline-flex min-h-11 items-center hover:text-ink">
+            <Link href="/termos" className="inline-flex min-h-11 items-center hover:text-white/80">
               Termos de uso
             </Link>
-            <Link href="/privacidade" className="inline-flex min-h-11 items-center hover:text-ink">
+            <Link href="/privacidade" className="inline-flex min-h-11 items-center hover:text-white/80">
               Privacidade
             </Link>
           </nav>
@@ -198,7 +198,7 @@ export default async function LandingPage() {
               href={`https://instagram.com/${settings.instagram}`}
               target="_blank"
               rel="noreferrer"
-              className="mt-5 flex flex-col items-center gap-2 rounded-lg bg-black px-6 py-4 font-semibold text-white"
+              className="mt-5 flex flex-col items-center gap-2 font-semibold"
             >
               <InstagramIcon className="size-9" />@{settings.instagram}
             </a>
