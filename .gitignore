@@ -20,3 +20,6 @@ coverage
 .railway/
 .DS_Store
 *.log
+
+# mensagens de desenvolvimento (códigos de login do provedor falso)
+.dev/

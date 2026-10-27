@@ -27,9 +27,10 @@
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:reset": "tsx scripts/db-reset.ts",
     "db:seed": "tsx scripts/db-seed.ts",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:start",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:start && pnpm check:bundle",
     "check:start": "node scripts/check-start.mjs",
-    "env:check": "tsx scripts/env-check.ts"
+    "env:check": "tsx scripts/env-check.ts",
+    "check:bundle": "node scripts/check-bundle.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -62,6 +63,7 @@
   "dependencies": {
     "@tanstack/react-router": "1.170.44",
     "@tanstack/react-start": "1.169.1",
+    "better-auth": "1.7.7",
     "drizzle-orm": "0.45.4",
     "luxon": "3.7.2",
     "pg": "8.23.1",

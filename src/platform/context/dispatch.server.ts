@@ -2,10 +2,12 @@
 import { getRequest } from '@tanstack/react-start/server'
 import type { JsonValue } from '~/contracts/json'
 import type { Result } from '~/contracts/result'
+import { assertAllowedOrigin } from '../auth/origin'
 import { getDeployBarbearia } from '../db/deploy-barbearia'
 import { SystemErrors } from '../errors/generic'
 import { errorToResult } from '../errors/to-result'
 import { logger } from '../logging'
+import { loadEnv } from '../validation/env'
 import { systemClock } from '../time/clock'
 import { loadOperationModules } from './load-operations.server'
 import { correlationIdFromHeader } from './request-context'
@@ -43,4 +45,24 @@ export async function dispatchOperation(
     logger.error({ correlationId, operation: name, err: error }, 'falha ao despachar operação')
     return errorToResult(error, correlationId)
   }
+}
+
+/**
+ * Entrada do navegador (a server function única chama ISTO, não `dispatchOperation`): antes de qualquer
+ * operação, confere a origem da requisição (CSRF, PRD §7.8/D0015). Origem estranha → `AUTH.ORIGIN_INVALID`
+ * sem tocar em sessão, validação nem handler.
+ */
+export function dispatchBrowserOperation(
+  name: string,
+  rawInput: unknown,
+  request: Request = getRequest(),
+): Promise<Result<JsonValue>> {
+  const correlationId = correlationIdFromHeader(request.headers.get('x-correlation-id'))
+  try {
+    assertAllowedOrigin(request, { appUrl: loadEnv().APP_URL })
+  } catch (error) {
+    logger.warn({ correlationId, operation: name }, 'requisição com origem não permitida')
+    return Promise.resolve(errorToResult(error, correlationId))
+  }
+  return dispatchOperation(name, rawInput, request)
 }

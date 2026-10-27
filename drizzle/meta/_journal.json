@@ -8,6 +8,13 @@
       "when": 1791933017520,
       "tag": "0000_t02_plataforma_base",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791943644846,
+      "tag": "0001_t04_identidade",
+      "breakpoints": true
     }
   ]
 }

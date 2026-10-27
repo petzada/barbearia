@@ -10,33 +10,89 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as publicoEntrarIndexRouteImport } from './routes/(publico)/entrar/index'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AdminEquipePapeisIndexRouteImport } from './routes/admin/equipe/papeis/index'
+import { Route as AppPerfilNumeroIndexRouteImport } from './routes/app/perfil/numero/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const publicoEntrarIndexRoute = publicoEntrarIndexRouteImport.update({
+  id: '/(publico)/entrar/',
+  path: '/entrar/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEquipePapeisIndexRoute = AdminEquipePapeisIndexRouteImport.update({
+  id: '/admin/equipe/papeis/',
+  path: '/admin/equipe/papeis/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppPerfilNumeroIndexRoute = AppPerfilNumeroIndexRouteImport.update({
+  id: '/app/perfil/numero/',
+  path: '/app/perfil/numero/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/entrar/': typeof publicoEntrarIndexRoute
+  '/admin/equipe/papeis/': typeof AdminEquipePapeisIndexRoute
+  '/app/perfil/numero/': typeof AppPerfilNumeroIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/entrar': typeof publicoEntrarIndexRoute
+  '/admin/equipe/papeis': typeof AdminEquipePapeisIndexRoute
+  '/app/perfil/numero': typeof AppPerfilNumeroIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/(publico)/entrar/': typeof publicoEntrarIndexRoute
+  '/admin/equipe/papeis/': typeof AdminEquipePapeisIndexRoute
+  '/app/perfil/numero/': typeof AppPerfilNumeroIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/auth/$'
+    | '/entrar/'
+    | '/admin/equipe/papeis/'
+    | '/app/perfil/numero/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/auth/$'
+    | '/entrar'
+    | '/admin/equipe/papeis'
+    | '/app/perfil/numero'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/auth/$'
+    | '/(publico)/entrar/'
+    | '/admin/equipe/papeis/'
+    | '/app/perfil/numero/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  publicoEntrarIndexRoute: typeof publicoEntrarIndexRoute
+  AdminEquipePapeisIndexRoute: typeof AdminEquipePapeisIndexRoute
+  AppPerfilNumeroIndexRoute: typeof AppPerfilNumeroIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +104,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(publico)/entrar/': {
+      id: '/(publico)/entrar/'
+      path: '/entrar'
+      fullPath: '/entrar/'
+      preLoaderRoute: typeof publicoEntrarIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/equipe/papeis/': {
+      id: '/admin/equipe/papeis/'
+      path: '/admin/equipe/papeis'
+      fullPath: '/admin/equipe/papeis/'
+      preLoaderRoute: typeof AdminEquipePapeisIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/perfil/numero/': {
+      id: '/app/perfil/numero/'
+      path: '/app/perfil/numero'
+      fullPath: '/app/perfil/numero/'
+      preLoaderRoute: typeof AppPerfilNumeroIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  publicoEntrarIndexRoute: publicoEntrarIndexRoute,
+  AdminEquipePapeisIndexRoute: AdminEquipePapeisIndexRoute,
+  AppPerfilNumeroIndexRoute: AppPerfilNumeroIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

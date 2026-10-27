@@ -3,3 +3,4 @@
 export * from './barbearias'
 export * from '../../audit/schema'
 export * from '../../idempotency/schema'
+export * from '../../../modules/identity/schema'

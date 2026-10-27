@@ -17,6 +17,6 @@ export const executeOperationFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data }) => {
-    const { dispatchOperation } = await import('./dispatch.server')
-    return dispatchOperation(data.operation, data.input)
+    const { dispatchBrowserOperation } = await import('./dispatch.server')
+    return dispatchBrowserOperation(data.operation, data.input)
   })
