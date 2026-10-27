@@ -30,7 +30,7 @@ const entry = (id: string, start: string, end: string) => ({
 });
 
 describe("TodayList", () => {
-  it("uma linha por pendente, em ordem, com agora e aguardando conclusão", () => {
+  it("uma linha por pendente, em ordem, com início/fim, agora e aguardando conclusão", () => {
     render(
       <TodayList
         entries={[entry("c", "18:00", "18:15"), entry("a", "09:00", "09:30"), entry("b", "13:00", "13:30")]}
@@ -39,22 +39,16 @@ describe("TodayList", () => {
       />,
     );
     const items = within(screen.getByRole("list")).getAllByRole("listitem");
-    // a (passado) · b (agora) · marcador · c (próximo)
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(3);
     expect(items[0]).toHaveTextContent("Cliente a");
     expect(items[0]).toHaveTextContent("Aguardando conclusão");
     expect(items[1]).toHaveTextContent("Cliente b");
     expect(items[1]).toHaveTextContent("Agora");
-    expect(within(items[2]).getByRole("status", { name: "Agora, 13:05" })).toBeInTheDocument();
-    expect(items[3]).toHaveTextContent("18:00 – 18:15");
-    expect(items[3]).toHaveTextContent("Cliente c");
-  });
-
-  it("marcador do agora no topo quando todos ainda vão começar", () => {
-    render(<TodayList entries={[entry("a", "17:30", "18:00")]} isClosed={false} initialNow={new Date(at("10:00")).getTime()} />);
-    const items = within(screen.getByRole("list")).getAllByRole("listitem");
-    expect(within(items[0]).getByRole("status", { name: "Agora, 10:00" })).toBeInTheDocument();
-    expect(items[1]).toHaveTextContent("Cliente a");
+    expect(within(items[2]).getByText("18:00")).toBeInTheDocument();
+    expect(within(items[2]).getByText("18:15")).toBeInTheDocument();
+    expect(items[2]).toHaveTextContent("Cliente c");
+    expect(items[2]).not.toHaveTextContent("Agora");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("sem pendentes mostra o estado vazio", () => {
