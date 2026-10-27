@@ -10,33 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiWebhooksWhatsmiauRouteImport } from './routes/api/webhooks/whatsmiau'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksWhatsmiauRoute = ApiWebhooksWhatsmiauRouteImport.update({
+  id: '/api/webhooks/whatsmiau',
+  path: '/api/webhooks/whatsmiau',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/webhooks/whatsmiau': typeof ApiWebhooksWhatsmiauRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/webhooks/whatsmiau': typeof ApiWebhooksWhatsmiauRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/webhooks/whatsmiau': typeof ApiWebhooksWhatsmiauRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/webhooks/whatsmiau'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/webhooks/whatsmiau'
+  id: '__root__' | '/' | '/api/webhooks/whatsmiau'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiWebhooksWhatsmiauRoute: typeof ApiWebhooksWhatsmiauRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +58,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/whatsmiau': {
+      id: '/api/webhooks/whatsmiau'
+      path: '/api/webhooks/whatsmiau'
+      fullPath: '/api/webhooks/whatsmiau'
+      preLoaderRoute: typeof ApiWebhooksWhatsmiauRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiWebhooksWhatsmiauRoute: ApiWebhooksWhatsmiauRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

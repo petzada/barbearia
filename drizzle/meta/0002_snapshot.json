@@ -1,0 +1,1319 @@
+{
+  "id": "99b61c9a-c001-44cb-8ee1-5d1a01324043",
+  "prevId": "23db9cd1-1749-4be6-a040-64c6f5a83739",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.barbearias": {
+      "name": "barbearias",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fuso": {
+          "name": "fuso",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'America/Sao_Paulo'"
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "barbearias_slug_uidx": {
+          "name": "barbearias_slug_uidx",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "barbearias_slug_formato": {
+          "name": "barbearias_slug_formato",
+          "value": "\"barbearias\".\"slug\" ~ '^[a-z0-9]+(-[a-z0-9]+)*$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.auditoria": {
+      "name": "auditoria",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ocorrida_em": {
+          "name": "ocorrida_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ator_id": {
+          "name": "ator_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ator_papeis": {
+          "name": "ator_papeis",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "acao": {
+          "name": "acao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recurso_tipo": {
+          "name": "recurso_tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recurso_id": {
+          "name": "recurso_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "antes": {
+          "name": "antes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "depois": {
+          "name": "depois",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motivo": {
+          "name": "motivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correlation_id": {
+          "name": "correlation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "auditoria_recurso_idx": {
+          "name": "auditoria_recurso_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recurso_tipo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recurso_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ocorrida_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auditoria_ocorrida_idx": {
+          "name": "auditoria_ocorrida_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ocorrida_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auditoria_correlation_idx": {
+          "name": "auditoria_correlation_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "correlation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "auditoria_barbearia_id_barbearias_id_fk": {
+          "name": "auditoria_barbearia_id_barbearias_id_fk",
+          "tableFrom": "auditoria",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.chaves_idempotencia": {
+      "name": "chaves_idempotencia",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ator_id": {
+          "name": "ator_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operacao": {
+          "name": "operacao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chave": {
+          "name": "chave",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash_payload": {
+          "name": "hash_payload",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resultado": {
+          "name": "resultado",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "chaves_idempotencia_escopo_uidx": {
+          "name": "chaves_idempotencia_escopo_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ator_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "operacao",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "chave",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "chaves_idempotencia_barbearia_id_barbearias_id_fk": {
+          "name": "chaves_idempotencia_barbearia_id_barbearias_id_fk",
+          "tableFrom": "chaves_idempotencia",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chaves_idempotencia_hash_sha256": {
+          "name": "chaves_idempotencia_hash_sha256",
+          "value": "\"chaves_idempotencia\".\"hash_payload\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.outbox": {
+      "name": "outbox",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "versao": {
+          "name": "versao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "agregado_id": {
+          "name": "agregado_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revisao_agregado": {
+          "name": "revisao_agregado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ocorrido_em": {
+          "name": "ocorrido_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "correlation_id": {
+          "name": "correlation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pendente'"
+        },
+        "tentativas": {
+          "name": "tentativas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "proxima_tentativa_em": {
+          "name": "proxima_tentativa_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ultimo_erro": {
+          "name": "ultimo_erro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "processado_em": {
+          "name": "processado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "outbox_pendentes_idx": {
+          "name": "outbox_pendentes_idx",
+          "columns": [
+            {
+              "expression": "proxima_tentativa_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"outbox\".\"estado\" = 'pendente'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "outbox_agregado_idx": {
+          "name": "outbox_agregado_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "agregado_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "outbox_barbearia_id_barbearias_id_fk": {
+          "name": "outbox_barbearia_id_barbearias_id_fk",
+          "tableFrom": "outbox",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "outbox_estado_valido": {
+          "name": "outbox_estado_valido",
+          "value": "\"outbox\".\"estado\" in ('pendente', 'processado', 'falhou')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.outbox_entregas": {
+      "name": "outbox_entregas",
+      "schema": "",
+      "columns": {
+        "handler": {
+          "name": "handler",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evento_id": {
+          "name": "evento_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entregue_em": {
+          "name": "entregue_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "outbox_entregas_evento_id_outbox_id_fk": {
+          "name": "outbox_entregas_evento_id_outbox_id_fk",
+          "tableFrom": "outbox_entregas",
+          "tableTo": "outbox",
+          "columnsFrom": [
+            "evento_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "outbox_entregas_barbearia_id_barbearias_id_fk": {
+          "name": "outbox_entregas_barbearia_id_barbearias_id_fk",
+          "tableFrom": "outbox_entregas",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "outbox_entregas_handler_evento_id_pk": {
+          "name": "outbox_entregas_handler_evento_id_pk",
+          "columns": [
+            "handler",
+            "evento_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.inbox_provedor": {
+      "name": "inbox_provedor",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provedor": {
+          "name": "provedor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conta": {
+          "name": "conta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ambiente": {
+          "name": "ambiente",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evento_externo_id": {
+          "name": "evento_externo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash_corpo": {
+          "name": "hash_corpo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cabecalhos": {
+          "name": "cabecalhos",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "corpo": {
+          "name": "corpo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recebido_em": {
+          "name": "recebido_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'recebido'"
+        },
+        "tentativas": {
+          "name": "tentativas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "ultimo_erro": {
+          "name": "ultimo_erro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "processado_em": {
+          "name": "processado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reprocessamentos": {
+          "name": "reprocessamentos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "inbox_provedor_evento_uidx": {
+          "name": "inbox_provedor_evento_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provedor",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "conta",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ambiente",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "evento_externo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "inbox_provedor_estado_idx": {
+          "name": "inbox_provedor_estado_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "estado",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recebido_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "inbox_provedor_barbearia_id_barbearias_id_fk": {
+          "name": "inbox_provedor_barbearia_id_barbearias_id_fk",
+          "tableFrom": "inbox_provedor",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "inbox_provedor_hash_sha256": {
+          "name": "inbox_provedor_hash_sha256",
+          "value": "\"inbox_provedor\".\"hash_corpo\" ~ '^[0-9a-f]{64}$'"
+        },
+        "inbox_provedor_estado_valido": {
+          "name": "inbox_provedor_estado_valido",
+          "value": "\"inbox_provedor\".\"estado\" in ('recebido', 'processando', 'processado', 'falhou')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.operacoes_externas": {
+      "name": "operacoes_externas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizado_em": {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revisao": {
+          "name": "revisao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chave_idempotente": {
+          "name": "chave_idempotente",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "alvo": {
+          "name": "alvo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pendente'"
+        },
+        "tentativas": {
+          "name": "tentativas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "reconciliacoes": {
+          "name": "reconciliacoes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "ultimo_erro": {
+          "name": "ultimo_erro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "entrada": {
+          "name": "entrada",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resultado": {
+          "name": "resultado",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "iniciada_em": {
+          "name": "iniciada_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "operacoes_externas_chave_uidx": {
+          "name": "operacoes_externas_chave_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tipo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "chave_idempotente",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "operacoes_externas_estado_idx": {
+          "name": "operacoes_externas_estado_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "estado",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "operacoes_externas_barbearia_id_barbearias_id_fk": {
+          "name": "operacoes_externas_barbearia_id_barbearias_id_fk",
+          "tableFrom": "operacoes_externas",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "operacoes_externas_estado_valido": {
+          "name": "operacoes_externas_estado_valido",
+          "value": "\"operacoes_externas\".\"estado\" in ('pendente', 'em_andamento', 'confirmada', 'incerta', 'falhou')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.estado_recuperacao": {
+      "name": "estado_recuperacao",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizado_em": {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revisao": {
+          "name": "revisao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "ativo": {
+          "name": "ativo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "ponto_restaurado": {
+          "name": "ponto_restaurado",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ativado_por": {
+          "name": "ativado_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motivo": {
+          "name": "motivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ativado_em": {
+          "name": "ativado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "estado_recuperacao_barbearia_uidx": {
+          "name": "estado_recuperacao_barbearia_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "estado_recuperacao_barbearia_id_barbearias_id_fk": {
+          "name": "estado_recuperacao_barbearia_id_barbearias_id_fk",
+          "tableFrom": "estado_recuperacao",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.entregas": {
+      "name": "entregas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canal": {
+          "name": "canal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instancia": {
+          "name": "instancia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "destinatario_mascarado": {
+          "name": "destinatario_mascarado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "telefone_hash": {
+          "name": "telefone_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "template": {
+          "name": "template",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chave_idempotente": {
+          "name": "chave_idempotente",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash_payload": {
+          "name": "hash_payload",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pendente'"
+        },
+        "tentativas": {
+          "name": "tentativas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "id_externo": {
+          "name": "id_externo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ultimo_erro": {
+          "name": "ultimo_erro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizado_em": {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "entregas_chave_uidx": {
+          "name": "entregas_chave_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "chave_idempotente",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "entregas_id_externo_uidx": {
+          "name": "entregas_id_externo_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "instancia",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id_externo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"entregas\".\"id_externo\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "entregas_estado_idx": {
+          "name": "entregas_estado_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "estado",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "criado_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "entregas_barbearia_id_barbearias_id_fk": {
+          "name": "entregas_barbearia_id_barbearias_id_fk",
+          "tableFrom": "entregas",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "entregas_canal_valido": {
+          "name": "entregas_canal_valido",
+          "value": "\"entregas\".\"canal\" in ('otp', 'avisos')"
+        },
+        "entregas_estado_valido": {
+          "name": "entregas_estado_valido",
+          "value": "\"entregas\".\"estado\" in ('pendente', 'enviado', 'falhou', 'confirmado')"
+        },
+        "entregas_tentativas_nao_negativas": {
+          "name": "entregas_tentativas_nao_negativas",
+          "value": "\"entregas\".\"tentativas\" >= 0"
+        },
+        "entregas_hash_sha256": {
+          "name": "entregas_hash_sha256",
+          "value": "\"entregas\".\"telefone_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "entregas_payload_hash_sha256": {
+          "name": "entregas_payload_hash_sha256",
+          "value": "\"entregas\".\"hash_payload\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

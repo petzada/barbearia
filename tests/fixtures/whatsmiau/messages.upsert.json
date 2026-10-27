@@ -1,0 +1,16 @@
+{
+  "event": "messages.upsert",
+  "instance": "FixtureInbox",
+  "date_time": "2026-03-30T14:33:00Z",
+  "data": {
+    "key": {
+      "remoteJid": "5511999990000@s.whatsapp.net",
+      "id": "fixture-inbound-001",
+      "fromMe": false
+    },
+    "message": {
+      "conversation": "SAIR"
+    },
+    "messageTimestamp": 1774881180
+  }
+}

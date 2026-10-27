@@ -1,0 +1,13 @@
+{
+  "event": "messages.update",
+  "instance": "FixtureInbox",
+  "date_time": "2026-03-30T14:45:00Z",
+  "data": {
+    "messageId": "fixture-sent-001",
+    "keyId": "fixture-sent-001",
+    "remoteJid": "5511999990000@s.whatsapp.net",
+    "fromMe": true,
+    "status": "READ",
+    "instanceId": "FixtureInbox"
+  }
+}

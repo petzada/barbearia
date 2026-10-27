@@ -15,6 +15,13 @@
       "when": 1791937006571,
       "tag": "0001_t03_durabilidade",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791943478385,
+      "tag": "0002_txx_whatsmiau_entregas",
+      "breakpoints": true
     }
   ]
 }
