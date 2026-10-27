@@ -235,7 +235,34 @@ export function eventsOverlapInSP(
   return startA < endB && startB < endA;
 }
 
-/** Posiciona eventos em colunas quando horários se cruzam (evita sobreposição visual). */
+/** Caixas (em px) se cruzam? Bordas encostadas (fim == início) não contam. */
+export function boxesOverlapPx(a: TimelineLayoutItem, b: TimelineLayoutItem): boolean {
+  return a.topPx < b.topPx + b.heightPx && b.topPx < a.topPx + a.heightPx;
+}
+
+/**
+ * Distribui caixas já posicionadas em colunas para que nunca se sobreponham
+ * na tela. Compara as caixas em px (não os horários): um card com altura
+ * mínima maior que a duração do atendimento também avança sobre o seguinte.
+ * Espera a lista ordenada por topo.
+ */
+export function assignColumnsByBox<T extends TimelineLayoutItem>(
+  items: T[],
+): (T & { column: number; columnCount: number })[] {
+  const placed: (T & { column: number })[] = [];
+  for (const item of items) {
+    const used = new Set(placed.filter((p) => boxesOverlapPx(item, p)).map((p) => p.column));
+    let column = 0;
+    while (used.has(column)) column++;
+    placed.push({ ...item, column });
+  }
+  return placed.map((p) => {
+    const cluster = placed.filter((other) => boxesOverlapPx(p, other));
+    return { ...p, columnCount: Math.max(1, ...cluster.map((c) => c.column + 1)) };
+  });
+}
+
+/** Posiciona eventos em colunas quando os cards se cruzam na tela (evita sobreposição visual). */
 export function layoutTimelineEntriesWithColumns(
   entries: { id: string; starts_at: string; ends_at: string }[],
   rows: TimelineRow[],
@@ -243,51 +270,14 @@ export function layoutTimelineEntriesWithColumns(
   const sorted = [...entries].sort(
     (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
   );
-
-  type Placed = {
-    id: string;
-    starts_at: string;
-    ends_at: string;
-    topPx: number;
-    heightPx: number;
-    column: number;
-  };
-
-  const placed: Placed[] = [];
-
-  for (const e of sorted) {
-    const { topPx, heightPx } = layoutEntry({
-      startsAt: e.starts_at,
-      rows,
-    });
-
-    const overlapping = placed.filter((p) => eventsOverlapInSP(e, p));
-    const usedColumns = new Set(overlapping.map((p) => p.column));
-
-    let column = 0;
-    while (usedColumns.has(column)) column++;
-
-    placed.push({
-      id: e.id,
-      starts_at: e.starts_at,
-      ends_at: e.ends_at,
-      topPx,
-      heightPx,
-      column,
-    });
-  }
-
-  return placed.map((p) => {
-    const cluster = placed.filter((other) => eventsOverlapInSP(p, other));
-    const columnCount = Math.max(1, ...cluster.map((c) => c.column + 1));
-    return {
-      id: p.id,
-      topPx: p.topPx,
-      heightPx: p.heightPx,
-      column: p.column,
-      columnCount,
-    };
-  });
+  const boxes = sorted.map((e) => ({ id: e.id, ...layoutEntry({ startsAt: e.starts_at, rows }) }));
+  return assignColumnsByBox(boxes).map(({ id, topPx, heightPx, column, columnCount }) => ({
+    id,
+    topPx,
+    heightPx,
+    column,
+    columnCount,
+  }));
 }
 
 export function formatAgendaDayHeader(dateKey: string, locale = "pt-BR"): string {
