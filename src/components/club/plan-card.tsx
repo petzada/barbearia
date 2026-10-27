@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CalendarCheck, Check, Sparkles } from "lucide-react";
+import { CalendarCheck, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { CYCLE_LABELS, planRulesSummary, type PlanCycle } from "@/lib/plans";
@@ -27,15 +27,21 @@ export function PlanCard({ plan, footer, header }: { plan: PlanCardData; footer?
     allowedWeekdays: plan.allowedWeekdays ?? [],
     cycle: plan.cycle,
   });
+  // Tudo o que o plano inclui, em bullets: serviços cobertos e depois os benefícios.
+  const included = [...new Set([...(plan.coveredServiceNames ?? []), ...plan.benefits])];
   return (
-    <article className={cn("flex w-full flex-col gap-4 rounded-lg p-6 shadow-card", dark ? "bg-surface-dark text-on-dark ring-2 ring-cta" : "bg-card")}>
-      {header}
+    <article
+      className={cn(
+        "relative flex w-full flex-col gap-4 rounded-lg p-6 shadow-card",
+        dark ? "bg-surface-dark text-on-dark ring-2 ring-cta" : "bg-card",
+      )}
+    >
       {plan.highlighted && (
-        <Badge variant="brand">
-          <Sparkles aria-hidden />
+        <Badge variant="brand" className="absolute -top-3 left-1/2 -translate-x-1/2">
           Recomendado
         </Badge>
       )}
+      {header}
       <div>
         <h2 className="text-xl font-extrabold">{plan.name || "Nome do plano"}</h2>
         {plan.description && <p className={cn("text-sm", dark ? "text-on-dark/70" : "text-ink-subtle")}>{plan.description}</p>}
@@ -52,19 +58,12 @@ export function PlanCard({ plan, footer, header }: { plan: PlanCardData; footer?
           )}
         >
           <CalendarCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <span>
-            {rules}
-            {plan.coveredServiceNames && plan.coveredServiceNames.length > 0 && (
-              <span className={cn("block text-xs font-medium", dark ? "text-on-dark/70" : "text-ink-subtle")}>
-                Inclui: {plan.coveredServiceNames.join(", ")}
-              </span>
-            )}
-          </span>
+          {rules}
         </p>
       )}
-      {plan.benefits.length > 0 && (
+      {included.length > 0 && (
         <ul className="flex flex-col gap-2">
-          {plan.benefits.map((b) => (
+          {included.map((b) => (
             <li key={b} className="flex items-start gap-2 text-[15px]">
               <Check className={cn("mt-0.5 size-4 shrink-0", dark ? "text-cta-on-dark" : "text-cta-ink")} aria-hidden />
               {b}

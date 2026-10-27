@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useBusy, useIsBusy } from "./busy";
 
 /**
- * Película na cor da marca (#05384B, 20%) sobre o app inteiro, com o logo
+ * Película branca (20%) sobre o app inteiro (até atrás das barras do navegador), com o logo
  * centralizado "em ação", enquanto houver alguma espera. Aparece com um
  * pequeno atraso (CSS) para não piscar em respostas instantâneas.
  */
@@ -15,7 +15,7 @@ export function LoadingOverlay() {
     <div
       role="status"
       aria-live="polite"
-      className="loading-overlay fixed inset-0 z-[100] flex items-center justify-center bg-[#05384B]/20"
+      className="loading-overlay fixed inset-x-0 top-0 z-[100] flex h-lvh min-h-full items-center justify-center bg-white/20"
     >
       <Image
         src="/images/logo.webp"

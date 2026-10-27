@@ -13,7 +13,7 @@ export default async function LoginPage() {
   const env = await getServerEnv();
 
   return (
-    <main className="flex min-h-svh flex-col bg-background lg:flex-row">
+    <main data-page-bg="card" className="flex min-h-svh flex-col bg-card lg:flex-row">
       <div className="relative h-[40svh] min-h-64 shrink-0 overflow-hidden bg-surface-dark lg:h-auto lg:min-h-svh lg:flex-1">
         <Image
           src="/images/login.webp"
@@ -24,7 +24,7 @@ export default async function LoginPage() {
           className="object-cover object-top"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-scrim/40 via-transparent to-scrim/30" aria-hidden />
-        <div className="absolute left-5 top-[calc(1rem+env(safe-area-inset-top))]">
+        <div className="absolute inset-x-0 top-[calc(1rem+env(safe-area-inset-top))] flex justify-center">
           <BrandMark inverted />
         </div>
       </div>
