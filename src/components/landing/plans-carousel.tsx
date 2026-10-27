@@ -85,11 +85,11 @@ function SideArrow({ side, visible, onClick }: { side: "left" | "right"; visible
         tabIndex={visible ? 0 : -1}
         aria-label={side === "left" ? "Plano anterior" : "Próximo plano"}
         className={cn(
-          "flex size-10 items-center justify-center rounded-full bg-card text-ink shadow-card",
+          "flex size-10 items-center justify-center text-black",
           visible ? "pointer-events-auto" : "pointer-events-none",
         )}
       >
-        <Icon className="size-5" aria-hidden />
+        <Icon className="size-7" strokeWidth={2.5} aria-hidden />
       </button>
     </div>
   );
