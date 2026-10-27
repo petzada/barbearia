@@ -89,7 +89,9 @@ describe("painel financeiro", () => {
       averageRating: 4,
       ratingsCount: 1,
     });
-    expect(data.revenueByDay).toEqual([{ dateKey: DAY, servicesCents: 15500, subscriptionsCents: 9900 }]);
+    expect(data.revenueByDay).toEqual([
+      { dateKey: DAY, servicesCents: 15500, subscriptionsCents: 9900, onlineCents: 0, balcaoCents: 7500, commissionsCents: 3750 + 2250 + 1400 },
+    ]);
     expect(data.topServices[0]).toEqual({ name: "Corte + Barba", count: 1, revenueCents: 7500 });
     expect(data.byBarber.map((b) => [b.name, b.completed, b.commissionCents])).toEqual([
       ["Moura", 2, 6000],

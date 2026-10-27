@@ -17,6 +17,7 @@ import { PAYMENT_CHANNEL_LABELS, paymentMethodLabel } from "@/lib/payments";
 import { chipClass, staticRowClass } from "@/lib/ui/classes";
 import { resolvePeriod } from "@/lib/periods";
 import { cn, countLabel } from "@/lib/utils";
+import { RevenueLineChart } from "@/components/charts/revenue-line-chart";
 import { PayoutButton } from "./payout-button";
 
 export const metadata: Metadata = { title: "Financeiro" };
@@ -40,6 +41,7 @@ export default async function FinanceiroPage({
   const user = await requireAdminUser();
   const actor = toActor(user);
   const db = await getDb();
+  const dash = await getDashboard(db, actor, period);
   const qs = (extra: Record<string, string | undefined>) =>
     new URLSearchParams(Object.entries({ periodo: period.key, aba: tab, ...extra }).filter(([, v]) => v) as [string, string][]).toString();
 
@@ -70,9 +72,17 @@ export default async function FinanceiroPage({
           }))}
         />
 
-        {tab === "resumo" && <Resumo db={db} actor={actor} period={period} />}
+        {tab === "resumo" && <Resumo kpis={dash.kpis} />}
         {tab === "recebimentos" && <Recebimentos db={db} actor={actor} period={period} forma={forma} qs={qs} />}
         {tab === "comissoes" && <Comissoes db={db} actor={actor} period={period} />}
+
+        <section className="flex flex-col gap-3">
+          <SectionTitle>Faturamento e comissões por dia</SectionTitle>
+          <RevenueLineChart
+            data={dash.revenueByDay}
+            label="Linhas por dia: assinaturas, avulsos online e pagamentos na barbearia, e comissões"
+          />
+        </section>
       </PageBody>
     </main>
   );
@@ -89,8 +99,7 @@ function AgendaLink() {
 
 type Ctx = { db: Awaited<ReturnType<typeof getDb>>; actor: ReturnType<typeof toActor>; period: { from: string; to: string } };
 
-async function Resumo({ db, actor, period }: Ctx) {
-  const { kpis: k } = await getDashboard(db, actor, period);
+function Resumo({ kpis: k }: { kpis: Awaited<ReturnType<typeof getDashboard>>["kpis"] }) {
   const result = k.servicesRevenueCents + k.subscriptionRevenueCents - k.commissionsCents;
   const rows = [
     { label: "Faturamento de serviços", value: k.servicesRevenueCents, hint: countLabel(k.completedCount, "atendimento concluído", "atendimentos concluídos") },

@@ -53,7 +53,18 @@ export type DashboardData = {
     averageRating: number | null;
     ratingsCount: number;
   };
-  revenueByDay: { dateKey: string; servicesCents: number; subscriptionsCents: number }[];
+  /**
+   * Por dia (SP): serviços concluídos e comissões pela data do atendimento;
+   * clube, avulsos online e balcão pela data do pagamento.
+   */
+  revenueByDay: {
+    dateKey: string;
+    servicesCents: number;
+    subscriptionsCents: number;
+    onlineCents: number;
+    balcaoCents: number;
+    commissionsCents: number;
+  }[];
   topServices: { name: string; count: number; revenueCents: number }[];
   byBarber: {
     barberId: string;
@@ -118,15 +129,22 @@ export async function getDashboard(
   const completed = entries.filter((e) => e.status === "completed");
   const servicesRevenueCents = completed.reduce((s, e) => s + (e.priceCents ?? 0), 0);
 
-  const byDay = new Map(eachDateKey(period).map((k) => [k, { servicesCents: 0, subscriptionsCents: 0 }]));
+  const byDay = new Map(
+    eachDateKey(period).map((k) => [k, { servicesCents: 0, subscriptionsCents: 0, onlineCents: 0, balcaoCents: 0, commissionsCents: 0 }]),
+  );
   for (const e of completed) {
     const bucket = byDay.get(dateKeyFromIsoInSP(e.startsAt));
-    if (bucket) bucket.servicesCents += e.priceCents ?? 0;
+    if (!bucket) continue;
+    bucket.servicesCents += e.priceCents ?? 0;
+    bucket.commissionsCents += e.commissionCents ?? 0;
   }
   for (const p of paid) {
-    if (p.kind !== "subscription" || !p.paidAt) continue;
+    if (!p.paidAt) continue;
     const bucket = byDay.get(dateKeyFromIsoInSP(p.paidAt));
-    if (bucket) bucket.subscriptionsCents += p.amountCents;
+    if (!bucket) continue;
+    if (p.kind === "subscription") bucket.subscriptionsCents += p.amountCents;
+    else if (p.provider === "abacatepay") bucket.onlineCents += p.amountCents;
+    else bucket.balcaoCents += p.amountCents;
   }
 
   const services_ = new Map<string, { count: number; revenueCents: number }>();
