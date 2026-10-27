@@ -265,3 +265,9 @@
     }
   }
 }
+
+/* Páginas de fundo branco (login): o branco vai até atrás da barra do navegador no Safari. */
+html:has([data-page-bg="card"]),
+html:has([data-page-bg="card"]) body {
+  background-color: var(--card);
+}

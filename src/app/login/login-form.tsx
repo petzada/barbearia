@@ -121,7 +121,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
     <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-[28px] font-extrabold leading-tight tracking-tight">Entrar</h1>
-        <p className="text-[15px] text-ink-subtle">Enviamos um código no seu WhatsApp. Sem senha.</p>
+        <p className="text-[15px] text-ink-subtle">Acesse com WhatsApp ou sua conta Google</p>
       </div>
       <form onSubmit={submitPhone} className="flex flex-col gap-3" noValidate>
         <label htmlFor="phone" className="text-sm font-bold">
@@ -165,11 +165,12 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
       )}
 
       <p className="text-center text-xs leading-relaxed text-ink-subtle">
-        Ao entrar você concorda com os{" "}
+        Ao entrar, você concorda com os
+        <br />
         <Link href="/termos" className="font-semibold text-ink underline-offset-2 hover:underline">
           Termos de uso
         </Link>{" "}
-        e a{" "}
+        e{" "}
         <Link href="/privacidade" className="font-semibold text-ink underline-offset-2 hover:underline">
           Política de privacidade
         </Link>

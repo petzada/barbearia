@@ -2,11 +2,19 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /** Logo oficial da barbearia; `inverted` usa a versão branca sobre fotos/fundos escuros. */
-export function BrandMark({ className, inverted = false }: { className?: string; inverted?: boolean }) {
+export function BrandMark({
+  className,
+  inverted = false,
+  alt = "Barbearia do Moura",
+}: {
+  className?: string;
+  inverted?: boolean;
+  alt?: string;
+}) {
   return (
     <Image
       src={inverted ? "/images/logo-white.webp" : "/images/logo.webp"}
-      alt="Barbearia do Moura"
+      alt={alt}
       width={480}
       height={290}
       priority

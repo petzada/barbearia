@@ -5,19 +5,51 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
-/** Botão "Agendar" fixo no rodapé, visível depois que o CTA do hero sai da tela. */
-export function StickyCta({ href, targetId }: { href: string; targetId: string }) {
+/**
+ * Botão "Agendar" fixo no rodapé. O hero fica parado (sticky) e o conteúdo sobe
+ * por cima dele: o botão aparece quando o conteúdo cobre o CTA do hero e some
+ * de novo quando o rodapé da página entra na tela.
+ */
+export function StickyCta({
+  href,
+  targetId,
+  coverId,
+  endId,
+}: {
+  href: string;
+  /** CTA do hero. */
+  targetId: string;
+  /** Conteúdo que sobe por cima do hero. */
+  coverId: string;
+  /** Rodapé: ao aparecer, o botão some. */
+  endId: string;
+}) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const target = document.getElementById(targetId);
-    if (!target || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(([entry]) => setVisible(!entry.isIntersecting), {
-      threshold: 0,
-    });
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [targetId]);
+    const cover = document.getElementById(coverId);
+    const end = document.getElementById(endId);
+    if (!target || !cover || !end) return;
+    let frame = 0;
+    function update() {
+      frame = 0;
+      const covered = cover!.getBoundingClientRect().top < target!.getBoundingClientRect().top;
+      const atEnd = end!.getBoundingClientRect().top < window.innerHeight;
+      setVisible(covered && !atEnd);
+    }
+    function onScroll() {
+      if (!frame) frame = requestAnimationFrame(update);
+    }
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [targetId, coverId, endId]);
 
   return (
     <div
