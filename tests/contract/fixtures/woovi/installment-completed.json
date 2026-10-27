@@ -1,0 +1,13 @@
+{
+  "installment": {
+    "id": "installment-fixture-id",
+    "value": 2500,
+    "status": "COMPLETED",
+    "cobr": {
+      "status": "COMPLETED",
+      "endToEndId": "E0000000000000000000000000000000",
+      "updatedAt": "2026-10-12T18:30:00.000Z",
+      "tries": [{ "status": "COMPLETED", "updatedAt": "2026-10-12T18:30:00.000Z" }]
+    }
+  }
+}

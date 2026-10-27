@@ -29,6 +29,7 @@ export type {
   PaymentSnapshot,
   PaymentStatus,
   RecurringPayer,
+  RecurringPayerAddress,
   RecurringSnapshot,
   RecurringStatus,
   RefundResult,

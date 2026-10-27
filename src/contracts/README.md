@@ -147,7 +147,7 @@ Biblioteca de fuso: **Luxon**, encapsulada em `time/zone.ts` (o resto só vê `L
 
 ## 12. Ports e fakes (`~/contracts`, `~/contracts/fakes`)
 
-Interfaces: `JobQueue` (`enqueueInTx`, `enqueue`, `cancelByKey`), `Outbox` (`publishInTx`), `PaymentProvider` (com `capabilities`: `provado | nao_suportado | nao_verificado` por chave), `NotificationProvider` (canais `otp`/`avisos`), `PushProvider`, `StorageProvider`, `MetricsSink`, `AuditWriter`, `Clock`, `SessionResolver`. Fakes em memória: `FakeJobQueue`, `FakeOutbox`, `FakePaymentProvider`, `FakeNotificationProvider`, `FakePushProvider`, `FakeStorageProvider`, `FakeMetricsSink`, `FakeAuditWriter`, `FakeSessionResolver`. Os fakes não simulam rollback de transação; para isso use Postgres real. Implementações reais: T03 (jobs/outbox), T09–T11 (adapters), T08 (R2), T30 (push), T36 (métricas).
+Interfaces: `JobQueue` (`enqueueInTx`, `enqueue`, `cancelByKey`), `Outbox` (`publishInTx`), `PaymentProvider` (com `capabilities`: `provado | nao_suportado | nao_verificado` por chave), `NotificationProvider` (canais `otp`/`avisos`), `PushProvider`, `StorageProvider`, `MetricsSink`, `AuditWriter`, `Clock`, `SessionResolver`. `RecurringPayer.address` é opcional no contrato para preservar consumidores existentes; adapters que exigem endereço validam sua presença antes da chamada ao provedor. Fakes em memória: `FakeJobQueue`, `FakeOutbox`, `FakePaymentProvider`, `FakeNotificationProvider`, `FakePushProvider`, `FakeStorageProvider`, `FakeMetricsSink`, `FakeAuditWriter`, `FakeSessionResolver`. Os fakes não simulam rollback de transação; para isso use Postgres real. Implementações reais: T03 (jobs/outbox), T09–T11 (adapters), T08 (R2), T30 (push), T36 (métricas).
 
 ## 13. Eventos de domínio
 

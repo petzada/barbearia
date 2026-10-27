@@ -1,5 +1,6 @@
+import { fileURLToPath } from 'node:url'
 import { closeDatabase } from '~/platform/db'
-import { startWorker } from '~/platform/jobs'
+import { loadModuleJobs, startWorker } from '~/platform/jobs'
 import { logger } from '~/platform/logging'
 import { loadEnv } from '~/platform/validation'
 
@@ -10,6 +11,8 @@ loadEnv()
 const PRAZO_DE_ENCERRAMENTO_MS = 30_000
 
 async function main(): Promise<void> {
+  // Convenção para adapters: cada integrations/<adapter>/jobs.ts registra filas, operações e inbox.
+  await loadModuleJobs(fileURLToPath(new URL('./integrations/', import.meta.url)))
   const worker = await startWorker()
   let encerrando = false
   const encerrar = (sinal: string): void => {

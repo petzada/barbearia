@@ -31,6 +31,18 @@ export interface RecurringPayer {
   readonly email?: string
   readonly name?: string
   readonly documentNumber?: string
+  /** Alguns provedores, como Pix Automático da Woovi, exigem endereço completo do pagador. */
+  readonly address?: RecurringPayerAddress
+}
+
+export interface RecurringPayerAddress {
+  readonly cep: string
+  readonly rua: string
+  readonly numero: string
+  readonly bairro: string
+  readonly cidade: string
+  readonly uf: string
+  readonly complemento?: string
 }
 
 export interface CreateRecurringInput {

@@ -1,0 +1,15 @@
+{
+  "subscription": {
+    "globalID": "c3Vic2NyaXB0aW9uLWZpeHR1cmU=",
+    "correlationID": "",
+    "value": 2500,
+    "status": "ACTIVE",
+    "paymentLinkUrl": "https://example.test/pix-authorization",
+    "pixRecurring": {
+      "recurrencyId": "fixture-recurring-id",
+      "status": "CREATED",
+      "journey": "ONLY_RECURRENCY"
+    },
+    "customer": { "name": "Pessoa de teste" }
+  }
+}
