@@ -25,7 +25,7 @@ export const metadata: Metadata = { title: "Financeiro" };
 type Tab = "resumo" | "recebimentos" | "comissoes";
 const TABS: { key: Tab; label: string }[] = [
   { key: "resumo", label: "Resumo" },
-  { key: "recebimentos", label: "Recebimentos" },
+  { key: "recebimentos", label: "Recebidos" },
   { key: "comissoes", label: "Comissões" },
 ];
 

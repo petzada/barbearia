@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CalendarDays, CalendarOff } from "lucide-react";
 import { EmptyState } from "@/components/page-header";
 import { chipClass, chipRowClass } from "@/lib/ui/classes";
+import { shortNames } from "@/lib/short-names";
 import { cn, countLabel } from "@/lib/utils";
 import { AgendaDayTimeline, type TimelineEntry } from "./agenda-day-timeline";
 import { DayNav } from "./day-nav";
@@ -38,6 +39,7 @@ export function AgendaView({
   const [adding, setAdding] = useState<{ barberId: string; time?: string } | null>(null);
 
   const visible = selectedBarberId ? columns.filter((c) => c.barber.id === selectedBarberId) : columns;
+  const chipNames = shortNames(columns.map((c) => c.barber));
   const single = visible.length === 1 ? visible[0] : null;
   const appointments = visible.flatMap((c) => c.entries).filter((e) => e.type === "appointment" && e.status !== "cancelled");
   const closedReason = single && "closedReason" in single.dayBounds ? (single.dayBounds as { closedReason?: string | null }).closedReason : null;
@@ -68,12 +70,13 @@ export function AgendaView({
           </Link>
           {columns.map((c) => (
             <Link
+              aria-label={c.barber.name}
               key={c.barber.id}
               href={hrefFor(dateKey, c.barber.id)}
               aria-current={selectedBarberId === c.barber.id ? "true" : undefined}
               className={cn("max-w-[60vw] shrink-0 px-4", chipClass)}
             >
-              <span className="truncate">{c.barber.name}</span>
+              <span className="truncate">{chipNames.get(c.barber.id)}</span>
             </Link>
           ))}
         </div>

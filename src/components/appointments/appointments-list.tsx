@@ -24,6 +24,8 @@ export type AppointmentListItem = {
   startsAt: number;
   endsAt: number;
   status: EntryStatus;
+  /** Horário já terminou (calculado no servidor; evita divergência na hidratação). */
+  past: boolean;
   serviceId: string | null;
   serviceName: string | null;
   barberId: string;
@@ -55,12 +57,12 @@ export function AppointmentsList({ items }: { items: AppointmentListItem[] }) {
                 <span className="tabular text-base font-extrabold">{formatSlotTime(item.startsAt)}</span>
               </span>
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate font-bold">{item.serviceName ?? "Serviço"}</span>
+                <span className="line-clamp-2 font-bold">{item.serviceName ?? "Serviço"}</span>
                 <span className="truncate text-sm text-ink-subtle">
                   {item.barberName} · {formatDayMonth(item.startsAt)}
                 </span>
               </span>
-              <StatusBadge status={item.status} size="sm" />
+              <StatusBadge status={item.status} past={item.past} size="sm" />
               <ChevronRight className="size-4 shrink-0 text-ink-tertiary" aria-hidden />
             </button>
           </li>
@@ -138,7 +140,7 @@ export function AppointmentSheet({
               {formatDayLabel(item.startsAt)} · <span className="tabular">{formatTimeRange(item.startsAt, item.endsAt)}</span>
             </p>
             <div className="flex flex-wrap gap-1.5">
-              <StatusBadge status={item.status} />
+              <StatusBadge status={item.status} past={item.past} />
               {showPayment && <PaymentBadge method={item.paymentMethod} status={item.paymentStatus} />}
             </div>
           </div>

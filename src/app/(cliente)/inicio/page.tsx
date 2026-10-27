@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Crown, MapPin, QrCode } from "lucide-react";
+import { ArrowRight, ChevronRight, Crown, MapPin, QrCode } from "lucide-react";
 import { getDb } from "@/server/db";
 import { getServerEnv } from "@/server/env";
 import { requireOnboardedUser } from "@/server/auth";
@@ -110,11 +110,11 @@ export default async function InicioPage() {
             <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-on-dark/10 text-cta-on-dark">
               <Crown className="size-6" aria-hidden />
             </span>
-            <span className="flex-1">
+            <span className="min-w-0 flex-1">
               <span className="block text-lg font-bold">Clube Moura</span>
               <span className="text-sm text-on-dark/70">Assine e economize em todo corte.</span>
             </span>
-            <span className={cn(buttonVariants({ size: "sm" }), "shrink-0")}>Conhecer</span>
+            <ChevronRight className="size-5 shrink-0 text-on-dark/70" aria-hidden />
           </Link>
         )}
       </PageBody>

@@ -3,9 +3,22 @@ import type { EntryPaymentMethod, EntryPaymentStatus, EntryStatus } from "@/serv
 import { entryPaymentBadge } from "@/lib/payments";
 import { ENTRY_STATUS_BADGE } from "./status";
 
-/** Badge único de status do agendamento (lista, card, folha e agenda). */
-export function StatusBadge({ status, size = "default" }: { status: EntryStatus; size?: "default" | "sm" }) {
-  const badge = ENTRY_STATUS_BADGE[status];
+/**
+ * Badge único de status do agendamento (lista, card, folha e agenda).
+ * `past`: horário já passou — "booked" vira "Aguardando conclusão" até o
+ * barbeiro concluir ou marcar falta.
+ */
+export function StatusBadge({
+  status,
+  past = false,
+  size = "default",
+}: {
+  status: EntryStatus;
+  past?: boolean;
+  size?: "default" | "sm";
+}) {
+  const badge =
+    status === "booked" && past ? { label: "Aguardando conclusão", variant: "warning" as const } : ENTRY_STATUS_BADGE[status];
   return (
     <Badge variant={badge.variant} size={size}>
       {badge.label}

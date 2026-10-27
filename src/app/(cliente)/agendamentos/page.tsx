@@ -35,6 +35,7 @@ export default async function AgendamentosPage({ searchParams }: { searchParams:
       startsAt: entry.startsAt.getTime(),
       endsAt: entry.endsAt.getTime(),
       status: entry.status,
+      past: entry.endsAt < now,
       serviceId: entry.serviceId,
       serviceName: entry.serviceName,
       barberId: entry.barberId,

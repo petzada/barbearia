@@ -10,6 +10,7 @@ vi.mock("@/app/actions/cliente", () => ({
 }));
 
 const base: AppointmentListItem = {
+  past: false,
   id: "e1",
   startsAt: Date.parse("2026-11-02T18:00:00Z"),
   endsAt: Date.parse("2026-11-02T18:30:00Z"),
