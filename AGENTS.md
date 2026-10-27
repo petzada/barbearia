@@ -33,6 +33,18 @@ Produção é o Worker `barbearia-do-moura`. A `main` é o que está em produç�
 5. Não colocar segredos no repositório nem no ambiente da nuvem: `.dev.vars.example` lista as variáveis;
    os valores ficam no Worker (`wrangler secret`).
 
+### PR na VM da nuvem (Claude Code na web, app ou thread de projeto)
+
+Na nuvem o proxy do GitHub bloqueia GraphQL, então `gh pr …` e `gh issue …` dão 403. `git push` e
+`gh api` (REST) funcionam. Lá o fluxo de PR é este:
+
+- Abrir em draft: botão **Create draft PR** no cartão Changes (clique direito em Create PR), ou
+  `gh api repos/{owner}/{repo}/pulls -f title='<tipo>(<escopo>): …' -f head=<branch> -f base=main -f body='…' -F draft=true`.
+- Listar ou ver PR: `gh api repos/{owner}/{repo}/pulls?head={owner}:<branch>`.
+- Marcar como pronto não tem endpoint REST: na nuvem o agente avisa que os gates estão verdes e o
+  responsável marca pelo GitHub (ou pelo app). Merge continua sendo só do responsável.
+- Não coloque `GH_TOKEN` no ambiente da nuvem: não resolve o 403 e deixa o token legível.
+
 ## Histórico
 
 - `legado/tanstack-postgres` e `task/T*`: a primeira implementação (TanStack Start + Postgres), guardada
