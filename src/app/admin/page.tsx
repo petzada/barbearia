@@ -7,7 +7,6 @@ import { getDashboard } from "@/server/reports";
 import { getTodayOperation } from "@/server/staff-agenda";
 import { EmptyState, PageBody, PageHeader, SectionTitle } from "@/components/page-header";
 import { PeriodFilter, StatTile } from "@/components/period-filter";
-import { DailyBarChart } from "@/components/charts/daily-bar-chart";
 import { BarberAvatar } from "@/components/booking/barber-avatar";
 import { formatMinutesShort, formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
 import { resolvePeriod } from "@/lib/periods";
@@ -23,7 +22,6 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
   const db = await getDb();
   const [today, dash] = await Promise.all([getTodayOperation(db, actor), getDashboard(db, actor, period)]);
   const k = dash.kpis;
-  const chart = dash.revenueByDay.map((d) => ({ dateKey: d.dateKey, valueCents: d.servicesCents + d.subscriptionsCents }));
   const maxService = Math.max(1, ...dash.topServices.map((s) => s.revenueCents));
 
   return (
@@ -60,14 +58,30 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{b.name}</p>
                     <p className="truncate text-sm text-ink-subtle">
-                      {b.isClosed
-                        ? "Folga hoje"
-                        : b.next
-                          ? `Próximo: ${formatSlotTime(b.next.startsAt)} · ${b.next.clientName}`
+                      {b.next
+                        ? `Próximo: ${formatSlotTime(b.next.startsAt)} · ${b.next.clientName}`
+                        : b.availableMinutes === 0
+                          ? "Sem expediente hoje"
                           : "Sem próximos atendimentos"}
                     </p>
                   </div>
-                  <span className="tabular text-sm font-bold text-ink-subtle">{b.appointments}</span>
+                  {b.availableMinutes === 0 ? (
+                    <span className="shrink-0 text-sm font-semibold text-ink-subtle">Folga</span>
+                  ) : (
+                    <div className="flex w-24 shrink-0 items-center gap-2">
+                      <div
+                        className="h-1.5 flex-1 overflow-hidden rounded-full bg-teal-soft"
+                        role="meter"
+                        aria-valuenow={b.occupancyPercent}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`Ocupação de ${b.name} hoje`}
+                      >
+                        <div className="h-full rounded-full bg-cta" style={{ width: `${b.occupancyPercent}%` }} />
+                      </div>
+                      <span className="tabular w-9 text-right text-sm font-bold">{b.occupancyPercent}%</span>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -105,15 +119,6 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
             <StatTile label="Cancelamentos" value={String(k.cancelledCount)} />
           </div>
         </section>
-
-        {chart.length > 1 && (
-          <section className="flex flex-col gap-3">
-            <SectionTitle>Faturamento por dia</SectionTitle>
-            <div className="rounded-lg bg-card p-4 shadow-card">
-              <DailyBarChart data={chart} label="Faturamento (serviços concluídos + clube) por dia" />
-            </div>
-          </section>
-        )}
 
         <div className="grid gap-6 *:min-w-0 lg:grid-cols-2">
           <section className="flex flex-col gap-3">

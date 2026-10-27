@@ -307,11 +307,18 @@ export type TodayOperation = {
     image: string | null;
     isClosed: boolean;
     appointments: number;
+    /** Minutos agendados ÷ disponíveis hoje (0 disponível = folga). */
+    bookedMinutes: number;
+    availableMinutes: number;
+    occupancyPercent: number;
     next: { startsAt: Date; clientName: string; serviceName: string | null } | null;
   }[];
   pendingCompletion: number;
   pendingPix: number;
 };
+
+const percentOf = (booked: number, available: number) =>
+  available > 0 ? Math.min(100, Math.round((booked / available) * 100)) : 0;
 
 export async function getTodayOperation(db: Db, actor: Actor, now: Date = new Date()): Promise<TodayOperation> {
   if (!actor.isAdmin) throw new DomainError("forbidden", "Acesso restrito à gestão.");
@@ -375,13 +382,17 @@ export async function getTodayOperation(db: Db, actor: Actor, now: Date = new Da
       .filter((e) => e.type === "block")
       .reduce((s, e) => s + (e.endsAt.getTime() - e.startsAt.getTime()) / 60_000, 0);
     const appts = own.filter((e) => e.type === "appointment");
+    let barberAvailable = 0;
+    let barberBooked = 0;
     if (!isClosed && hours) {
-      available += Math.max(
+      barberAvailable = Math.max(
         0,
         parseTimeToMinutes(hours.closeTime) - parseTimeToMinutes(hours.openTime) - blockedMinutes,
       );
-      booked += appts.reduce((s, e) => s + (e.endsAt.getTime() - e.startsAt.getTime()) / 60_000, 0);
+      barberBooked = appts.reduce((s, e) => s + (e.endsAt.getTime() - e.startsAt.getTime()) / 60_000, 0);
     }
+    available += barberAvailable;
+    booked += barberBooked;
     const next = appts.find((e) => e.status === "booked" && e.endsAt > now);
     return {
       id: b.id,
@@ -389,13 +400,16 @@ export async function getTodayOperation(db: Db, actor: Actor, now: Date = new Da
       image: b.image,
       isClosed,
       appointments: appts.length,
+      bookedMinutes: barberBooked,
+      availableMinutes: barberAvailable,
+      occupancyPercent: percentOf(barberBooked, barberAvailable),
       next: next ? { startsAt: next.startsAt, clientName: next.clientName ?? "Cliente", serviceName: next.serviceName } : null,
     };
   });
 
   return {
     dateKey,
-    occupancyPercent: available > 0 ? Math.min(100, Math.round((booked / available) * 100)) : 0,
+    occupancyPercent: percentOf(booked, available),
     bookedMinutes: booked,
     availableMinutes: available,
     barbers: rows.sort((a, b) => a.name.localeCompare(b.name)),

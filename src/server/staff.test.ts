@@ -242,12 +242,22 @@ describe("operação de hoje (20)", () => {
     const client = await createUser(t.db, { name: "Ana" });
     await createAppointment(t.db, client, { barberId: moura.id, serviceId: "svc-combo", startsAt: sp(DAY, "09:00").getTime(), paymentChoice: "local" }, BEFORE);
     await createAppointment(t.db, client, { barberId: moura.id, serviceId: "svc-corte", startsAt: sp(DAY, "15:00").getTime(), paymentChoice: "local" }, BEFORE);
+    const caio = await createBarber(t.db, { name: "Caio" });
+    await createAppointment(t.db, client, { barberId: caio.id, serviceId: "svc-corte", startsAt: sp(DAY, "10:00").getTime(), paymentChoice: "local" }, BEFORE);
+    const leo = await createBarber(t.db, { name: "Leo" });
+    await saveBarberWeek(t.db, admin, { barberId: leo.id, days: fullWeek("09:00", "19:00", [1]) });
     const op = await getTodayOperation(t.db, admin, sp(DAY, "11:00"));
-    expect(op.availableMinutes).toBe(600);
-    expect(op.bookedMinutes).toBe(90);
-    expect(op.occupancyPercent).toBe(15);
-    expect(op.pendingCompletion).toBe(1);
-    expect(op.barbers[0]).toMatchObject({ name: "Moura", appointments: 2, next: expect.objectContaining({ clientName: "Ana" }) });
+    expect(op.availableMinutes).toBe(1200);
+    expect(op.bookedMinutes).toBe(120);
+    expect(op.occupancyPercent).toBe(10);
+    expect(op.pendingCompletion).toBe(2);
+    const byName = Object.fromEntries(op.barbers.map((b) => [b.name, b]));
+    expect(byName.Moura).toMatchObject({
+      appointments: 2, bookedMinutes: 90, availableMinutes: 600, occupancyPercent: 15,
+      next: expect.objectContaining({ clientName: "Ana" }),
+    });
+    expect(byName.Caio).toMatchObject({ bookedMinutes: 30, availableMinutes: 600, occupancyPercent: 5 });
+    expect(byName.Leo).toMatchObject({ isClosed: true, bookedMinutes: 0, availableMinutes: 0, occupancyPercent: 0 });
     await expect(getTodayOperation(t.db, moura)).rejects.toMatchObject({ code: "forbidden" });
   });
 });
