@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useSheetState } from "@/components/kit/use-sheet-state";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ import { rowClass, rowGroupClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
 import type { EntryPaymentMethod, EntryPaymentStatus, EntryStatus } from "@/server/db/schema";
 import { PaymentBadge, StatusBadge } from "./status-badge";
+import { useBusyTransition } from "@/components/loading/busy";
 
 export type AppointmentListItem = {
   id: string;
@@ -84,7 +85,7 @@ export function AppointmentSheet({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 

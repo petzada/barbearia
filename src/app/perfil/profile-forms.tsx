@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Camera, Check, ChevronRight, LogOut, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
@@ -19,13 +19,14 @@ import { BottomSheet } from "@/components/kit/bottom-sheet";
 import { ConfirmDialog } from "@/components/kit/confirm-dialog";
 import { GoogleIcon } from "@/components/google-icon";
 import { RowIcon, rowClass } from "@/components/kit/settings-list";
+import { useBusyTransition } from "@/components/loading/busy";
 
 
 export function NameRow({ initialName }: { initialName: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(initialName);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   function save(event: React.FormEvent) {
     event.preventDefault();
@@ -75,7 +76,7 @@ export function NameRow({ initialName }: { initialName: string }) {
 export function AvatarRow({ userId }: { userId?: string }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   return (
     <>
       <button type="button" disabled={pending} onClick={() => input.current?.click()} className={rowClass}>
@@ -164,7 +165,7 @@ export function GoogleRow({ connected }: { connected: boolean }) {
 export function RemindersRow({ enabled }: { enabled: boolean }) {
   const router = useRouter();
   const [checked, setChecked] = useState(enabled);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   return (
     <label className={rowClass}>
       <RowIcon icon={Bell} />

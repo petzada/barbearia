@@ -14,6 +14,7 @@ import { dateKeyFromIsoInSP, formatSlotTime } from "@/lib/agenda/availability";
 import { formatDayLabel, formatTimeRange } from "@/lib/agenda/format";
 import { minutesFromIsoInSP } from "@/lib/agenda/timeline";
 import { rowGroupClass } from "@/lib/ui/classes";
+import { useBusy } from "@/components/loading/busy";
 
 type Block = { id: string; startsAt: number; endsAt: number; note: string | null };
 
@@ -34,6 +35,7 @@ export function BlocksList({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  useBusy(pendingId !== null);
 
   const groups = new Map<string, Block[]>();
   for (const b of blocks) {

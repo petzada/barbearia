@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { formatSlotTime } from "@/lib/agenda/availability";
 import { formatDayLabel } from "@/lib/agenda/format";
 import { chipClass } from "@/lib/ui/classes";
 import { cn, countLabel } from "@/lib/utils";
+import { useBusyTransition } from "@/components/loading/busy";
 
 type Preset = "almoco" | "manha" | "tarde" | "dia" | "varios";
 
@@ -49,7 +50,7 @@ export function BlockFormSheet({
   const [end, setEnd] = useState("13:00");
   const [note, setNote] = useState("");
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   useEffect(() => {
     if (!open) return;

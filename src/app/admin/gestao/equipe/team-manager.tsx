@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Plus, Send, Trash2 } from "lucide-react";
@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
 import { rowGroupClass } from "@/lib/ui/classes";
+import { useBusyTransition } from "@/components/loading/busy";
 
 type ShopDay = { weekday: number; openTime: string; closeTime: string; isClosed: boolean };
 
@@ -58,7 +59,7 @@ export function TeamManager({
   const sheet = useSheetState<Member>();
   const confirmInvite = useSheetState<string>();
   const [adding, setAdding] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   function toggleBookings(m: Member, accepting: boolean) {
     startTransition(async () => {
@@ -182,7 +183,7 @@ function MemberSheet({ member, open, self, shopWeek, onClose }: { member: Member
   const [percent, setPercent] = useState(member.commissionPercent);
   const [customWeek, setCustomWeek] = useState(member.week.length === 7);
   const [week, setWeek] = useState<WeekDay[]>(member.week.length === 7 ? member.week : weekFromShop(shopWeek));
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   const closedDays = shopWeek.filter((d) => d.isClosed).map((d) => d.weekday);
 
   function save() {
@@ -292,7 +293,7 @@ function InviteSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: 
   const [phone, setPhone] = useState("");
   const [isBarber, setIsBarber] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   function submit() {
     startTransition(async () => {

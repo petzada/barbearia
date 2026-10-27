@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getSelectableDateKeys } from "@/lib/agenda/availability";
@@ -13,6 +13,7 @@ import { ScheduleStep } from "./schedule-step";
 import { ServiceStep } from "./service-step";
 import { StepIndicator, type WizardStep } from "./step-indicator";
 import type { BookingBarber, BookingRules, BookingService } from "./types";
+import { useBusyTransition } from "@/components/loading/busy";
 
 export function BookingWizard({
   services,
@@ -51,8 +52,8 @@ export function BookingWizard({
   const [slot, setSlot] = useState<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [payment, setPayment] = useState<PaymentChoice>(rules.onlinePayment ? "pix" : "local");
-  const [loadingSlots, startLoadingSlots] = useTransition();
-  const [confirming, startConfirm] = useTransition();
+  const [loadingSlots, startLoadingSlots] = useBusyTransition();
+  const [confirming, startConfirm] = useBusyTransition();
   const windowKeys = useMemo(() => getSelectableDateKeys(rules.bookingWindowDays), [rules.bookingWindowDays]);
 
   function loadSlots(barberId: string, serviceId: string, dateKey: string) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { spLocalDateTimeToIso } from "@/lib/agenda/timezone";
 import { maskBrazilPhoneInput } from "@/lib/phone";
 import { chipClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
+import { useBusyTransition } from "@/components/loading/busy";
 
 export type SheetService = { id: string; name: string; durationMinutes: number; priceCents: number };
 export type SheetBarber = { id: string; name: string; openTime: string; closeTime: string; isClosed: boolean };
@@ -53,7 +54,7 @@ export function NewEntrySheet({
   const [blockEnd, setBlockEnd] = useState("");
   const [note, setNote] = useState("");
   const [preset, setPreset] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   // Reabre limpo, com o horário/barbeiro de onde o "+" foi tocado.
   useEffect(() => {

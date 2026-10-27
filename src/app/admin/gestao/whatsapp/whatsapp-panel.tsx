@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element -- QR Code chega como data URL da WhatsMiau. */
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, History, RefreshCw, Send, Unplug, XCircle } from "lucide-react";
@@ -26,6 +26,7 @@ import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
 import { formatDayLabel } from "@/lib/agenda/format";
 import { chipClass, chipRowClass, rowGroupClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
+import { useBusyTransition } from "@/components/loading/busy";
 
 type Config = {
   status: "not_configured" | "connecting" | "connected" | "disconnected" | "qr_required" | "unknown";
@@ -68,7 +69,7 @@ export function WhatsappPanel({
   kind?: string;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   const [enabled, setEnabled] = useState(config.remindersEnabled);
   const [hour, setHour] = useState(config.reminderHour);
   const [template, setTemplate] = useState(config.reminderTemplate ?? DEFAULT_WHATSAPP_TEMPLATE);

@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { acceptTermsAction } from "@/app/actions/perfil";
 import { TermsConsent } from "@/components/legal/terms-consent";
 import { Button } from "@/components/ui/button";
+import { useBusyTransition } from "@/components/loading/busy";
 
 export function AcceptTermsForm() {
   const [checked, setChecked] = useState(false);
   const [tried, setTried] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   return (
     <form
