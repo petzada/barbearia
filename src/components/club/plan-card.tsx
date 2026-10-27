@@ -21,7 +21,6 @@ export type PlanCardData = {
 
 /** Card de plano do Clube — o mesmo no app do cliente e na prévia da gestão. */
 export function PlanCard({ plan, footer, header }: { plan: PlanCardData; footer?: ReactNode; header?: ReactNode }) {
-  const dark = plan.highlighted;
   const rules = planRulesSummary({
     visitsPerCycle: plan.visitsPerCycle ?? 0,
     allowedWeekdays: plan.allowedWeekdays ?? [],
@@ -30,33 +29,25 @@ export function PlanCard({ plan, footer, header }: { plan: PlanCardData; footer?
   // Tudo o que o plano inclui, em bullets: serviços cobertos e depois os benefícios.
   const included = [...new Set([...(plan.coveredServiceNames ?? []), ...plan.benefits])];
   return (
-    <article
-      className={cn(
-        "relative flex w-full flex-col gap-4 rounded-lg p-6 shadow-card",
-        dark ? "bg-surface-dark text-on-dark ring-2 ring-cta" : "bg-card",
-      )}
-    >
+    // O destacado se diferencia só pela borda e pelo selo teal: mesmo fundo e mesmo layout.
+    <article className={cn("relative flex w-full flex-col gap-4 rounded-lg bg-card p-6", plan.highlighted && "ring-2 ring-cta")}>
       {plan.highlighted && (
         <Badge variant="brand" className="absolute -top-3 left-1/2 -translate-x-1/2">
-          Recomendado
+          Mais escolhido
         </Badge>
       )}
       {header}
+      {/* Título e descrição com altura fixa: os preços ficam alinhados entre os cards. */}
       <div>
-        <h2 className="text-xl font-extrabold">{plan.name || "Nome do plano"}</h2>
-        {plan.description && <p className={cn("text-sm", dark ? "text-on-dark/70" : "text-ink-subtle")}>{plan.description}</p>}
+        <h2 className="line-clamp-1 text-xl font-extrabold">{plan.name || "Nome do plano"}</h2>
+        <p className="line-clamp-2 min-h-[2lh] text-sm text-ink-subtle">{plan.description}</p>
       </div>
       <p>
         <span className="text-display">{formatPriceCents(plan.priceCents)}</span>
-        <span className={cn("text-sm", dark ? "text-on-dark/70" : "text-ink-subtle")}> /{CYCLE_LABELS[plan.cycle]}</span>
+        <span className="text-sm text-ink-subtle"> /{CYCLE_LABELS[plan.cycle]}</span>
       </p>
       {rules && (
-        <p
-          className={cn(
-            "flex items-start gap-2 rounded-md px-3 py-2 text-sm font-semibold",
-            dark ? "bg-on-dark/10 text-on-dark" : "bg-teal-soft text-cta-ink",
-          )}
-        >
+        <p className="flex items-start gap-2 rounded-md bg-teal-soft px-3 py-2 text-sm font-semibold text-cta-ink">
           <CalendarCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
           {rules}
         </p>
@@ -65,7 +56,7 @@ export function PlanCard({ plan, footer, header }: { plan: PlanCardData; footer?
         <ul className="flex flex-col gap-2">
           {included.map((b) => (
             <li key={b} className="flex items-start gap-2 text-[15px]">
-              <Check className={cn("mt-0.5 size-4 shrink-0", dark ? "text-cta-on-dark" : "text-cta-ink")} aria-hidden />
+              <Check className="mt-0.5 size-4 shrink-0 text-cta-ink" aria-hidden />
               {b}
             </li>
           ))}

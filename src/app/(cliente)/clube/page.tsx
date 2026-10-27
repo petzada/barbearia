@@ -196,7 +196,7 @@ export default async function ClubePage() {
                       Assinar
                     </Link>
                   ) : (
-                    <p className={cn("text-sm", plan.highlighted ? "text-on-dark/70" : "text-ink-subtle")}>
+                    <p className="text-sm text-ink-subtle">
                       Assine direto na barbearia.
                     </p>
                   )

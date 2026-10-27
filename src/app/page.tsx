@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
-import { Clock } from "lucide-react";
 import { getDb } from "@/server/db";
 import { getCurrentUser } from "@/server/auth";
 import { listServices } from "@/server/catalog";
@@ -46,11 +45,12 @@ export default async function LandingPage() {
         footer={
           <Link
             href={user ? "/clube" : "/login"}
-            className={buttonVariants({
-              size: "lg",
-              variant: plan.highlighted ? "default" : "outline",
-              className: cn("mt-auto w-full", !plan.highlighted && "border-ink/35"),
-            })}
+            className={cn(
+              buttonVariants({ size: "lg", variant: plan.highlighted ? "default" : "outline" }),
+              "mt-auto w-full",
+              // Contorno visível (sem fundo e sem teal) para os planos não destacados.
+              !plan.highlighted && "border-ink/40 bg-transparent",
+            )}
           >
             Assinar
           </Link>
@@ -135,7 +135,7 @@ export default async function LandingPage() {
             <SectionHeading id="onde" title="Conheça nosso espaço" subtitle="Você será muito bem-vindo" />
             <div className="flex flex-col gap-4 rounded-lg bg-card p-5 shadow-card">
               {address && (
-                <div>
+                <div className="text-center">
                   <p className="text-lg font-bold leading-snug">{address.street}</p>
                   {address.area && <p className="text-[15px] font-semibold text-ink-subtle">{address.area}</p>}
                 </div>
@@ -154,26 +154,13 @@ export default async function LandingPage() {
                 </a>
               )}
             </div>
-            {settings.instagram && (
-              <a
-                href={`https://instagram.com/${settings.instagram}`}
-                target="_blank"
-                rel="noreferrer"
-                className="mx-auto flex flex-col items-center gap-2 font-semibold"
-              >
-                <InstagramIcon className="size-9" />@{settings.instagram}
-              </a>
-            )}
           </section>
 
           {/* Horário */}
           <section aria-labelledby="horario" className="flex flex-col gap-5">
             <SectionHeading id="horario" title="Não perca tempo" subtitle="Confira nosso horário de funcionamento" />
             <div className="rounded-lg bg-card p-5 shadow-card">
-              <p className="mb-3 flex items-center gap-2 font-bold">
-                <Clock className="size-5 text-cta-ink" aria-hidden />
-                Horário de funcionamento
-              </p>
+              <p className="mb-3 text-center font-bold">Horários</p>
               <dl className="flex flex-col gap-2 text-sm">
                 {summarizeWeek(week).map((row) => (
                   <div key={row.label} className="flex justify-between gap-4">
@@ -206,6 +193,16 @@ export default async function LandingPage() {
               Privacidade
             </Link>
           </nav>
+          {settings.instagram && (
+            <a
+              href={`https://instagram.com/${settings.instagram}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 flex flex-col items-center gap-2 rounded-lg bg-black px-6 py-4 font-semibold text-white"
+            >
+              <InstagramIcon className="size-9" />@{settings.instagram}
+            </a>
+          )}
         </div>
       </footer>
 

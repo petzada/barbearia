@@ -94,7 +94,7 @@ export function PlansManager({ plans, services }: { plans: PlanRow[]; services: 
                     </div>
                   }
                   footer={
-                    <Button variant={p.highlighted ? "on-dark" : "outline"} onClick={() => sheet.show(p)}>
+                    <Button variant="outline" onClick={() => sheet.show(p)}>
                       <Pencil aria-hidden />
                       Editar
                     </Button>
