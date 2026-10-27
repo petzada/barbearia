@@ -244,6 +244,7 @@ export function AgendaDayTimeline({
               : 0;
           const continuationPx = Math.max(0, timeSpanPx - renderHeight - 2);
           const done = e.status === "completed" || e.status === "no_show";
+          const accent = STATUS_ACCENT[ENTRY_STATUS_BADGE[e.status as EntryStatus]?.variant ?? "soft"];
           // Meio slot (15 min): menos respiro, mesmas informações.
           const compact = renderHeight < SLOT_HEIGHT_PX - 2;
 
@@ -277,31 +278,27 @@ export function AgendaDayTimeline({
                   "relative z-[1] flex w-full shrink-0 flex-col overflow-hidden rounded-md px-3 text-left transition active:scale-[0.98]",
                   compact ? "justify-center py-0.5" : "py-2",
                   continuationPx > 0 ? "" : "h-full",
+                  // Mesmo visual para qualquer duração: só a altura muda.
                   e.type === "block"
                     ? "border border-dashed border-hairline-strong bg-surface-2"
-                    : done
-                      ? "bg-card opacity-70 shadow-card"
-                      : "border-l-4 border-cta bg-card shadow-card",
+                    : "border border-ink bg-card pl-4 shadow-card",
                 )}
                 style={{ height: renderHeight }}
               >
                 {e.type === "appointment" ? (
                   <>
+                    {/* Barra na cor do status (confirmado, concluído, falta). */}
+                    <span className={cn("absolute inset-y-0 left-0 w-1", accent.bar)} aria-hidden />
                     <span className="truncate text-sm font-bold leading-tight">{e.clientName}</span>
                     <span className="truncate text-xs leading-tight text-ink-subtle">
                       {e.serviceName ?? "Serviço"}
-                      {compact && done && ` · ${ENTRY_STATUS_BADGE[e.status as EntryStatus].label}`}
+                      {done && (
+                        <>
+                          {" · "}
+                          <span className={cn("font-bold", accent.text)}>{ENTRY_STATUS_BADGE[e.status as EntryStatus].label}</span>
+                        </>
+                      )}
                     </span>
-                    {done && !compact && (
-                      <span
-                        className={cn(
-                          "mt-auto text-[11px] font-bold",
-                          STATUS_ACCENT[ENTRY_STATUS_BADGE[e.status as EntryStatus].variant].text,
-                        )}
-                      >
-                        {ENTRY_STATUS_BADGE[e.status as EntryStatus].label}
-                      </span>
-                    )}
                   </>
                 ) : (
                   <>
