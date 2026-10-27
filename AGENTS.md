@@ -15,8 +15,9 @@ Produção é o Worker `barbearia-do-moura`. A `main` é o que está em produç�
 
 ## Onde cada coisa roda
 
-- **Local ou VM da nuvem (Claude Code):** só o escopo do diff — `npm run lint`, `npm run typecheck`,
-  `npm test` (vitest). Nada de banco local, Docker local ou `wrangler dev` com dados reais.
+- **Local ou VM da nuvem (Claude Code):** só o escopo do diff, pelo lefthook (instalado no `npm ci`):
+  pre-commit roda o eslint nos arquivos em stage; pre-push roda `npm run typecheck` e `npm run test:related`
+  (vitest nos testes ligados ao diff). Não aumente o pre-push. Nada de banco local, Docker local ou `wrangler dev` com dados reais.
 - **CI (GitHub Actions, `.github/workflows/ci.yml`):** lint, typecheck, testes e build completos,
   em todo PR e em push na `main`. Repositório público: minutos sem custo.
 - **Deploy:** `npm run deploy` (OpenNext → Workers) só pelo responsável, nunca por agente. Migrations

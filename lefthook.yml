@@ -1,0 +1,18 @@
+# Gates locais (notebook ou VM da nuvem): pre-commit só nos arquivos em stage (< 10 s) e
+# pre-push só no diff do branch (< 2 min). Lint e testes completos e o build ficam no CI.
+# Instalação: automática no `npm ci`/`npm install` (script prepare).
+
+pre-commit:
+  parallel: true
+  commands:
+    eslint:
+      glob: "*.{js,mjs,ts,tsx}"
+      run: npx eslint --cache --cache-location node_modules/.cache/eslint/ {staged_files}
+
+pre-push:
+  piped: true
+  commands:
+    1_typecheck:
+      run: npm run typecheck
+    2_related:
+      run: node scripts/test-related.mjs

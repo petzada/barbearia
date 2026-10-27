@@ -13,8 +13,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:related": "node scripts/test-related.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "e2e:db": "rm -rf .wrangler/e2e && wrangler d1 migrations apply DB --local --persist-to .wrangler/e2e",
@@ -27,7 +28,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "db:seed:local": "wrangler d1 execute DB --local --file=./drizzle/seed/seed.sql"
+    "db:seed:local": "wrangler d1 execute DB --local --file=./drizzle/seed/seed.sql",
+    "prepare": "node -e \"try{if(require('fs').existsSync('.git'))require('child_process').execSync('lefthook install',{stdio:'inherit'})}catch(e){console.warn('lefthook install ignorado')}\""
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -65,6 +67,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "jsdom": "^30.1.3",
+    "lefthook": "^2.2.2",
     "miniflare": "^4.20260730.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5",
