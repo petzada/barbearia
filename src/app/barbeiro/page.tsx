@@ -8,7 +8,7 @@ import { getBarberEarnings } from "@/server/reports";
 import { dayBoundsFor } from "@/server/agenda-page";
 import { PageBody, PageHeader } from "@/components/page-header";
 import { StatTile } from "@/components/period-filter";
-import { TodayTimeline } from "@/components/agenda/today-timeline";
+import { TodayList } from "@/components/agenda/today-list";
 import { toTimelineEntries } from "@/components/agenda/to-timeline";
 import { buttonVariants } from "@/components/ui/button";
 import { formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
@@ -55,13 +55,7 @@ export default async function BarbeiroHojePage() {
         {bounds.closedReason && (
           <p className="rounded-lg bg-warning/12 p-4 text-sm font-semibold text-warning-ink">Barbearia fechada hoje: {bounds.closedReason}.</p>
         )}
-        <TodayTimeline
-          entries={toTimelineEntries(pending)}
-          openTime={bounds.openTime}
-          closeTime={bounds.closeTime}
-          isClosed={bounds.isClosed}
-          initialNow={now.getTime()}
-        />
+        <TodayList entries={toTimelineEntries(pending)} isClosed={bounds.isClosed} initialNow={now.getTime()} />
       </PageBody>
     </main>
   );

@@ -200,16 +200,23 @@ export function timelineRowsHeightPx(rows: TimelineRow[]): number {
   return rows.reduce((sum, r) => sum + r.heightPx, 0);
 }
 
+/** Atendimento curto (ex.: 15 min = meio slot) ocupa só a sua fração do slot. */
+export const SHORT_CARD_MIN_HEIGHT_PX = 40;
+
 export function layoutEntry({
   startsAt,
+  endsAt,
   rows,
 }: {
   startsAt: string;
+  endsAt: string;
   rows: TimelineRow[];
 }): { topPx: number; heightPx: number } {
   const startMin = minutesFromIsoInSP(startsAt);
   const topPx = minuteToTopPx(rows, startMin);
-  return { topPx, heightPx: MIN_CARD_HEIGHT_PX };
+  const spanPx = spanToHeightPx(rows, startMin, minutesFromIsoInSP(endsAt));
+  const heightPx = spanPx < SLOT_HEIGHT_PX ? Math.max(SHORT_CARD_MIN_HEIGHT_PX, spanPx) : MIN_CARD_HEIGHT_PX;
+  return { topPx, heightPx };
 }
 
 export type TimelineLayoutItem = {
@@ -270,7 +277,7 @@ export function layoutTimelineEntriesWithColumns(
   const sorted = [...entries].sort(
     (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
   );
-  const boxes = sorted.map((e) => ({ id: e.id, ...layoutEntry({ startsAt: e.starts_at, rows }) }));
+  const boxes = sorted.map((e) => ({ id: e.id, ...layoutEntry({ startsAt: e.starts_at, endsAt: e.ends_at, rows }) }));
   return assignColumnsByBox(boxes).map(({ id, topPx, heightPx, column, columnCount }) => ({
     id,
     topPx,

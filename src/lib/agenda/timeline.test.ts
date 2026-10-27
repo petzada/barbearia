@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignColumnsByBox, buildTimelineRows, layoutTimelineEntriesWithColumns, MIN_CARD_HEIGHT_PX } from "./timeline";
+import { assignColumnsByBox, buildTimelineRows, layoutTimelineEntriesWithColumns, MIN_CARD_HEIGHT_PX, SLOT_HEIGHT_PX } from "./timeline";
 
 const at = (hhmm: string) => new Date(`2030-01-07T${hhmm}:00-03:00`).toISOString();
 
@@ -19,21 +19,35 @@ describe("assignColumnsByBox", () => {
 });
 
 describe("layoutTimelineEntriesWithColumns", () => {
-  it("cards de 15 min seguidos não se sobrepõem: o mínimo de altura empurra o seguinte para outra coluna", () => {
+  it("15 min ocupa meio slot; cards de 15 min seguidos ficam empilhados na mesma coluna", () => {
     const rows = buildTimelineRows("17:00", "19:00");
     const out = layoutTimelineEntriesWithColumns(
       [
         { id: "a", starts_at: at("17:30"), ends_at: at("17:45") },
         { id: "b", starts_at: at("17:45"), ends_at: at("18:00") },
-        { id: "c", starts_at: at("18:00"), ends_at: at("18:15") },
+        { id: "c", starts_at: at("18:00"), ends_at: at("18:30") },
       ],
       rows,
     );
     const byId = new Map(out.map((o) => [o.id, o]));
-    expect(byId.get("a")!.heightPx).toBe(MIN_CARD_HEIGHT_PX);
-    expect(byId.get("a")!.column).not.toBe(byId.get("b")!.column);
-    // "c" começa exatamente onde o card "a" termina (85px): encostado, mesma coluna.
-    expect(byId.get("c")!.topPx).toBe(byId.get("a")!.topPx + byId.get("a")!.heightPx);
-    expect(byId.get("c")!.column).toBe(0);
+    expect(byId.get("a")!.heightPx).toBe(SLOT_HEIGHT_PX / 2);
+    expect(byId.get("b")!.topPx).toBe(byId.get("a")!.topPx + SLOT_HEIGHT_PX / 2);
+    expect(byId.get("c")!.heightPx).toBe(MIN_CARD_HEIGHT_PX);
+    expect(out.every((o) => o.column === 0 && o.columnCount === 1)).toBe(true);
+  });
+
+  it("encaixe no mesmo horário vai para a coluna ao lado", () => {
+    const rows = buildTimelineRows("17:00", "19:00");
+    const out = layoutTimelineEntriesWithColumns(
+      [
+        { id: "a", starts_at: at("17:30"), ends_at: at("18:00") },
+        { id: "b", starts_at: at("17:30"), ends_at: at("17:45") },
+      ],
+      rows,
+    );
+    expect(out.map((o) => [o.column, o.columnCount])).toEqual([
+      [0, 2],
+      [1, 2],
+    ]);
   });
 });
