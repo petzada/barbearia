@@ -15,17 +15,20 @@ export function LoadingOverlay() {
     <div
       role="status"
       aria-live="polite"
-      className="loading-overlay fixed inset-x-0 top-0 z-[100] flex h-lvh min-h-full items-center justify-center bg-white/20"
+      className="loading-overlay fixed inset-x-0 top-0 z-[100] h-lvh min-h-full bg-white/20"
     >
-      <Image
-        src="/images/logo.webp"
-        alt=""
-        width={480}
-        height={290}
-        priority
-        className="loading-logo h-auto w-28 select-none drop-shadow-[0_2px_10px_rgba(255,255,255,0.7)]"
-        draggable={false}
-      />
+      {/* A película vai até atrás das barras do navegador; o logo fica no centro da área visível. */}
+      <div className="flex h-dvh items-center justify-center">
+        <Image
+          src="/images/logo.webp"
+          alt=""
+          width={480}
+          height={290}
+          priority
+          className="loading-logo h-auto w-28 select-none drop-shadow-[0_2px_10px_rgba(255,255,255,0.7)]"
+          draggable={false}
+        />
+      </div>
       <span className="sr-only">Carregando…</span>
     </div>
   );
