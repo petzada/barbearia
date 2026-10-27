@@ -15,7 +15,7 @@ import {
   useToast,
 } from '~/ui'
 import { changeEnablement, listMatrix, scheduleCommission } from '../client'
-import { formatPercentualBasisPoints, parsePercentual } from './format'
+import { assinanteAcompanhaAvulso, formatPercentualBasisPoints, parsePercentual } from './format'
 
 type Resultado = Awaited<ReturnType<typeof listMatrix>>
 type Dados<T> = T extends Promise<Result<infer D>> ? D : never
@@ -79,7 +79,7 @@ export function AdminMatriz() {
           <Badge tone="info">Avulso</Badge>
           <Badge tone="sucesso">Assinante</Badge>
           <span className="self-center text-sm text-suave">
-            Percentuais em pontos-base; uma nova vigência preserva os atendimentos anteriores.
+            Percentuais de 0% a 100%; uma nova vigência preserva os atendimentos anteriores.
           </span>
         </div>
       </Card>
@@ -129,7 +129,10 @@ function LinhaMatriz({
       ? ''
       : formatPercentualBasisPoints(celula.percentualAssinanteBp),
   )
-  const [assinanteEditado, setAssinanteEditado] = useState(false)
+  // Se os percentuais gravados já diferem, o ajuste do avulso não pode apagar o do assinante (D0023).
+  const [assinanteEditado, setAssinanteEditado] = useState(
+    !assinanteAcompanhaAvulso(celula.percentualAvulsoBp, celula.percentualAssinanteBp),
+  )
   const [inicio, setInicio] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const toast = useToast()

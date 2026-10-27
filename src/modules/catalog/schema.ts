@@ -12,7 +12,13 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
-import { basisPoints, centavos, mutableColumns, baseColumns } from '~/platform/db/columns'
+import {
+  basisPoints,
+  centavos,
+  mutableColumns,
+  baseColumns,
+  revisionColumn,
+} from '../../platform/db/columns'
 
 export const servicos = pgTable(
   'servicos',
@@ -73,7 +79,7 @@ export const barbeiros = pgTable(
   {
     ...mutableColumns(),
     // TODO T04: usuario_id será ligado por FK composta quando a tabela de identidade existir.
-    usuarioId: text('usuario_id').notNull(),
+    usuarioId: uuid('usuario_id').notNull(),
     nomeExibicao: text('nome_exibicao').notNull(),
     fotoKey: text('foto_key'),
     bio: text('bio'),
@@ -95,6 +101,8 @@ export const habilitacoes = pgTable(
     barbeiroId: uuid('barbeiro_id').notNull(),
     servicoId: uuid('servico_id').notNull(),
     habilitado: boolean('habilitado').notNull().default(false),
+    // Revisão monotônica do par barbeiro × serviço: vira `aggregateRevision` de EnablementChanged.
+    revisao: revisionColumn(),
   },
   (t) => [
     unique('habilitacoes_barbearia_par_uidx').on(t.barbeariaId, t.barbeiroId, t.servicoId),

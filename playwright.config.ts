@@ -1,19 +1,11 @@
 import { defineConfig, devices } from '@playwright/test'
 import { config } from 'dotenv'
+import { exigirBancoDeTesteE2E } from './tests/e2e/helpers/banco-e2e'
 
 if (process.env['E2E_FAKE_SESSION'] === '1') {
   config({ path: '.env.local', quiet: true })
   const testUrl = process.env['DATABASE_URL_TEST']
-  const bancoEsperado = (() => {
-    try {
-      return !!testUrl && new URL(testUrl).pathname.replace(/^\//, '') === 'barbearia_t06_test'
-    } catch {
-      return false
-    }
-  })()
-  if (!bancoEsperado) {
-    throw new Error('E2E_FAKE_SESSION exige DATABASE_URL_TEST apontando para o banco T06.')
-  }
+  exigirBancoDeTesteE2E(testUrl)
   process.env['DATABASE_URL'] = testUrl
 }
 

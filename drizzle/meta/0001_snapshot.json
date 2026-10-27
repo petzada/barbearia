@@ -1,0 +1,1152 @@
+{
+  "id": "df06754c-0fc7-4087-8f83-8fa71839a857",
+  "prevId": "d586acc6-005b-446c-87a9-ea6e0c2ccd40",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.barbearias": {
+      "name": "barbearias",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fuso": {
+          "name": "fuso",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'America/Sao_Paulo'"
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "barbearias_slug_uidx": {
+          "name": "barbearias_slug_uidx",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "barbearias_slug_formato": {
+          "name": "barbearias_slug_formato",
+          "value": "\"barbearias\".\"slug\" ~ '^[a-z0-9]+(-[a-z0-9]+)*$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.auditoria": {
+      "name": "auditoria",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ocorrida_em": {
+          "name": "ocorrida_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ator_id": {
+          "name": "ator_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ator_papeis": {
+          "name": "ator_papeis",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "acao": {
+          "name": "acao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recurso_tipo": {
+          "name": "recurso_tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recurso_id": {
+          "name": "recurso_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "antes": {
+          "name": "antes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "depois": {
+          "name": "depois",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motivo": {
+          "name": "motivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correlation_id": {
+          "name": "correlation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "auditoria_recurso_idx": {
+          "name": "auditoria_recurso_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recurso_tipo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recurso_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ocorrida_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auditoria_ocorrida_idx": {
+          "name": "auditoria_ocorrida_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ocorrida_em",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auditoria_correlation_idx": {
+          "name": "auditoria_correlation_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "correlation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "auditoria_barbearia_id_barbearias_id_fk": {
+          "name": "auditoria_barbearia_id_barbearias_id_fk",
+          "tableFrom": "auditoria",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.chaves_idempotencia": {
+      "name": "chaves_idempotencia",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ator_id": {
+          "name": "ator_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operacao": {
+          "name": "operacao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chave": {
+          "name": "chave",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash_payload": {
+          "name": "hash_payload",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resultado": {
+          "name": "resultado",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "chaves_idempotencia_escopo_uidx": {
+          "name": "chaves_idempotencia_escopo_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ator_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "operacao",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "chave",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "chaves_idempotencia_barbearia_id_barbearias_id_fk": {
+          "name": "chaves_idempotencia_barbearia_id_barbearias_id_fk",
+          "tableFrom": "chaves_idempotencia",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chaves_idempotencia_hash_sha256": {
+          "name": "chaves_idempotencia_hash_sha256",
+          "value": "\"chaves_idempotencia\".\"hash_payload\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.barbeiros": {
+      "name": "barbeiros",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizado_em": {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revisao": {
+          "name": "revisao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome_exibicao": {
+          "name": "nome_exibicao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "foto_key": {
+          "name": "foto_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ativo": {
+          "name": "ativo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "barbeiros_usuario_uidx": {
+          "name": "barbeiros_usuario_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "barbeiros_publicos_idx": {
+          "name": "barbeiros_publicos_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ativo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ordem",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "nome_exibicao",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "barbeiros_barbearia_id_barbearias_id_fk": {
+          "name": "barbeiros_barbearia_id_barbearias_id_fk",
+          "tableFrom": "barbeiros",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "barbeiros_barbearia_id_id_uidx": {
+          "name": "barbeiros_barbearia_id_id_uidx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "barbearia_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "barbeiros_ordem_nao_negativa": {
+          "name": "barbeiros_ordem_nao_negativa",
+          "value": "\"barbeiros\".\"ordem\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.combo_componentes": {
+      "name": "combo_componentes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "combo_id": {
+          "name": "combo_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "componente_id": {
+          "name": "componente_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "combo_componentes_combo_idx": {
+          "name": "combo_componentes_combo_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "combo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "combo_componentes_barbearia_id_barbearias_id_fk": {
+          "name": "combo_componentes_barbearia_id_barbearias_id_fk",
+          "tableFrom": "combo_componentes",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "combo_componentes_combo_fk": {
+          "name": "combo_componentes_combo_fk",
+          "tableFrom": "combo_componentes",
+          "tableTo": "servicos",
+          "columnsFrom": [
+            "barbearia_id",
+            "combo_id"
+          ],
+          "columnsTo": [
+            "barbearia_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "combo_componentes_componente_fk": {
+          "name": "combo_componentes_componente_fk",
+          "tableFrom": "combo_componentes",
+          "tableTo": "servicos",
+          "columnsFrom": [
+            "barbearia_id",
+            "componente_id"
+          ],
+          "columnsTo": [
+            "barbearia_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "combo_componentes_par_uidx": {
+          "name": "combo_componentes_par_uidx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "barbearia_id",
+            "combo_id",
+            "componente_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "combo_componentes_sem_autorreferencia": {
+          "name": "combo_componentes_sem_autorreferencia",
+          "value": "\"combo_componentes\".\"combo_id\" <> \"combo_componentes\".\"componente_id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.comissao_vigencias": {
+      "name": "comissao_vigencias",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "barbeiro_id": {
+          "name": "barbeiro_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "servico_id": {
+          "name": "servico_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pct_avulso_bp": {
+          "name": "pct_avulso_bp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pct_assinante_bp": {
+          "name": "pct_assinante_bp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inicio": {
+          "name": "inicio",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fim": {
+          "name": "fim",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "comissao_vigencias_par_inicio_idx": {
+          "name": "comissao_vigencias_par_inicio_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "barbeiro_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "servico_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "inicio",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "comissao_vigencias_barbearia_id_barbearias_id_fk": {
+          "name": "comissao_vigencias_barbearia_id_barbearias_id_fk",
+          "tableFrom": "comissao_vigencias",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "comissao_vigencias_barbeiro_fk": {
+          "name": "comissao_vigencias_barbeiro_fk",
+          "tableFrom": "comissao_vigencias",
+          "tableTo": "barbeiros",
+          "columnsFrom": [
+            "barbearia_id",
+            "barbeiro_id"
+          ],
+          "columnsTo": [
+            "barbearia_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "comissao_vigencias_servico_fk": {
+          "name": "comissao_vigencias_servico_fk",
+          "tableFrom": "comissao_vigencias",
+          "tableTo": "servicos",
+          "columnsFrom": [
+            "barbearia_id",
+            "servico_id"
+          ],
+          "columnsTo": [
+            "barbearia_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "comissao_vigencias_inicio_uidx": {
+          "name": "comissao_vigencias_inicio_uidx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "barbearia_id",
+            "barbeiro_id",
+            "servico_id",
+            "inicio"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "comissao_vigencias_bp_validos": {
+          "name": "comissao_vigencias_bp_validos",
+          "value": "\"comissao_vigencias\".\"pct_avulso_bp\" between 0 and 10000\n        and \"comissao_vigencias\".\"pct_assinante_bp\" between 0 and 10000"
+        },
+        "comissao_vigencias_fim_valido": {
+          "name": "comissao_vigencias_fim_valido",
+          "value": "\"comissao_vigencias\".\"fim\" is null or \"comissao_vigencias\".\"fim\" >= \"comissao_vigencias\".\"inicio\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.habilitacoes": {
+      "name": "habilitacoes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "barbeiro_id": {
+          "name": "barbeiro_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "servico_id": {
+          "name": "servico_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "habilitado": {
+          "name": "habilitado",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "habilitacoes_servico_idx": {
+          "name": "habilitacoes_servico_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "servico_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "habilitado",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "habilitacoes_barbearia_id_barbearias_id_fk": {
+          "name": "habilitacoes_barbearia_id_barbearias_id_fk",
+          "tableFrom": "habilitacoes",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "habilitacoes_barbeiro_fk": {
+          "name": "habilitacoes_barbeiro_fk",
+          "tableFrom": "habilitacoes",
+          "tableTo": "barbeiros",
+          "columnsFrom": [
+            "barbearia_id",
+            "barbeiro_id"
+          ],
+          "columnsTo": [
+            "barbearia_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "habilitacoes_servico_fk": {
+          "name": "habilitacoes_servico_fk",
+          "tableFrom": "habilitacoes",
+          "tableTo": "servicos",
+          "columnsFrom": [
+            "barbearia_id",
+            "servico_id"
+          ],
+          "columnsTo": [
+            "barbearia_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "habilitacoes_barbearia_par_uidx": {
+          "name": "habilitacoes_barbearia_par_uidx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "barbearia_id",
+            "barbeiro_id",
+            "servico_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.servicos": {
+      "name": "servicos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "barbearia_id": {
+          "name": "barbearia_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "criado_em": {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "atualizado_em": {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revisao": {
+          "name": "revisao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preco_centavos": {
+          "name": "preco_centavos",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duracao_minutos": {
+          "name": "duracao_minutos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ativo": {
+          "name": "ativo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "foto_key": {
+          "name": "foto_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "componentes_assinatura": {
+          "name": "componentes_assinatura",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "servicos_combo_ativo_componentes_uidx": {
+          "name": "servicos_combo_ativo_componentes_uidx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "componentes_assinatura",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"servicos\".\"tipo\" = 'combo' and \"servicos\".\"ativo\"",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "servicos_barbearia_ativo_nome_idx": {
+          "name": "servicos_barbearia_ativo_nome_idx",
+          "columns": [
+            {
+              "expression": "barbearia_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ativo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "nome",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "servicos_barbearia_id_barbearias_id_fk": {
+          "name": "servicos_barbearia_id_barbearias_id_fk",
+          "tableFrom": "servicos",
+          "tableTo": "barbearias",
+          "columnsFrom": [
+            "barbearia_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "servicos_barbearia_id_id_uidx": {
+          "name": "servicos_barbearia_id_id_uidx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "barbearia_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "servicos_preco_positivo": {
+          "name": "servicos_preco_positivo",
+          "value": "\"servicos\".\"preco_centavos\" > 0"
+        },
+        "servicos_duracao_positiva": {
+          "name": "servicos_duracao_positiva",
+          "value": "\"servicos\".\"duracao_minutos\" > 0"
+        },
+        "servicos_tipo_valido": {
+          "name": "servicos_tipo_valido",
+          "value": "\"servicos\".\"tipo\" in ('simples', 'combo')"
+        },
+        "servicos_assinatura_combo": {
+          "name": "servicos_assinatura_combo",
+          "value": "(\"servicos\".\"tipo\" = 'simples' and \"servicos\".\"componentes_assinatura\" is null)\n        or (\"servicos\".\"tipo\" = 'combo' and \"servicos\".\"componentes_assinatura\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

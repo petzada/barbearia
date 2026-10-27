@@ -1,4 +1,5 @@
 import { config } from 'dotenv'
+import { exigirBancoDeTesteE2E } from './banco-e2e'
 import { seedBarbearia } from '../../../src/platform/db/seed'
 import { criarDb, criarPool } from '../../../src/platform/db/client'
 import {
@@ -15,21 +16,14 @@ export interface CatalogoE2E {
   readonly barbeiroNome: string
 }
 
-/** Cria dados exclusivos no banco T06 descartável; não toca no banco de desenvolvimento. */
+/** Cria dados exclusivos no banco de teste descartável; não toca no banco de desenvolvimento. */
 export async function prepararCatalogoE2E(): Promise<CatalogoE2E> {
   config({ path: '.env.local', quiet: true })
   const url = process.env['DATABASE_URL_TEST']
   const slug = process.env['BARBEARIA_SLUG']
-  const bancoEsperado = (() => {
-    try {
-      return !!url && new URL(url).pathname.replace(/^\//, '') === 'barbearia_t06_test'
-    } catch {
-      return false
-    }
-  })()
-  if (!url || !slug || !bancoEsperado) {
-    throw new Error('A preparação de catálogo E2E exige o banco T06 de teste e BARBEARIA_SLUG.')
-  }
+  if (!slug) throw new Error('A preparação de catálogo E2E exige BARBEARIA_SLUG.')
+  exigirBancoDeTesteE2E(url)
+  if (!url) throw new Error('A preparação de catálogo E2E exige DATABASE_URL_TEST.')
   const pool = criarPool(url)
   const db = criarDb(pool)
   const barbearia = await seedBarbearia(db, { slug })
@@ -86,7 +80,7 @@ export async function prepararCatalogoE2E(): Promise<CatalogoE2E> {
     .values({
       id: barbeiroId,
       barbeariaId: barbearia.id,
-      usuarioId: 'e2e-t06-catalog-barber',
+      usuarioId: 'f0600000-0000-4000-8000-0000000000a1',
       nomeExibicao: barbeiroNome,
       bio: 'Perfil fictício usado no teste de catálogo.',
     })

@@ -2,6 +2,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
+import { exigirBancoDeTesteE2E } from './tests/e2e/helpers/banco-e2e'
 
 export default defineConfig(({ command, mode }) => {
   // O build SSR em vários ambientes resolvia o plugin do React em modo dev (jsxDEV no servidor,
@@ -16,16 +17,7 @@ export default defineConfig(({ command, mode }) => {
     }
     if (process.env['E2E_FAKE_SESSION'] === '1') {
       const testUrl = process.env['DATABASE_URL_TEST']
-      const bancoEsperado = (() => {
-        try {
-          return !!testUrl && new URL(testUrl).pathname.replace(/^\//, '') === 'barbearia_t06_test'
-        } catch {
-          return false
-        }
-      })()
-      if (!bancoEsperado) {
-        throw new Error('E2E_FAKE_SESSION exige DATABASE_URL_TEST apontando para o banco T06.')
-      }
+      exigirBancoDeTesteE2E(testUrl)
       process.env['DATABASE_URL'] = testUrl
     }
   }

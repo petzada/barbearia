@@ -15,6 +15,13 @@
       "when": 1791933017521,
       "tag": "t06_catalogo_servicos_equipe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791933017522,
+      "tag": "t06_catalogo_revisao_usuario_uuid",
+      "breakpoints": true
     }
   ]
 }

@@ -1,35 +1,19 @@
-import { useEffect, useState } from 'react'
-import { Link } from '@tanstack/react-router'
-import { Badge, Card, EmptyState, ErrorState, LoadingSkeleton, MoneyText } from '~/ui'
-import { listPublicCatalog } from '../client'
+import { Link, useRouter } from '@tanstack/react-router'
+import { Badge, Card, EmptyState, ErrorState, MoneyText } from '~/ui'
+import type { listPublicCatalog } from '../client'
 
 type Resultado = Awaited<ReturnType<typeof listPublicCatalog>>
 
-export function ServicosPublicos() {
-  const [resultado, setResultado] = useState<Resultado | null>(null)
+/** O `loader` da rota entrega o resultado na primeira resposta (SSR); aqui só se apresenta ou se tenta de novo. */
+export function ServicosPublicos({ resultado }: { resultado: Resultado }) {
+  const router = useRouter()
 
-  async function carregar() {
-    setResultado(await listPublicCatalog({}))
-  }
-
-  useEffect(() => {
-    let ativa = true
-    void listPublicCatalog({}).then((resposta) => {
-      if (ativa) setResultado(resposta)
-    })
-    return () => {
-      ativa = false
-    }
-  }, [])
-
-  if (!resultado)
-    return <LoadingSkeleton lines={4} variant="cartoes" label="Carregando serviços…" />
   if (resultado.status === 'error') {
     return (
       <ErrorState
         message={resultado.message}
         correlationId={resultado.correlationId}
-        onRetry={carregar}
+        onRetry={() => router.invalidate()}
       />
     )
   }

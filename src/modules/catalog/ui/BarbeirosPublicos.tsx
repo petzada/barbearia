@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Link } from '@tanstack/react-router'
-import { Badge, Card, EmptyState, ErrorState, LoadingSkeleton } from '~/ui'
-import { listPublicBarbers } from '../client'
+import { Link, useRouter } from '@tanstack/react-router'
+import { Badge, Card, EmptyState, ErrorState } from '~/ui'
+import type { listPublicBarbers } from '../client'
 
 type Resultado = Awaited<ReturnType<typeof listPublicBarbers>>
 
@@ -14,30 +13,16 @@ function iniciais(nome: string): string {
     .join('')
 }
 
-export function BarbeirosPublicos() {
-  const [resultado, setResultado] = useState<Resultado | null>(null)
+/** O `loader` da rota entrega o resultado na primeira resposta (SSR); aqui só se apresenta ou se tenta de novo. */
+export function BarbeirosPublicos({ resultado }: { resultado: Resultado }) {
+  const router = useRouter()
 
-  async function carregar() {
-    setResultado(await listPublicBarbers({}))
-  }
-
-  useEffect(() => {
-    let ativa = true
-    void listPublicBarbers({}).then((resposta) => {
-      if (ativa) setResultado(resposta)
-    })
-    return () => {
-      ativa = false
-    }
-  }, [])
-
-  if (!resultado) return <LoadingSkeleton lines={4} variant="cartoes" label="Carregando equipe…" />
   if (resultado.status === 'error') {
     return (
       <ErrorState
         message={resultado.message}
         correlationId={resultado.correlationId}
-        onRetry={carregar}
+        onRetry={() => router.invalidate()}
       />
     )
   }

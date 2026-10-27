@@ -16,6 +16,14 @@ import {
 import type { CatalogDependencies } from '../deps'
 import { barbeiros, comboComponentes, comissaoVigencias, habilitacoes, servicos } from '../schema'
 
+// Item 9: criar combo e desativar serviço leem o catálogo ativo e escrevem em seguida; sem um lock comum,
+// duas abas de admin quebram RN02 (combo com componente inativo, ou simples desativado dentro de combo ativo).
+async function lockCatalogoDaBarbearia(tx: Tx, ctx: RequestContext): Promise<void> {
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(hashtext(${ctx.barbeariaId}), hashtext('catalog.combo'))`,
+  )
+}
+
 interface DadosServico {
   readonly nome: string
   readonly descricao?: string | undefined
@@ -68,9 +76,7 @@ export async function createCombo(
     throw CatalogErrors.INVALID_COMBO()
   }
 
-  await tx.execute(
-    sql`select pg_advisory_xact_lock(hashtext(${ctx.barbeariaId}), hashtext('catalog.combo'))`,
-  )
+  await lockCatalogoDaBarbearia(tx, ctx)
   const componentes = await tx
     .select({ id: servicos.id, ativo: servicos.ativo, tipo: servicos.tipo })
     .from(servicos)
@@ -210,6 +216,7 @@ export async function deactivateService(
   input: { readonly servicoId: string },
   expectedRevision: number | undefined,
 ) {
+  await lockCatalogoDaBarbearia(tx, ctx)
   const [atual] = await tx
     .select()
     .from(servicos)
@@ -261,43 +268,42 @@ export async function changeEnablement(
   deps: CatalogDependencies,
   input: { readonly barbeiroId: string; readonly servicoId: string; readonly habilitado: boolean },
 ) {
-  const [[barbeiro], [servico], [anterior]] = await Promise.all([
-    tx
-      .select({ id: barbeiros.id })
-      .from(barbeiros)
-      .where(
-        and(
-          eq(barbeiros.barbeariaId, ctx.barbeariaId),
-          eq(barbeiros.id, input.barbeiroId),
-          eq(barbeiros.ativo, true),
-        ),
+  // Item 8: um client `pg` não executa queries em paralelo; as leituras seguem em sequência no mesmo `tx`.
+  const [barbeiro] = await tx
+    .select({ id: barbeiros.id })
+    .from(barbeiros)
+    .where(
+      and(
+        eq(barbeiros.barbeariaId, ctx.barbeariaId),
+        eq(barbeiros.id, input.barbeiroId),
+        eq(barbeiros.ativo, true),
       ),
-    tx
-      .select({ id: servicos.id })
-      .from(servicos)
-      .where(
-        and(
-          eq(servicos.barbeariaId, ctx.barbeariaId),
-          eq(servicos.id, input.servicoId),
-          eq(servicos.ativo, true),
-        ),
-      ),
-    tx
-      .select()
-      .from(habilitacoes)
-      .where(
-        and(
-          eq(habilitacoes.barbeariaId, ctx.barbeariaId),
-          eq(habilitacoes.barbeiroId, input.barbeiroId),
-          eq(habilitacoes.servicoId, input.servicoId),
-        ),
-      )
-      .for('update'),
-  ])
+    )
   if (!barbeiro) throw CatalogErrors.BARBER_NOT_FOUND()
+  const [servico] = await tx
+    .select({ id: servicos.id })
+    .from(servicos)
+    .where(
+      and(
+        eq(servicos.barbeariaId, ctx.barbeariaId),
+        eq(servicos.id, input.servicoId),
+        eq(servicos.ativo, true),
+      ),
+    )
   if (!servico) throw CatalogErrors.SERVICE_NOT_FOUND()
+  const [anterior] = await tx
+    .select()
+    .from(habilitacoes)
+    .where(
+      and(
+        eq(habilitacoes.barbeariaId, ctx.barbeariaId),
+        eq(habilitacoes.barbeiroId, input.barbeiroId),
+        eq(habilitacoes.servicoId, input.servicoId),
+      ),
+    )
+    .for('update')
   if (anterior?.habilitado === input.habilitado) return ok({ ...input })
-  await tx
+  const [gravada] = await tx
     .insert(habilitacoes)
     .values({
       barbeariaId: ctx.barbeariaId,
@@ -307,19 +313,22 @@ export async function changeEnablement(
     })
     .onConflictDoUpdate({
       target: [habilitacoes.barbeariaId, habilitacoes.barbeiroId, habilitacoes.servicoId],
-      set: { habilitado: input.habilitado },
+      set: { habilitado: input.habilitado, revisao: sql`${habilitacoes.revisao} + 1` },
     })
+    .returning({ id: habilitacoes.id, revisao: habilitacoes.revisao })
+  if (!gravada) throw CatalogErrors.BARBER_NOT_FOUND()
   await auditWriter.record(tx, ctx, {
     action: 'catalog.alterarHabilitacao',
     resource: { type: 'habilitacao', id: `${input.barbeiroId}:${input.servicoId}` },
     before: { habilitado: anterior?.habilitado ?? false },
     after: { habilitado: input.habilitado },
   })
+  // A revisão é monotônica por par barbeiro × serviço (o agregado da habilitação), não por barbeiro.
   await deps.outbox.publishInTx(
     tx,
     EnablementChanged.create(ctx, {
-      aggregateId: input.barbeiroId,
-      aggregateRevision: 1,
+      aggregateId: `${input.barbeiroId}:${input.servicoId}`,
+      aggregateRevision: gravada.revisao,
       payload: input,
     }),
   )
@@ -347,40 +356,39 @@ export async function scheduleCommission(
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtext(${input.barbeiroId}), hashtext(${input.servicoId}))`,
   )
-  const [[barbeiro], [servico], vigencias] = await Promise.all([
-    tx
-      .select({ id: barbeiros.id })
-      .from(barbeiros)
-      .where(
-        and(
-          eq(barbeiros.barbeariaId, ctx.barbeariaId),
-          eq(barbeiros.id, input.barbeiroId),
-          eq(barbeiros.ativo, true),
-        ),
+  // Item 8: leituras em sequência no mesmo `tx`; o `FOR UPDATE` da vigência vem antes de qualquer escrita.
+  const [barbeiro] = await tx
+    .select({ id: barbeiros.id })
+    .from(barbeiros)
+    .where(
+      and(
+        eq(barbeiros.barbeariaId, ctx.barbeariaId),
+        eq(barbeiros.id, input.barbeiroId),
+        eq(barbeiros.ativo, true),
       ),
-    tx
-      .select({ id: servicos.id })
-      .from(servicos)
-      .where(
-        and(
-          eq(servicos.barbeariaId, ctx.barbeariaId),
-          eq(servicos.id, input.servicoId),
-          eq(servicos.ativo, true),
-        ),
+    )
+  const [servico] = await tx
+    .select({ id: servicos.id })
+    .from(servicos)
+    .where(
+      and(
+        eq(servicos.barbeariaId, ctx.barbeariaId),
+        eq(servicos.id, input.servicoId),
+        eq(servicos.ativo, true),
       ),
-    tx
-      .select()
-      .from(comissaoVigencias)
-      .where(
-        and(
-          eq(comissaoVigencias.barbeariaId, ctx.barbeariaId),
-          eq(comissaoVigencias.barbeiroId, input.barbeiroId),
-          eq(comissaoVigencias.servicoId, input.servicoId),
-        ),
-      )
-      .orderBy(desc(comissaoVigencias.inicio))
-      .for('update'),
-  ])
+    )
+  const vigencias = await tx
+    .select()
+    .from(comissaoVigencias)
+    .where(
+      and(
+        eq(comissaoVigencias.barbeariaId, ctx.barbeariaId),
+        eq(comissaoVigencias.barbeiroId, input.barbeiroId),
+        eq(comissaoVigencias.servicoId, input.servicoId),
+      ),
+    )
+    .orderBy(desc(comissaoVigencias.inicio))
+    .for('update')
   if (!barbeiro) throw CatalogErrors.BARBER_NOT_FOUND()
   if (!servico) throw CatalogErrors.SERVICE_NOT_FOUND()
   const anterior = vigencias[0]
@@ -390,6 +398,8 @@ export async function scheduleCommission(
   ) {
     throw CatalogErrors.INVALID_EFFECTIVE_DATE()
   }
+  // D0066/RN02: a vigência anterior termina no dia local anterior ao início da nova (fim inclusivo).
+  const fimAnterior = anterior ? (anterior.fim ?? addDays(input.inicio, -1)) : null
   if (anterior?.fim === null) {
     await tx
       .update(comissaoVigencias)
@@ -411,8 +421,14 @@ export async function scheduleCommission(
   await auditWriter.record(tx, ctx, {
     action: 'catalog.agendarComissao',
     resource: { type: 'comissao_vigencia', id: nova.id },
+    // A trilha registra a vigência anterior como estava (fim aberto) e a fronteira efetiva depois da mudança.
     before: anterior
-      ? { percentualAvulsoBp: anterior.percentualAvulsoBp, fim: input.inicio }
+      ? {
+          percentualAvulsoBp: anterior.percentualAvulsoBp,
+          percentualAssinanteBp: anterior.percentualAssinanteBp,
+          inicio: anterior.inicio,
+          fim: anterior.fim,
+        }
       : null,
     after: {
       barbeiroId: input.barbeiroId,
@@ -420,13 +436,16 @@ export async function scheduleCommission(
       percentualAvulsoBp: input.percentualAvulsoBp,
       percentualAssinanteBp: input.percentualAssinanteBp,
       inicio: input.inicio,
+      fim: null,
+      vigenciaAnteriorFim: fimAnterior,
     },
   })
   await deps.outbox.publishInTx(
     tx,
     CommissionRateScheduled.create(ctx, {
-      aggregateId: input.barbeiroId,
-      aggregateRevision: 1,
+      // Revisão = número da vigência do par barbeiro × serviço (monotônico; vigências são append-only).
+      aggregateId: `${input.barbeiroId}:${input.servicoId}`,
+      aggregateRevision: vigencias.length + 1,
       payload: {
         barbeiroId: input.barbeiroId,
         servicoId: input.servicoId,
