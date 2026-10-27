@@ -5,6 +5,7 @@ import {
   buildTimelineLabels,
   buildTimelineRows,
   COLUMN_GAP_PX,
+  currentMinutesInSP,
   entryDurationMinutes,
   expandBoundsForEntries,
   layoutTimelineEntriesWithColumns,
@@ -15,6 +16,7 @@ import {
   timelineRowsHeightPx,
 } from "@/lib/agenda/timeline";
 import { todayDateKeySP } from "@/lib/agenda/timezone";
+import { formatClock } from "@/lib/agenda/today";
 import { formatSlotTime } from "@/lib/agenda/availability";
 import { cn } from "@/lib/utils";
 import { CalendarOff } from "lucide-react";
@@ -208,16 +210,17 @@ export function AgendaDayTimeline({
         {/* Linha de hora atual */}
         {nowTop != null && (
           <div
-            className="pointer-events-none absolute right-0 z-20 flex items-center"
-            style={{
-              top: nowTop,
-              left: TIME_COL_WIDTH,
-              transform: "translateY(-50%)",
-            }}
+            className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
+            style={{ top: nowTop, transform: "translateY(-50%)" }}
             aria-hidden
           >
-            <span className="size-2.5 shrink-0 rounded-full border-2 border-pastel bg-surface-1" />
-            <span className="h-px flex-1 bg-pastel" />
+            <span
+              className="tabular shrink-0 rounded-full bg-destructive px-1.5 py-0.5 text-center text-[11px] font-extrabold text-white"
+              style={{ width: TIME_COL_WIDTH }}
+            >
+              {formatClock(currentMinutesInSP(now))}
+            </span>
+            <span className="h-0.5 flex-1 bg-destructive" />
           </div>
         )}
 
@@ -240,11 +243,6 @@ export function AgendaDayTimeline({
                 )
               : 0;
           const continuationPx = Math.max(0, timeSpanPx - renderHeight - 2);
-          const containsNow =
-            isToday &&
-            nowTop != null &&
-            nowTop >= renderTop &&
-            nowTop <= renderTop + renderHeight;
           const done = e.status === "completed" || e.status === "no_show";
           // Meio slot (15 min): menos respiro, mesmas informações.
           const compact = renderHeight < SLOT_HEIGHT_PX - 2;
@@ -284,7 +282,6 @@ export function AgendaDayTimeline({
                     : done
                       ? "bg-card opacity-70 shadow-card"
                       : "border-l-4 border-cta bg-card shadow-card",
-                  containsNow && e.type === "appointment" && "ring-2 ring-cta/40",
                 )}
                 style={{ height: renderHeight }}
               >
