@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { formatPriceCents } from "@/lib/agenda/availability";
 import { BILLING_GRACE_DAYS } from "@/lib/club-billing";
 import { CardCheckout, type CardCheckoutPayer } from "../../card-checkout";
 import { PendingPayment } from "../../pending-payment";
+import { useBusyTransition } from "@/components/loading/busy";
 
 type Method = "CARD" | "PIX";
 
@@ -29,7 +30,7 @@ export function SubscribeFlow({
   const router = useRouter();
   const [method, setMethod] = useState<Method>(publicKey ? "CARD" : "PIX");
   const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   const price = formatPriceCents(plan.priceCents);
   const clearPending = useCallback(() => setPendingPaymentId(null), []);
 

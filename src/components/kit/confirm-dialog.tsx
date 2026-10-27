@@ -12,6 +12,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { useBusy } from "@/components/loading/busy";
 
 /**
  * Confirmação única para toda ação irreversível: título em pergunta, uma frase
@@ -40,6 +41,7 @@ export function ConfirmDialog({
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [pending, setPending] = useState(false);
+  useBusy(pending);
   const open = openProp ?? internalOpen;
   const setOpen = (next: boolean) => {
     if (openProp === undefined) setInternalOpen(next);

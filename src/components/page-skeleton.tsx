@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { BusyWhileMounted } from "@/components/loading/loading-overlay";
 
 type Variant = "list" | "grid" | "dashboard" | "settings";
 
@@ -26,6 +27,7 @@ export function PageSkeleton({
       {variant === "grid" && <GridBody cards={cards} />}
       {variant === "dashboard" && <DashboardBody />}
       {variant === "settings" && <SettingsBody groups={cards} />}
+      <BusyWhileMounted />
     </div>
   );
 }

@@ -1,23 +1,17 @@
-import { Scissors } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-/** Marca textual da barbearia (substituível pelo logo oficial em /public). */
+/** Logo oficial da barbearia; `inverted` usa a versão branca sobre fotos/fundos escuros. */
 export function BrandMark({ className, inverted = false }: { className?: string; inverted?: boolean }) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
-      <span
-        className={cn(
-          "flex size-9 items-center justify-center rounded-md",
-          inverted ? "bg-on-dark/15 text-on-dark" : "bg-cta text-cta-foreground",
-        )}
-      >
-        <Scissors className="size-[18px]" strokeWidth={2.25} aria-hidden />
-      </span>
-      <span className={cn("text-[15px] font-extrabold leading-tight tracking-tight", inverted ? "text-on-dark" : "text-ink")}>
-        Barbearia
-        <br />
-        do Moura
-      </span>
-    </span>
+    <Image
+      src={inverted ? "/images/logo-white.webp" : "/images/logo.webp"}
+      alt="Barbearia do Moura"
+      width={480}
+      height={290}
+      priority
+      className={cn("h-14 w-auto select-none", inverted && "drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)]", className)}
+      draggable={false}
+    />
   );
 }

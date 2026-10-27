@@ -1,6 +1,5 @@
 "use client";
 
-import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Ban, CheckCircle2, ChevronRight, MessageCircle, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +23,7 @@ import { rowClass, rowGroupClass, rowIconClass } from "@/lib/ui/classes";
 import { FieldLabel } from "@/components/kit/field-label";
 import type { EntryPaymentMethod, EntryPaymentStatus, EntryStatus } from "@/server/db/schema";
 import type { TimelineEntry } from "./agenda-day-timeline";
+import { useBusyTransition } from "@/components/loading/busy";
 
 type ActionResult = { ok: boolean; error: string | null };
 
@@ -44,7 +44,7 @@ export function EntrySheet({
   openedAt: number;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   function run(fn: () => Promise<ActionResult>, success: string) {
     return new Promise<boolean>((resolve) =>

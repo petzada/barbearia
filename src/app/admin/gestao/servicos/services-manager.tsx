@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { Plus, Scissors } from "lucide-react";
@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { chipClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
+import { useBusyTransition } from "@/components/loading/busy";
 
 export type ServiceRow = {
   id: string;
@@ -34,7 +35,7 @@ const DURATIONS = [15, 30, 45, 60, 90];
 export function ServicesManager({ services }: { services: ServiceRow[] }) {
   const router = useRouter();
   const sheet = useSheetState<ServiceRow | "new">();
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   const run = (fn: () => Promise<{ ok: boolean; error: string | null }>, message?: string) =>
     startTransition(async () => {
@@ -123,7 +124,7 @@ function ServiceSheet({
   const [custom, setCustom] = useState(service ? !DURATIONS.includes(service.durationMinutes) : false);
   const [price, setPrice] = useState(service?.priceCents ?? 0);
   const [active, setActive] = useState(service?.active ?? true);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   function save() {
     startTransition(async () => {

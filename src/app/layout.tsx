@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { NavigationTracker } from "@/components/navigation-tracker";
+import { LoadingOverlay } from "@/components/loading/loading-overlay";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <div className="min-h-svh overflow-x-clip">{children}</div>
         <NavigationTracker />
+        <LoadingOverlay />
         <Toaster richColors position="top-center" containerAriaLabel="Avisos" />
       </body>
     </html>

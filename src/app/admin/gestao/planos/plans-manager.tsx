@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowDown, ArrowUp, Crown, Minus, Pencil, Plus, Trash2 } from "lucide-react";
@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CYCLE_OPTIONS, WEEKDAY_SHORT, type PlanCycle } from "@/lib/plans";
 import { chipClass, rowGroupClass } from "@/lib/ui/classes";
 import { cn, countLabel } from "@/lib/utils";
+import { useBusyTransition } from "@/components/loading/busy";
 
 export type PlanRow = {
   id: string;
@@ -142,7 +143,7 @@ function PlanSheet({
   const [allowedWeekdays, setAllowedWeekdays] = useState<number[]>(plan?.allowedWeekdays ?? []);
   const [visitsPerCycle, setVisitsPerCycle] = useState(plan?.visitsPerCycle ?? 4);
   const toggle = <T,>(list: T[], value: T) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   const productChanged = plan != null && (price !== plan.priceCents || cycle !== plan.cycle);
 
   function addBenefit() {

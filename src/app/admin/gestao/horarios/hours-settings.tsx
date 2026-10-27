@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { AtSign, CalendarRange, CalendarX, ChevronRight, Copy, Grid3x3, MapPin, MessageCircle, Plus, Store, Timer, Trash2, type LucideIcon } from "lucide-react";
@@ -20,6 +20,7 @@ import { WEEKDAY_LONG } from "@/lib/agenda/week";
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
 import { chipClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
+import { useBusyTransition } from "@/components/loading/busy";
 
 type Day = { weekday: number; openTime: string; closeTime: string; isClosed: boolean };
 type Settings = {
@@ -62,7 +63,7 @@ export function HoursSettings({ week, closures, settings }: { week: Day[]; closu
   const [closureDate, setClosureDate] = useState(todayDateKeySP());
   const [closureReason, setClosureReason] = useState("");
   const [ruleValue, setRuleValue] = useState<number | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   const confirmClosure = useSheetState<string>();
 
   const done = (message: string) => {

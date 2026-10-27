@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { closePayoutAction } from "@/app/actions/admin";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { formatDateRange } from "@/lib/agenda/format";
 import type { PayoutMethod } from "@/server/payouts";
+import { useBusyTransition } from "@/components/loading/busy";
 
 /** Fecha o período do barbeiro e marca as comissões como pagas. */
 export function PayoutButton({
@@ -30,7 +31,7 @@ export function PayoutButton({
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<PayoutMethod>("pix");
   const [note, setNote] = useState("");
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   function confirm() {
     startTransition(async () => {

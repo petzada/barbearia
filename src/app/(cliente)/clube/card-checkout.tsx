@@ -11,6 +11,7 @@ import { formatCpf, isValidCpf } from "@/lib/cpf";
 import { formatPriceCents } from "@/lib/agenda/availability";
 import { BILLING_GRACE_DAYS, MAX_CARD_ATTEMPTS } from "@/lib/club-billing";
 import { cn } from "@/lib/utils";
+import { useBusy } from "@/components/loading/busy";
 
 export type CardCheckoutPayer = {
   name: string;
@@ -49,6 +50,7 @@ export function CardCheckout({
   const [email, setEmail] = useState(payer.billingEmail ?? "");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
+  useBusy(busy);
   const [touched, setTouched] = useState(false);
   const onReadyChange = useCallback((value: boolean) => setReady(value), []);
 

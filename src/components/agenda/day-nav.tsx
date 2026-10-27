@@ -9,6 +9,7 @@ import { todayDateKeySP } from "@/lib/agenda/timezone";
 import { chipClass } from "@/lib/ui/classes";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useBusyTransition } from "@/components/loading/busy";
 import { BookingCalendarSheet } from "./booking-calendar-sheet";
 
 export function shiftDateKey(dateKey: string, days: number) {
@@ -28,6 +29,7 @@ export function DayNav({
 }) {
   const router = useRouter();
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [, startNavigation] = useBusyTransition();
   const isToday = dateKey === todayDateKeySP();
   return (
     <div className="flex items-center gap-2">
@@ -55,7 +57,7 @@ export function DayNav({
         open={calendarOpen}
         onOpenChange={setCalendarOpen}
         selected={dateKey}
-        onSelect={(day) => router.push(hrefFor(day))}
+        onSelect={(day) => startNavigation(() => router.push(hrefFor(day)))}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useSheetState } from "@/components/kit/use-sheet-state";
 import { useRouter } from "next/navigation";
 import { Ban, ChevronRight, CreditCard, Plus, Receipt, Undo2 } from "lucide-react";
@@ -36,6 +36,7 @@ import { LOCAL_PAYMENT_METHODS, type LocalPaymentMethod } from "@/lib/validation
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
 import { rowClass, rowGroupClass, staticRowClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
+import { useBusyTransition } from "@/components/loading/busy";
 
 type Row = {
   subscriptionId: string;
@@ -73,7 +74,7 @@ export function ClubMembers({ rows }: { rows: Row[] }) {
   const detail = detailSheet.item;
   const [method, setMethod] = useState<LocalPaymentMethod>("dinheiro");
   const [openingId, setOpeningId] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
   const [now] = useState(() => Date.now());
 
   function open(subscriptionId: string) {
@@ -297,7 +298,7 @@ export function RegisterButton({ plans }: { plans: { id: string; name: string; p
   const [phone, setPhone] = useState("");
   const [planId, setPlanId] = useState(plans[0]?.id ?? "");
   const [method, setMethod] = useState<LocalPaymentMethod>("dinheiro");
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = useBusyTransition();
 
   function submit() {
     startTransition(async () => {

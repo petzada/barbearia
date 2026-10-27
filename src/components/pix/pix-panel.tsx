@@ -9,6 +9,7 @@ import { checkPixAction, simulatePixAction } from "@/app/actions/cliente";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/page-header";
+import { useBusy } from "@/components/loading/busy";
 
 const POLL_MS = 4000;
 
@@ -50,6 +51,7 @@ export function PixPanel({
   const [status, setStatus] = useState<string>("pending");
   const [now, setNow] = useState(() => Date.now());
   const [simulating, setSimulating] = useState(false);
+  useBusy(simulating);
 
   useEffect(() => {
     if (status === "paid") {

@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { NavigationBusy } from "@/components/loading/navigation-busy";
 import { BottomNav } from "./bottom-nav";
 import { Sidebar } from "./sidebar";
 import type { AppMode } from "./nav-config";
@@ -29,6 +30,9 @@ export function AppShell({
         </div>
       </div>
       <BottomNav mode={mode} />
+      <Suspense fallback={null}>
+        <NavigationBusy />
+      </Suspense>
     </div>
   );
 }
