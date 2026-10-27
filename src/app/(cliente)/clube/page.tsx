@@ -216,13 +216,13 @@ export default async function ClubePage() {
             <ul className={rowGroupClass}>
               {history.map((p) => (
                 <li key={p.id} className={staticRowClass}>
-                  <div>
-                    <p className="font-bold">{p.kind === "subscription" ? "Clube Moura" : "Agendamento"}</p>
-                    <p className="text-ink-subtle">
+                  <div className="min-w-0">
+                    <p className="truncate font-bold">{p.kind === "subscription" ? "Clube Moura" : "Agendamento"}</p>
+                    <p className="truncate text-ink-subtle">
                       {formatDay(p.paidAt)} · {paymentMethodLabel(p.method)}
                     </p>
                   </div>
-                  <span className="tabular font-bold">{formatPriceCents(p.amountCents)}</span>
+                  <span className="tabular shrink-0 font-bold">{formatPriceCents(p.amountCents)}</span>
                 </li>
               ))}
             </ul>

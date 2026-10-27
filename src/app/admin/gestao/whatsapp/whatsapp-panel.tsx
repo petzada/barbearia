@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { DEFAULT_WHATSAPP_TEMPLATE } from "@/server/whatsapp/template";
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
 import { formatDayLabel } from "@/lib/agenda/format";
-import { chipClass, chipRowClass } from "@/lib/ui/classes";
+import { chipClass, chipRowClass, rowGroupClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
 
 type Config = {
@@ -274,7 +274,7 @@ export function WhatsappPanel({
         {logs.length === 0 ? (
           <EmptyState compact icon={History} title="Nenhum envio registrado" />
         ) : (
-          <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+          <ul className={rowGroupClass}>
             {logs.map((l) => (
               <li key={l.id} className="flex items-start gap-3 px-4 py-3 text-sm">
                 {l.status === "sent" ? (

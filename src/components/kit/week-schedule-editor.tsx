@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { WEEKDAY_LONG } from "@/lib/agenda/week";
+import { rowGroupClass } from "@/lib/ui/classes";
 import { cn } from "@/lib/utils";
 
 export type WeekDay = { weekday: number; startTime: string; endTime: string; isOff: boolean };
@@ -39,7 +40,7 @@ export function WeekScheduleEditor({
     onChange(value.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d)));
 
   return (
-    <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card" aria-label="Escala semanal">
+    <ul className={rowGroupClass} aria-label="Escala semanal">
       {order.map((weekday) => {
         const day = value.find((d) => d.weekday === weekday)!;
         const shopClosed = disabledDays.includes(weekday);

@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { formatBrazilPhone, maskBrazilPhoneInput } from "@/lib/phone";
+import { rowGroupClass } from "@/lib/ui/classes";
 
 type ShopDay = { weekday: number; openTime: string; closeTime: string; isClosed: boolean };
 
@@ -126,7 +127,7 @@ export function TeamManager({
         {invites.length > 0 && (
           <section className="flex flex-col gap-2">
             <h2 className="px-1 text-xs font-bold uppercase tracking-wider text-ink-subtle">Convites pendentes</h2>
-            <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+            <ul className={rowGroupClass}>
               {invites.map((i) => (
                 <li key={i.phoneNumber} className="flex items-center gap-3 py-2 pl-4 pr-2 text-sm">
                   <span className="flex-1">
@@ -219,7 +220,7 @@ function MemberSheet({ member, open, self, shopWeek, onClose }: { member: Member
 
       <div className="flex flex-col gap-2">
         <Label>Papéis</Label>
-        <div className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+        <div className={rowGroupClass}>
           <label className="flex items-center justify-between gap-3 px-4 py-3">
             <span>
               <span className="block font-semibold">Barbeiro</span>

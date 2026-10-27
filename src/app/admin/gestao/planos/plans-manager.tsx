@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { CYCLE_OPTIONS, WEEKDAY_SHORT, type PlanCycle } from "@/lib/plans";
-import { chipClass } from "@/lib/ui/classes";
+import { chipClass, rowGroupClass } from "@/lib/ui/classes";
 import { cn, countLabel } from "@/lib/utils";
 
 export type PlanRow = {
@@ -266,7 +266,7 @@ function PlanSheet({
       <div className="flex flex-col gap-2">
         <Label>Benefícios</Label>
         {benefits.length > 0 && (
-          <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+          <ul className={rowGroupClass}>
             {benefits.map((b, i) => (
               <li key={b} className="flex items-center gap-1 py-1 pl-4 pr-1">
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold">{b}</span>
@@ -307,7 +307,7 @@ function PlanSheet({
           </Button>
         </div>
       </div>
-      <div className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+      <div className={rowGroupClass}>
         <label className="flex items-center justify-between gap-3 px-4 py-3">
           <span>
             <span className="block font-semibold">★ Recomendado</span>

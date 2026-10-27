@@ -14,7 +14,7 @@ import { dateKeyFromIsoInSP, formatPriceCents, formatSlotTime } from "@/lib/agen
 import { formatDateRange, formatDayLabel } from "@/lib/agenda/format";
 import { buttonVariants } from "@/components/ui/button";
 import { PERIOD_OPTIONS, resolvePeriod } from "@/lib/periods";
-import { staticRowClass } from "@/lib/ui/classes";
+import { rowGroupClass, staticRowClass } from "@/lib/ui/classes";
 import { countLabel } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Ganhos" };
@@ -101,7 +101,7 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
                   <span>{formatDayLabel(dateKey)}</span>
                   <span className="tabular">{formatPriceCents(items.reduce((s, i) => s + i.commissionCents, 0))}</span>
                 </div>
-                <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+                <ul className={rowGroupClass}>
                   {items.map((i) => (
                     <li key={i.id} className={staticRowClass}>
                       <span className="tabular w-12 shrink-0 text-ink-subtle">{formatSlotTime(i.startsAt)}</span>
@@ -120,7 +120,7 @@ export default async function GanhosPage({ searchParams }: { searchParams: Promi
         {payouts.length > 0 && (
           <section className="flex flex-col gap-3">
             <SectionTitle>Últimos repasses</SectionTitle>
-            <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+            <ul className={rowGroupClass}>
               {payouts.map((p) => (
                 <li key={p.id} className={staticRowClass}>
                   <span>

@@ -11,6 +11,7 @@ import { DailyBarChart } from "@/components/charts/daily-bar-chart";
 import { BarberAvatar } from "@/components/booking/barber-avatar";
 import { formatMinutesShort, formatPriceCents, formatSlotTime } from "@/lib/agenda/availability";
 import { resolvePeriod } from "@/lib/periods";
+import { rowGroupClass, staticRowClass } from "@/lib/ui/classes";
 import { countLabel } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Painel" };
@@ -114,7 +115,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
           </section>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 *:min-w-0 lg:grid-cols-2">
           <section className="flex flex-col gap-3">
             <SectionTitle>Serviços mais vendidos</SectionTitle>
             {dash.topServices.length === 0 ? (
@@ -142,14 +143,14 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
             {dash.byBarber.length === 0 ? (
               <EmptyState compact icon={Users} title="Sem atendimentos concluídos no período" />
             ) : (
-              <ul className="divide-y divide-hairline rounded-lg bg-card shadow-card">
+              <ul className={rowGroupClass}>
                 {dash.byBarber.map((b) => (
-                  <li key={b.barberId} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
-                    <span>
-                      <span className="block font-bold">{b.name}</span>
+                  <li key={b.barberId} className={staticRowClass}>
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold">{b.name}</span>
                       <span className="text-ink-subtle">{countLabel(b.completed, "atendimento", "atendimentos")}</span>
                     </span>
-                    <span className="tabular text-right">
+                    <span className="tabular shrink-0 text-right">
                       <span className="block font-bold">{formatPriceCents(b.revenueCents)}</span>
                       <span className="text-xs text-ink-subtle">comissão {formatPriceCents(b.commissionCents)}</span>
                     </span>
