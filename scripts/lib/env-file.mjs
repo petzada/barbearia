@@ -33,7 +33,7 @@ const needsQuotes = (v) => /[\s#"']/.test(v);
 
 /** Serializa com cabeçalho; aspas só quando necessário. */
 export function serializeEnv(entries) {
-  const lines = ["# Gerado por `npm run setup`. Não versionar (arquivo no .gitignore).", ""];
+  const lines = ["# Gerado por `pnpm run setup`. Não versionar (arquivo no .gitignore).", ""];
   for (const [key, value] of entries) {
     lines.push(`${key}=${needsQuotes(value) ? JSON.stringify(value) : value}`);
   }
