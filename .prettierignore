@@ -1,0 +1,10 @@
+pnpm-lock.yaml
+drizzle/
+cloudflare-env.d.ts
+.agents/
+.claude/
+.open-next/
+.wrangler/
+playwright-report/
+test-results/
+coverage/

@@ -1,18 +1,20 @@
-# Gates locais (notebook ou VM da nuvem): pre-commit só nos arquivos em stage (< 10 s) e
-# pre-push só no diff do branch (< 2 min). Lint e testes completos e o build ficam no CI.
-# Instalação: automática no `npm ci`/`npm install` (script prepare).
+# Gates locais (notebook ou VM da nuvem). Instalação automática no `pnpm install` (script prepare).
+# pre-commit: só os arquivos em stage (formatter + eslint com cache).
+# pre-push: só o typecheck incremental. Testes relacionados (`pnpm test:related`) antes do PR;
+# lint, testes completos e build ficam no CI.
 
 pre-commit:
   parallel: true
-  commands:
-    eslint:
-      glob: "*.{js,mjs,ts,tsx}"
-      run: npx eslint --cache --cache-location node_modules/.cache/eslint/ {staged_files}
+  jobs:
+    - name: prettier
+      glob: "*.{js,mjs,cjs,ts,tsx,mts,cts,json,css}"
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+    - name: eslint
+      glob: "*.{js,mjs,cjs,ts,tsx,mts,cts}"
+      run: pnpm exec eslint --cache --cache-location node_modules/.cache/eslint/ {staged_files}
 
 pre-push:
-  piped: true
-  commands:
-    1_typecheck:
-      run: npm run typecheck
-    2_related:
-      run: node scripts/test-related.mjs
+  jobs:
+    - name: typecheck
+      run: pnpm typecheck
