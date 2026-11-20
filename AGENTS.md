@@ -15,38 +15,39 @@ Produção é o Worker `barbearia-do-moura`. A `main` é o que está em produç�
 
 ## Onde cada coisa roda
 
-- **Local ou VM da nuvem (Claude Code):** só o escopo do diff, pelo lefthook (instalado no `npm ci`):
-  pre-commit roda o eslint nos arquivos em stage; pre-push roda `npm run typecheck` e `npm run test:related`
-  (vitest nos testes ligados ao diff). Não aumente o pre-push. Nada de banco local, Docker local ou `wrangler dev` com dados reais.
-- **CI (GitHub Actions, `.github/workflows/ci.yml`):** lint, typecheck, testes e build completos,
-  em todo PR e em push na `main`. Repositório público: minutos sem custo.
-- **Deploy:** automático pelo Workers Builds da Cloudflare a cada push na `main` (ou seja, a cada
-  merge, que é do responsável). `npm run deploy` (OpenNext → Workers) manual só pelo responsável,
-  nunca por agente. Migrations do D1 (`npm run db:migrate:remote`) também são ação do responsável
-  e devem ir antes do merge que depende delas.
+- **Local ou VM da nuvem:** pnpm 12 (`packageManager`), Node do `.nvmrc`. Hooks do lefthook (instalados
+  no `pnpm install`): pre-commit roda Prettier + ESLint só nos arquivos em stage; pre-push roda só o
+  `pnpm typecheck` incremental. Não aumente os hooks.
+- **CI (`.github/workflows/ci.yml`):** lint, typecheck, build e testes completos em todo PR e push na
+  `main`. O check obrigatório da `main` é o job `check` (agrega os outros): não renomear.
+- **Deploy:** Workers Builds da Cloudflare a cada push na `main`. `pnpm run deploy` manual só pelo
+  responsável. Migrations do D1 remoto (`pnpm db:migrate:remote`) vão antes do merge que depende delas.
+- Segredos só no Worker (`wrangler secret`); `.dev.vars.example` lista as variáveis. Nada de segredo no
+  repositório nem no ambiente da nuvem.
+- Atenção no pnpm: `setup` e `deploy` são comandos do próprio pnpm; use `pnpm run setup` e `pnpm run deploy`.
 
-## Fluxo de git — obrigatório
+## Fluxo autônomo
 
-1. Branch nova a partir da `main` atualizada: `<tipo>/<nome-kebab>` (`feat`, `fix`, `chore`, `docs`,
-   `test`, `refactor`, `ci`). Nunca commitar direto na `main`.
-2. Commits semânticos em PT-BR: `<tipo>(<escopo>): <descrição no imperativo>`.
-3. **Fluxo de git (dev solo; mesmo de `~/.claude/CLAUDE.md`):** ao terminar uma implementação, commit +
-   push da branch da feature, automático (sem PR não há custo de CI relevante). **"Finaliza"** = PR e
-   pronto na sequência, acompanhar o CI, corrigir num push só e avisar. **"Suba pra produção" / "faça o
-   merge"** = squash merge e acompanhar o deploy. Draft só se pedido; merge só com esse pedido.
-4. Nunca `--no-verify`, nunca desligar hooks ou proteções, nunca force-push em branch compartilhada.
-5. Não colocar segredos no repositório nem no ambiente da nuvem: `.dev.vars.example` lista as variáveis;
-   os valores ficam no Worker (`wrangler secret`).
+1. Branch de feature a partir de `origin/main` atualizada: `<tipo>/<nome-kebab>`. Commits semânticos em
+   PT-BR (`<tipo>(<escopo>): <descrição no imperativo>`); commit + push a cada parte pronta.
+2. Ao terminar: `pnpm test:related`, `pnpm lint` e `pnpm build`; abrir o PR pronto (não draft), acompanhar
+   o CI e corrigir tudo num push só.
+3. CI verde e baixo risco: squash merge sem perguntar. Risco (auth, pagamento, dados de usuário, infra/CI,
+   deleção): perguntar antes do merge.
+4. Migrations: expand entra automático; contract em dois tempos (PR posterior, depois do deploy sem uso do
+   que sai e smoke verde; snapshot do D1 antes de qualquer drop).
+5. Smoke falhou: corrigir pra frente ou rollback do app (versão anterior do Worker), nunca do banco.
+6. Nunca `--no-verify`, push direto na `main`, deploy do notebook, banco ou Docker local, force-push em
+   branch compartilhada.
 
 ### PR na VM da nuvem (Claude Code na web, app ou thread de projeto)
 
 Na nuvem o proxy do GitHub bloqueia GraphQL, então `gh pr …` e `gh issue …` dão 403. `git push` e
-`gh api` (REST) funcionam. O fluxo é o mesmo, pela API REST:
+`gh api` (REST) funcionam:
 
-- **"Finaliza":** abrir o PR já pronto (`draft=false`):
-  `gh api repos/{owner}/{repo}/pulls -f title='<tipo>(<escopo>): …' -f head=<branch> -f base=main -f body='…' -F draft=false`.
-- **"Suba pra produção":** `gh api -X PUT repos/{owner}/{repo}/pulls/<n>/merge -f merge_method=squash`.
-- Listar ou ver PR: `gh api repos/{owner}/{repo}/pulls?head={owner}:<branch>`.
+- Abrir PR pronto: `gh api repos/{owner}/{repo}/pulls -f title='<tipo>(<escopo>): …' -f head=<branch> -f base=main -f body='…' -F draft=false`.
+- Squash merge: `gh api -X PUT repos/{owner}/{repo}/pulls/<n>/merge -f merge_method=squash`.
+- Ver PR da branch: `gh api repos/{owner}/{repo}/pulls?head={owner}:<branch>`.
 - Não coloque `GH_TOKEN` no ambiente da nuvem: não resolve o 403 e deixa o token legível.
 
 ## Histórico

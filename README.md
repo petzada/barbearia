@@ -63,7 +63,7 @@ As decisões de produto de cada tela estão em [`docs/DECISOES.md`](docs/DECISOE
 
 **Pré-requisitos**
 
-- [Node.js](https://nodejs.org) **22** ou superior (versão de referência em `.nvmrc`) e npm
+- [Node.js](https://nodejs.org) **22** ou superior (versão de referência em `.nvmrc`) e [pnpm](https://pnpm.io) 12 (`corepack enable` ou `npm i -g pnpm@12`)
 - Git
 - Conta na Cloudflare apenas para publicar (o desenvolvimento usa um D1 local descartável)
 
@@ -72,9 +72,9 @@ As decisões de produto de cada tela estão em [`docs/DECISOES.md`](docs/DECISOE
 ```bash
 git clone https://github.com/petzada/barbearia.git
 cd barbearia
-npm install                          # também instala os hooks do lefthook
+pnpm install                         # também instala os hooks do lefthook
 cp .dev.vars.example .dev.vars       # preencha o que for usar
-npm run db:migrate:local             # cria o D1 local com dados iniciais
+pnpm db:migrate:local                # cria o D1 local com dados iniciais
 ```
 
 Para desenvolver sem WhatsApp, defina no `.dev.vars`:
@@ -86,12 +86,12 @@ ADMIN_PHONE_NUMBERS=5511999999999
 
 Com isso o código de login aparece no log do servidor, `123456` também é aceito (só fora de produção) e os telefones listados viram admin e barbeiro no primeiro login.
 
-`npm run setup` faz perguntas e grava as variáveis de pagamento e webhooks para você.
+`pnpm run setup` faz perguntas e grava as variáveis de pagamento e webhooks para você.
 
 ## Como utilizar
 
 ```bash
-npm run dev          # http://localhost:3000
+pnpm dev             # http://localhost:3000
 ```
 
 1. Abra `http://localhost:3000` e entre com o telefone de `ADMIN_PHONE_NUMBERS`.
@@ -102,11 +102,11 @@ npm run dev          # http://localhost:3000
 
 | Comando | O que faz |
 |---|---|
-| `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção do Next.js |
-| `npm run preview` | Build OpenNext e prévia no runtime do Workers |
-| `npm run db:generate` | Gera migration após alterar `src/server/db/schema.ts` |
-| `npm run check` | Lint + typecheck + testes + build |
+| `pnpm dev` | Servidor de desenvolvimento |
+| `pnpm build` | Build de produção do Next.js |
+| `pnpm preview` | Build OpenNext e prévia no runtime do Workers |
+| `pnpm db:generate` | Gera migration após alterar `src/server/db/schema.ts` |
+| `pnpm check` | Lint + typecheck + testes + build |
 
 ## Publicação
 
@@ -115,9 +115,9 @@ O Worker é publicado pelo Workers Builds da Cloudflare a cada push na `main` (b
 segredos e o deploy manual, quando preciso, ficam com o responsável pelo projeto:
 
 ```bash
-npm run db:migrate:remote                # aplica as migrations no D1 de produção
+pnpm db:migrate:remote                   # aplica as migrations no D1 de produção
 wrangler secret put BETTER_AUTH_SECRET   # e os demais segredos do .dev.vars.example
-npm run deploy                           # build OpenNext + deploy do Worker
+pnpm run deploy                          # build OpenNext + deploy do Worker
 ```
 
 O webhook do AbacatePay deve apontar para `<APP_BASE_URL>/api/webhooks/abacatepay?webhookSecret=<segredo>` com os eventos `transparent.completed`, `transparent.refunded`, `transparent.disputed` e `transparent.lost`.
@@ -126,13 +126,14 @@ O webhook do AbacatePay deve apontar para `<APP_BASE_URL>/api/webhooks/abacatepa
 
 | Comando | O que roda |
 |---|---|
-| `npm run lint` | ESLint |
-| `npm run typecheck` | `next typegen` + `tsc --noEmit` |
-| `npm test` | Vitest: unidade, integração com D1 real (Miniflare) e componentes (jsdom) |
-| `npm run test:related` | Só os testes ligados aos arquivos alterados |
-| `npm run test:e2e` | Playwright contra `next dev` com um D1 descartável em `.wrangler/e2e` |
+| `pnpm lint` | ESLint |
+| `pnpm format` | Prettier no repositório todo |
+| `pnpm typecheck` | `tsc --noEmit` incremental (`next typegen` só quando as rotas mudam) |
+| `pnpm test` | Vitest: unidade, integração com D1 real (Miniflare) e componentes (jsdom) |
+| `pnpm test:related` | Só os testes ligados aos arquivos alterados (rode antes de abrir o PR) |
+| `pnpm e2e` | Playwright contra `next dev` com um D1 descartável em `.wrangler/e2e` |
 
-O E2E precisa da porta 3000 livre e do `.dev.vars` com `AUTH_DEV_OTP=123456` e `ADMIN_PHONE_NUMBERS=5511999999999`. No dia a dia o **lefthook** roda o ESLint no commit e o typecheck + testes do diff no push; a suíte completa e o build rodam no **GitHub Actions** em todo PR.
+O E2E precisa da porta 3000 livre e do `.dev.vars` com `AUTH_DEV_OTP=123456` e `ADMIN_PHONE_NUMBERS=5511999999999`. No dia a dia o **lefthook** roda Prettier + ESLint nos arquivos do commit e o typecheck incremental no push; a suíte completa e o build rodam no **GitHub Actions** em todo PR.
 
 ## Contribuição
 
