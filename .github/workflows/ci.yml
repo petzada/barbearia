@@ -11,30 +11,82 @@ concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
 jobs:
-  check:
+  lint-build:
+    name: lint, typecheck e build
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
+
+      - name: Cache do Next (.next/cache)
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**', 'next.config.ts', 'tsconfig.json') }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            next-${{ runner.os }}-
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Typecheck
-        run: npx next typegen && npx tsc --noEmit
-
-      - name: Testes (unidade e D1)
-        run: npx vitest run
+        run: pnpm typecheck
 
       - name: Build
-        run: npx next build
-        env:
-          NEXT_TELEMETRY_DISABLED: "1"
+        run: pnpm build
+
+      - name: Aviso de falha
+        if: failure()
+        run: echo "::error title=CI falhou::lint, typecheck ou build falhou em ${{ github.ref_name }} (${{ github.sha }})."
+
+  test:
+    name: testes (unidade e D1)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Testes
+        run: pnpm test:ci
+
+      - name: Aviso de falha
+        if: failure()
+        run: echo "::error title=Testes falharam::vitest falhou em ${{ github.ref_name }} (${{ github.sha }})."
+
+  # Check obrigatório da proteção da main: não renomear. Passa só se os dois jobs passarem.
+  check:
+    needs: [lint-build, test]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Resultado
+        run: |
+          echo "lint-build: ${{ needs.lint-build.result }} / test: ${{ needs.test.result }}"
+          test "${{ needs.lint-build.result }}" = success && test "${{ needs.test.result }}" = success
