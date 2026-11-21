@@ -22,6 +22,8 @@ Produção é o Worker `barbearia-do-moura`. A `main` é o que está em produç�
   `main`. O check obrigatório da `main` é o job `check` (agrega os outros): não renomear.
 - **Deploy:** Workers Builds da Cloudflare a cada push na `main`. `pnpm run deploy` manual só pelo
   responsável. Migrations do D1 remoto (`pnpm db:migrate:remote`) vão antes do merge que depende delas.
+  Não há workflow que aplique migration remota: até existir, `db:migrate:remote` é do responsável
+  (agente prepara a migration e pede).
 - Segredos só no Worker (`wrangler secret`); `.dev.vars.example` lista as variáveis. Nada de segredo no
   repositório nem no ambiente da nuvem.
 - Atenção no pnpm: `setup` e `deploy` são comandos do próprio pnpm; use `pnpm run setup` e `pnpm run deploy`.
