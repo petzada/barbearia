@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Provisiona a infraestrutura da Barbearia do Moura na Cloudflare (idempotente).
 //
-//   npm run cf:setup              → cria/reaproveita D1 e R2, grava o database_id,
+//   pnpm cf:setup              → cria/reaproveita D1 e R2, grava o database_id,
 //                                   aplica as migrations remotas e gera os tipos
-//   npm run cf:setup -- --dry-run → só mostra o que seria feito
+//   pnpm cf:setup -- --dry-run → só mostra o que seria feito
 //
-// Requer `npx wrangler login` (ou CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID).
+// Requer `pnpm exec wrangler login` (ou CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID).
 
 import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -44,7 +44,10 @@ console.log(`Barbearia do Moura · Cloudflare${dryRun ? " (dry-run)" : ""}\n`);
 // 1. Autenticação
 const who = wrangler(["whoami"]);
 if (!dryRun && (who.status !== 0 || /not authenticated/i.test(who.stdout + who.stderr))) {
-  fail("wrangler não autenticado.", "Rode `npx wrangler login` ou defina CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID.");
+  fail(
+    "wrangler não autenticado.",
+    "Rode `pnpm exec wrangler login` ou defina CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID.",
+  );
 }
 
 // 2. D1 (reaproveita se já existir)
@@ -59,9 +62,10 @@ if (existing) {
 } else if (!dryRun) {
   const created = wrangler(["d1", "create", D1_NAME]);
   if (created.status !== 0) fail(`não foi possível criar o D1 "${D1_NAME}".`, created.stderr);
-  databaseId = created.stdout.match(/"database_id"\s*:\s*"([0-9a-f-]{36})"/i)?.[1]
-    ?? created.stdout.match(/database_id\s*=\s*"([0-9a-f-]{36})"/i)?.[1]
-    ?? null;
+  databaseId =
+    created.stdout.match(/"database_id"\s*:\s*"([0-9a-f-]{36})"/i)?.[1] ??
+    created.stdout.match(/database_id\s*=\s*"([0-9a-f-]{36})"/i)?.[1] ??
+    null;
   if (!databaseId) fail("D1 criado, mas o database_id não foi encontrado na saída.", created.stdout);
   console.log(`  ✓ criado "${D1_NAME}" (${databaseId})`);
 } else if (databaseId) {
@@ -99,5 +103,5 @@ const types = wrangler(["types", "--env-interface", "CloudflareEnv", "cloudflare
 if (types.status !== 0) fail("falha ao gerar os tipos (wrangler types).");
 
 console.log(`\n✓ Infraestrutura pronta. Próximos passos:
-  1. npm run setup        (chaves: WhatsMiau, AbacatePay, Google; destino Produção)
-  2. npm run deploy`);
+  1. pnpm run setup       (chaves: WhatsMiau, AbacatePay, Google; destino Produção)
+  2. pnpm run deploy`);

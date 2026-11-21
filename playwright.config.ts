@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * E2E contra `next dev` com um D1 local descartável (.wrangler/e2e), recriado
- * a cada execução. Requer .dev.vars (`npm run setup`) com AUTH_DEV_OTP=123456
+ * a cada execução. Requer .dev.vars (`pnpm run setup`) com AUTH_DEV_OTP=123456
  * e ADMIN_PHONE_NUMBERS (o primeiro número é o admin do teste).
  */
 export default defineConfig({
@@ -22,7 +22,7 @@ export default defineConfig({
     defaultBrowserType: "chromium",
   },
   webServer: {
-    command: "npm run e2e:db && CF_PERSIST_DIR=.wrangler/e2e/v3 npx next dev -p 3000",
+    command: "pnpm e2e:db && CF_PERSIST_DIR=.wrangler/e2e/v3 pnpm exec next dev -p 3000",
     url: "http://localhost:3000",
     // Nunca reaproveita um servidor existente: ele usaria outro banco.
     reuseExistingServer: false,

@@ -51,5 +51,10 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 
-# worktrees temporários de agentes
-/.claude/worktrees/
+# Claude Code (locais, nunca versionar)
+.claude/worktrees/
+.claude/settings.local.json
+
+# caches
+.eslintcache
+.turbo

@@ -12,14 +12,17 @@
     "cf:setup": "node scripts/cf-setup.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint --cache --cache-location node_modules/.cache/eslint/",
+    "format": "prettier --write .",
+    "typecheck": "node scripts/typecheck.mjs",
     "test": "vitest run",
+    "test:ci": "vitest run",
     "test:related": "node scripts/test-related.mjs",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "e2e": "playwright test",
+    "test:e2e": "pnpm e2e",
     "e2e:db": "rm -rf .wrangler/e2e && wrangler d1 migrations apply DB --local --persist-to .wrangler/e2e",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "cf:build": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
@@ -29,7 +32,7 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "db:seed:local": "wrangler d1 execute DB --local --file=./drizzle/seed/seed.sql",
-    "prepare": "node -e \"try{if(require('fs').existsSync('.git'))require('child_process').execSync('lefthook install',{stdio:'inherit'})}catch(e){console.warn('lefthook install ignorado')}\""
+    "prepare": "node -e \"try{if(require('fs').statSync('.git').isDirectory())require('child_process').execSync('lefthook install',{stdio:'inherit'})}catch{}\""
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -45,6 +48,7 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-hook-form": "^7.76.0",
+    "react-is": "19.3.1",
     "recharts": "^3.10.1",
     "server-only": "^0.0.1",
     "shadcn": "^4.22.1",
@@ -69,9 +73,11 @@
     "jsdom": "^30.1.3",
     "lefthook": "^2.2.2",
     "miniflare": "^4.20260730.0",
+    "prettier": "^3.10.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^5",
     "vitest": "^5.0.5",
     "wrangler": "^4.152.0"
-  }
+  },
+  "packageManager": "pnpm@12.22.0"
 }

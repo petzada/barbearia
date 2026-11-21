@@ -1,0 +1,7 @@
+# Pacotes que podem rodar scripts de instalação (binários nativos).
+allowBuilds:
+  esbuild: true
+  lefthook: true
+  sharp: true
+  unrs-resolver: true
+  workerd: true

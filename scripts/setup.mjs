@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Terminal de configuração das chaves da Barbearia do Moura.
 //
-//   npm run setup               → menu interativo
-//   npm run setup -- --from-env → lê as variáveis do ambiente (CI), sem perguntas
+//   pnpm run setup              → menu interativo
+//   pnpm run setup --from-env   → lê as variáveis do ambiente (CI), sem perguntas
 //
 // Grava em .dev.vars (local, fora do git) e/ou envia como secrets do Worker
 // na Cloudflare (`wrangler secret bulk`). Nunca imprime os valores secretos.
@@ -44,7 +44,11 @@ function loadLocal() {
 
 // --- Entrada no terminal (texto e oculto) -----------------------------------
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: Boolean(process.stdin.isTTY) });
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal: Boolean(process.stdin.isTTY),
+});
 let muted = false;
 rl._writeToOutput = function writeToOutput(text) {
   if (!muted) rl.output.write(text);
@@ -53,9 +57,7 @@ rl._writeToOutput = function writeToOutput(text) {
 
 function ask(question, fallback = "") {
   const hint = fallback ? c.dim(` [${fallback}]`) : "";
-  return new Promise((resolve) =>
-    rl.question(`${question}${hint}: `, (answer) => resolve(answer.trim() || fallback)),
-  );
+  return new Promise((resolve) => rl.question(`${question}${hint}: `, (answer) => resolve(answer.trim() || fallback)));
 }
 
 /** Pergunta escondendo a digitação; Enter vazio mantém o valor atual. */
@@ -115,7 +117,9 @@ async function sectionWhatsmiau(env) {
 
 async function sectionAbacatePay(env) {
   console.log(`\n${c.bold("AbacatePay")} ${c.dim("(Pix e cartão do clube — checkout transparente)")}`);
-  const mode = (await ask("Modo da chave: teste ou produção (t/p)", "t")).toLowerCase().startsWith("p") ? "produção" : "teste";
+  const mode = (await ask("Modo da chave: teste ou produção (t/p)", "t")).toLowerCase().startsWith("p")
+    ? "produção"
+    : "teste";
   console.log(c.dim(`  Use as chaves do modo ${mode} criadas em Integração no painel do AbacatePay.`));
   console.log(c.dim("  A chave pública (pk_…) e a chave da API precisam ser do MESMO modo."));
   const updates = {
@@ -166,14 +170,28 @@ function printChecklist(env) {
   const local = webhookUrls(env.get("APP_BASE_URL"), env);
   const prod = webhookUrls(prodBase, env);
   console.log(`\n${c.bold("Checklist")}`);
-  for (const key of ["WHATSMIAU_API_KEY", "ABACATEPAY_API_KEY", "ABACATEPAY_PUBLIC_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ADMIN_PHONE_NUMBERS"]) {
+  for (const key of [
+    "WHATSMIAU_API_KEY",
+    "ABACATEPAY_API_KEY",
+    "ABACATEPAY_PUBLIC_KEY",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "ADMIN_PHONE_NUMBERS",
+  ]) {
     const value = env.get(key);
-    console.log(`  ${value ? c.ok("✓") : c.warn("•")} ${key} ${c.dim(value ? (key === "ADMIN_PHONE_NUMBERS" ? "definido" : maskSecret(value)) : "pendente")}`);
+    console.log(
+      `  ${value ? c.ok("✓") : c.warn("•")} ${key} ${c.dim(value ? (key === "ADMIN_PHONE_NUMBERS" ? "definido" : maskSecret(value)) : "pendente")}`,
+    );
   }
   console.log(`\n${c.bold("Cole nos painéis externos")} ${c.dim("(contêm segredos — não compartilhe)")}`);
   if (prod.whatsmiau) console.log(`  WhatsMiau → webhook connection.update:\n    ${c.teal(prod.whatsmiau)}`);
-  if (prod.abacatepay) console.log(`  AbacatePay → Webhooks (eventos transparent.completed, .refunded, .disputed e .lost):\n    ${c.teal(prod.abacatepay)}`);
-  console.log(`  Google Cloud → URIs de redirecionamento autorizados:\n    ${c.teal(local.googleRedirect)}\n    ${c.teal(prod.googleRedirect)}`);
+  if (prod.abacatepay)
+    console.log(
+      `  AbacatePay → Webhooks (eventos transparent.completed, .refunded, .disputed e .lost):\n    ${c.teal(prod.abacatepay)}`,
+    );
+  console.log(
+    `  Google Cloud → URIs de redirecionamento autorizados:\n    ${c.teal(local.googleRedirect)}\n    ${c.teal(prod.googleRedirect)}`,
+  );
 }
 
 // --- Fluxos ------------------------------------------------------------------
@@ -201,7 +219,9 @@ async function interactive() {
   if (!env.get("BETTER_AUTH_SECRET")) env = mergeEnv(env, { BETTER_AUTH_SECRET: generateSecret() });
   if (!env.get("CRON_SECRET")) env = mergeEnv(env, { CRON_SECRET: generateSecret() });
 
-  console.log(`\n${c.bold("Onde salvar?")}\n  1. Local (.dev.vars)\n  2. Produção (secrets na Cloudflare)\n  3. Os dois`);
+  console.log(
+    `\n${c.bold("Onde salvar?")}\n  1. Local (.dev.vars)\n  2. Produção (secrets na Cloudflare)\n  3. Os dois`,
+  );
   const target = await ask("Destino", "1");
   if (target === "1" || target === "3") {
     writeFileSync(DEV_VARS, serializeEnv(env), { mode: 0o600 });
@@ -209,7 +229,9 @@ async function interactive() {
   }
   if (target === "2" || target === "3") {
     if (!wranglerAuthenticated()) {
-      console.log(c.warn("! O wrangler não está autenticado. Rode `npx wrangler login` e depois `npm run setup` de novo."));
+      console.log(
+        c.warn("! O wrangler não está autenticado. Rode `pnpm exec wrangler login` e depois `pnpm run setup` de novo."),
+      );
     } else {
       const sent = pushToCloudflare(env);
       console.log(c.ok(`✓ ${sent.length} secrets enviados para o Worker.`));

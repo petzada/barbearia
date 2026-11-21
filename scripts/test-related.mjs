@@ -1,4 +1,4 @@
-// Testes ligados ao diff do branch (pre-push do lefthook e `npm run test:related`).
+// Testes ligados ao diff do branch (`pnpm test:related`, antes de abrir o PR).
 // Compara com o merge-base do branch padrão do remoto e roda `vitest related --run` nos
 // arquivos alterados. Sem nada relacionado no diff, não roda nada.
 // Argumentos extras vão direto para o vitest (ex.: --testTimeout=60000); `--list` só
@@ -11,9 +11,10 @@
 //   achados pelos dois primeiros segmentos do caminho: "content/blog" ou
 //   path.join(..., "content", "blog").
 // O CI roda a suíte completa de qualquer forma.
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { runBin } from "./lib/bin.mjs";
 
 const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
 const lines = (s) => s.split("\n").filter(Boolean);
@@ -78,8 +79,5 @@ if (args.includes("--list")) {
   console.log(targets.join("\n"));
   process.exit(0);
 }
-const r = spawnSync("npx", ["vitest", "related", "--run", "--passWithNoTests", ...args, ...targets], {
-  stdio: "inherit",
-  shell: process.platform === "win32",
-});
-process.exit(r.status ?? 1);
+// Binário do vitest direto pelo Node: a lista de arquivos não passa por shell.
+process.exit(runBin("vitest", "vitest", ["related", "--run", "--passWithNoTests", ...args, ...targets]));

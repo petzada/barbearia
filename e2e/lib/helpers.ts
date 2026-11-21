@@ -5,9 +5,11 @@ import { parseEnvFile } from "../../scripts/lib/env-file.mjs";
 
 /** Primeiro admin de ADMIN_PHONE_NUMBERS (.dev.vars) ou E2E_ADMIN_PHONE, sem o DDI. */
 export function adminPhone(): string {
-  const fromFile = existsSync(".dev.vars") ? parseEnvFile(readFileSync(".dev.vars", "utf8")).get("ADMIN_PHONE_NUMBERS") : undefined;
+  const fromFile = existsSync(".dev.vars")
+    ? parseEnvFile(readFileSync(".dev.vars", "utf8")).get("ADMIN_PHONE_NUMBERS")
+    : undefined;
   const raw = (process.env.E2E_ADMIN_PHONE ?? fromFile ?? "").split(",")[0].replace(/\D/g, "");
-  if (!raw) throw new Error("Defina ADMIN_PHONE_NUMBERS no .dev.vars (npm run setup) ou E2E_ADMIN_PHONE.");
+  if (!raw) throw new Error("Defina ADMIN_PHONE_NUMBERS no .dev.vars (pnpm run setup) ou E2E_ADMIN_PHONE.");
   return raw.startsWith("55") && raw.length > 11 ? raw.slice(2) : raw;
 }
 
